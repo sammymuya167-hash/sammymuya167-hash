@@ -1,8 +1,8 @@
 <p align="center">
-  <img src="./assets/banner.svg" width="100%" alt="Sammy Muya GitHub Banner" />
+  <img src="./assets/banner.svg" width="100%" alt="SHADOWNET GitHub Banner" />
 </p>
 
-<h1 align="center">Hey, I'm Sammy 👋</h1>
+<h1 align="center">Hey, I'm SHADOWNET 👋</h1>
 <p align="center">
   I build practical automation systems, e-commerce tools, APIs, and workflows that remove repetitive work.
 </p>
