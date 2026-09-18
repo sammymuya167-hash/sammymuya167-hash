@@ -18,7 +18,7 @@
   <circle cx="970" cy="58" r="170" fill="#7C3AED" fill-opacity="0.18" filter="url(#blur)"/>
   <circle cx="180" cy="330" r="160" fill="#06B6D4" fill-opacity="0.16" filter="url(#blur)"/>
   <rect x="48" y="42" width="1104" height="276" rx="24" stroke="url(#accent)" stroke-opacity="0.5"/>
-  <text x="86" y="142" fill="white" font-family="Arial, Helvetica, sans-serif" font-size="62" font-weight="700">SAMMY MUYA</text>
+  <text x="86" y="142" fill="white" font-family="Arial, Helvetica, sans-serif" font-size="62" font-weight="700">SHADOWNET</text>
   <text x="88" y="197" fill="#B8C4E0" font-family="Arial, Helvetica, sans-serif" font-size="25">Automation • E-commerce Systems • APIs • Product Engineering</text>
   <text x="88" y="249" fill="#7DD3FC" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="600">BUILDING SYSTEMS THAT TURN MANUAL WORK INTO ONE-CLICK WORKFLOWS.</text>
   <circle cx="1044" cy="180" r="56" stroke="url(#accent)" stroke-width="5"/>
