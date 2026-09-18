@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="./assets/banner.svg" width="100%" alt="SHADOWNET GitHub Banner" />
+  <img src="./assets/shadownet-banner.svg" width="100%" alt="SHADOWNET GitHub Banner" />
 </p>
 
 <h1 align="center">Hey, I'm SHADOWNET 👋</h1>
