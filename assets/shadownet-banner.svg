@@ -1,0 +1,26 @@
+<svg width="1200" height="360" viewBox="0 0 1200 360" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1200" y2="360" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#080B14"/>
+      <stop offset="0.48" stop-color="#121A2B"/>
+      <stop offset="1" stop-color="#0B1020"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="160" y1="60" x2="1020" y2="310" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#7C3AED"/>
+      <stop offset="0.5" stop-color="#06B6D4"/>
+      <stop offset="1" stop-color="#22C55E"/>
+    </linearGradient>
+    <filter id="blur" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="48"/>
+    </filter>
+  </defs>
+  <rect width="1200" height="360" rx="28" fill="url(#bg)"/>
+  <circle cx="970" cy="58" r="170" fill="#7C3AED" fill-opacity="0.18" filter="url(#blur)"/>
+  <circle cx="180" cy="330" r="160" fill="#06B6D4" fill-opacity="0.16" filter="url(#blur)"/>
+  <rect x="48" y="42" width="1104" height="276" rx="24" stroke="url(#accent)" stroke-opacity="0.5"/>
+  <text x="86" y="142" fill="white" font-family="Arial, Helvetica, sans-serif" font-size="62" font-weight="700">SHADOWNET</text>
+  <text x="88" y="197" fill="#B8C4E0" font-family="Arial, Helvetica, sans-serif" font-size="25">Automation • E-commerce Systems • APIs • Product Engineering</text>
+  <text x="88" y="249" fill="#7DD3FC" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="600">BUILDING SYSTEMS THAT TURN MANUAL WORK INTO ONE-CLICK WORKFLOWS.</text>
+  <circle cx="1044" cy="180" r="56" stroke="url(#accent)" stroke-width="5"/>
+  <path d="M1013 180H1075M1044 149V211" stroke="white" stroke-width="7" stroke-linecap="round"/>
+</svg>
