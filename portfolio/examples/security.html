@@ -1,0 +1,11 @@
+<!doctype html><html lang="en"><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Authentication log triage</title><style>
+*{box-sizing:border-box}body{font:16px/1.6 system-ui,sans-serif;background:#edf2f6;color:#182b3a;margin:0}
+main{max-width:1100px;margin:auto;padding:40px 24px}h1{font-size:36px;line-height:1.15}h2{margin-top:32px}
+section{background:white;border:1px solid #d3dfe6;border-radius:12px;padding:20px;margin:20px 0}
+table{width:100%;border-collapse:collapse}th,td{padding:10px;border-bottom:1px solid #dde4e9;text-align:left;vertical-align:top}
+th{background:#f1f5f8}.scroll{overflow:auto}code{font-size:13px;word-break:break-word}
+footer{font-size:13px;color:#526677}a{color:#005e86}</style>
+<main><p>FELIX K. NDEGWA / PORTFOLIO DEMONSTRATION</p><h1>Authentication log triage</h1>
+<p>Validated 7 events. Rules flag patterns for review, not confirmed intrusions.</p><section><h2>Investigation queue</h2><div class="scroll"><table><thead><tr><th>Rule</th><th>Severity</th><th>Source</th><th>UTC</th><th>Accounts</th><th>Evidence lines</th></tr></thead><tbody><tr><td>failure_burst</td><td>medium</td><td>192.0.2.10</td><td>2026-10-03T09:02:00Z</td><td>demo.operator</td><td>[1, 2, 3, 4, 5]</td></tr><tr><td>success_after_failures</td><td>high</td><td>192.0.2.10</td><td>2026-10-03T09:02:10Z</td><td>demo.operator</td><td>[1, 2, 3, 4, 5, 6]</td></tr></tbody></table></div><p>At least 5 failed sign-ins from one source within 300 seconds. Investigate; shared addresses and user mistakes can produce this pattern.</p><p>Successful authentication followed repeated failures for the same account and source. Verify the account owner and surrounding activity; this is not proof of compromise.</p></section><section><h2>Rejected records</h2><div class="scroll"><table><thead><tr><th>Line</th><th>Validation error</th></tr></thead><tbody><tr><td>8</td><td>&#x27;not-an-ip&#x27; does not appear to be an IPv4 or IPv6 address</td></tr></tbody></table></div></section><footer>Synthetic sample data. Local demonstration; no live employer systems or customer records.</footer></main></html>

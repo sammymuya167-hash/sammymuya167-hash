@@ -1,0 +1,28 @@
+[
+  {
+    "id": 2,
+    "title": "Conference display signal drops",
+    "requester": "Demo events team",
+    "priority": "P1",
+    "status": "waiting",
+    "created_at": "2026-10-03T09:00:00Z",
+    "due_at": "2026-10-03T13:00:00Z",
+    "resolved_at": null,
+    "asset_id": null,
+    "overdue": true,
+    "resolution_within_target": null
+  },
+  {
+    "id": 1,
+    "title": "Staff laptop cannot connect to Wi-Fi",
+    "requester": "Demo reception",
+    "priority": "P2",
+    "status": "resolved",
+    "created_at": "2026-10-03T07:00:00Z",
+    "due_at": "2026-10-03T15:00:00Z",
+    "resolved_at": "2026-10-03T08:00:00Z",
+    "asset_id": "DEMO-LAP-001",
+    "overdue": false,
+    "resolution_within_target": true
+  }
+]

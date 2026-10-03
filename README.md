@@ -91,3 +91,8 @@ Idea → Build → Test → Automate → Deploy → Improve
 <p align="center">
   <img src="https://komarev.com/ghpvc/?username=sammymuya167-hash&style=flat-square&label=Profile+Views" alt="Profile views" />
 </p>
+
+
+## IT support and security portfolio
+
+[Explore Felix K. Ndegwa's working portfolio](portfolio/README.md): a support desk tracker, authentication log triage and an offline network configuration auditor. Includes reproducible synthetic examples, technical case studies and 19 automated tests. These are AI-assisted portfolio demonstrations created in October 2026.

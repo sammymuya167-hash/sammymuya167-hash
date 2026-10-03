@@ -1,0 +1,30 @@
+{
+  "records": 5,
+  "valid_records": 5,
+  "findings": [
+    {
+      "device": "office-switch",
+      "rule": "gateway_outside_subnet",
+      "severity": "high",
+      "detail": "Gateway 10.30.30.1 is outside 10.20.20.0/24."
+    },
+    {
+      "device": "meeting-room-display",
+      "rule": "unusable_host_address",
+      "severity": "high",
+      "detail": "Device uses a network or broadcast address in 10.40.40.0/24."
+    },
+    {
+      "device": "staff-laptop-01, printer-01",
+      "rule": "duplicate_ip",
+      "severity": "high",
+      "detail": "Address 10.10.10.20 appears on multiple inventory records."
+    },
+    {
+      "device": "staff-laptop-01, guest-access-point, printer-01",
+      "rule": "shared_subnet_zones",
+      "severity": "medium",
+      "detail": "Zones guest, staff share 10.10.10.0/24. Review the intended VLAN/routing design; an inventory alone cannot verify isolation."
+    }
+  ]
+}

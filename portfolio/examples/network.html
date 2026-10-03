@@ -1,0 +1,11 @@
+<!doctype html><html lang="en"><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Network configuration audit</title><style>
+*{box-sizing:border-box}body{font:16px/1.6 system-ui,sans-serif;background:#edf2f6;color:#182b3a;margin:0}
+main{max-width:1100px;margin:auto;padding:40px 24px}h1{font-size:36px;line-height:1.15}h2{margin-top:32px}
+section{background:white;border:1px solid #d3dfe6;border-radius:12px;padding:20px;margin:20px 0}
+table{width:100%;border-collapse:collapse}th,td{padding:10px;border-bottom:1px solid #dde4e9;text-align:left;vertical-align:top}
+th{background:#f1f5f8}.scroll{overflow:auto}code{font-size:13px;word-break:break-word}
+footer{font-size:13px;color:#526677}a{color:#005e86}</style>
+<main><p>FELIX K. NDEGWA / PORTFOLIO DEMONSTRATION</p><h1>Network configuration audit</h1>
+<p>Reviewed 5 exported records; 5 parsed successfully. Offline configuration checks only.</p><section><h2>Findings</h2><div class="scroll"><table><thead><tr><th>Device</th><th>Severity</th><th>Check</th><th>Explanation</th></tr></thead><tbody><tr><td>office-switch</td><td>high</td><td>gateway_outside_subnet</td><td>Gateway 10.30.30.1 is outside 10.20.20.0/24.</td></tr><tr><td>meeting-room-display</td><td>high</td><td>unusable_host_address</td><td>Device uses a network or broadcast address in 10.40.40.0/24.</td></tr><tr><td>staff-laptop-01, printer-01</td><td>high</td><td>duplicate_ip</td><td>Address 10.10.10.20 appears on multiple inventory records.</td></tr><tr><td>staff-laptop-01, guest-access-point, printer-01</td><td>medium</td><td>shared_subnet_zones</td><td>Zones guest, staff share 10.10.10.0/24. Review the intended VLAN/routing design; an inventory alone cannot verify isolation.</td></tr></tbody></table></div></section><section><h2>Interpretation</h2><p>Validate findings against approved diagrams and device configurations before changing anything. No live connectivity or segmentation test was performed.</p></section><footer>Synthetic sample data. Local demonstration; no live employer systems or customer records.</footer></main></html>

@@ -1,0 +1,8 @@
+{"timestamp":"2026-10-03T09:00:00Z","source_ip":"192.0.2.10","user":"demo.operator","outcome":"failure"}
+{"timestamp":"2026-10-03T09:00:30Z","source_ip":"192.0.2.10","user":"demo.operator","outcome":"failure"}
+{"timestamp":"2026-10-03T09:01:00Z","source_ip":"192.0.2.10","user":"demo.operator","outcome":"failure"}
+{"timestamp":"2026-10-03T09:01:30Z","source_ip":"192.0.2.10","user":"demo.operator","outcome":"failure"}
+{"timestamp":"2026-10-03T09:02:00Z","source_ip":"192.0.2.10","user":"demo.operator","outcome":"failure"}
+{"timestamp":"2026-10-03T09:02:10Z","source_ip":"192.0.2.10","user":"demo.operator","outcome":"success"}
+{"timestamp":"2026-10-03T09:03:00Z","source_ip":"198.51.100.15","user":"demo.reception","outcome":"success"}
+{"timestamp":"2026-10-03T09:04:00Z","source_ip":"not-an-ip","user":"demo.invalid","outcome":"failure"}

@@ -1,0 +1,48 @@
+{
+  "valid_events": 7,
+  "errors": [
+    {
+      "line": 8,
+      "error": "'not-an-ip' does not appear to be an IPv4 or IPv6 address"
+    }
+  ],
+  "findings": [
+    {
+      "rule": "failure_burst",
+      "severity": "medium",
+      "source_ip": "192.0.2.10",
+      "timestamp": "2026-10-03T09:02:00Z",
+      "failure_count": 5,
+      "users": [
+        "demo.operator"
+      ],
+      "evidence_lines": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "explanation": "At least 5 failed sign-ins from one source within 300 seconds. Investigate; shared addresses and user mistakes can produce this pattern."
+    },
+    {
+      "rule": "success_after_failures",
+      "severity": "high",
+      "source_ip": "192.0.2.10",
+      "timestamp": "2026-10-03T09:02:10Z",
+      "failure_count": 5,
+      "users": [
+        "demo.operator"
+      ],
+      "evidence_lines": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ],
+      "explanation": "Successful authentication followed repeated failures for the same account and source. Verify the account owner and surrounding activity; this is not proof of compromise."
+    }
+  ]
+}

@@ -1,0 +1,7 @@
+[
+  {"device":"staff-laptop-01","address":"10.10.10.20/24","gateway":"10.10.10.1","zone":"staff"},
+  {"device":"guest-access-point","address":"10.10.10.21/24","gateway":"10.10.10.1","zone":"guest"},
+  {"device":"printer-01","address":"10.10.10.20/24","gateway":"10.10.10.1","zone":"staff"},
+  {"device":"office-switch","address":"10.20.20.2/24","gateway":"10.30.30.1","zone":"management"},
+  {"device":"meeting-room-display","address":"10.40.40.255/24","gateway":"10.40.40.1","zone":"events"}
+]
