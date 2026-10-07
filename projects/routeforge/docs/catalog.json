@@ -1,0 +1,522 @@
+{
+  "source": "FULL STACK PROJECTS.pdf, supplied by the user on 2026-10-07",
+  "note": "Idea titles transcribed from the PDF. Unchecked reference links are not evidence of a working repository or a licence. Check primary sources before reuse.",
+  "projects": [
+    {
+      "pdf_id": 1,
+      "title": "Full E-Commerce Platform",
+      "state": "unbuilt"
+    },
+    {
+      "pdf_id": 2,
+      "title": "Multi-Vendor Marketplace",
+      "state": "unbuilt"
+    },
+    {
+      "pdf_id": 3,
+      "title": "Online Bookstore",
+      "state": "unbuilt"
+    },
+    {
+      "pdf_id": 4,
+      "title": "Fashion Store with AR Try-On",
+      "state": "unbuilt"
+    },
+    {
+      "pdf_id": 5,
+      "title": "Grocery Delivery App",
+      "state": "unbuilt"
+    },
+    {
+      "pdf_id": 6,
+      "title": "Social Media Platform (Facebook Clone)",
+      "state": "unbuilt"
+    },
+    {
+      "pdf_id": 7,
+      "title": "Instagram Clone",
+      "state": "unbuilt"
+    },
+    {
+      "pdf_id": 8,
+      "title": "Twitter Clone",
+      "state": "unbuilt"
+    },
+    {
+      "pdf_id": 9,
+      "title": "LinkedIn Clone",
+      "state": "unbuilt"
+    },
+    {
+      "pdf_id": 10,
+      "title": "Real-Time Chat Application",
+      "state": "unbuilt"
+    },
+    {
+      "pdf_id": 11,
+      "title": "Discord Clone",
+      "state": "unbuilt"
+    },
+    {
+      "pdf_id": 12,
+      "title": "WhatsApp Clone",
+      "state": "unbuilt"
+    },
+    {
+      "pdf_id": 13,
+      "title": "Slack Clone",
+      "state": "unbuilt"
+    },
+    {
+      "pdf_id": 14,
+      "title": "LMS Platform (Udemy Clone)",
+      "state": "unbuilt",
+      "reference_url": "https://github.com/antonioerdeljac/next13-lms-platform",
+      "license_checked": false
+    },
+    {
+      "pdf_id": 15,
+      "title": "Online Course Platform",
+      "state": "unbuilt"
+    },
+    {
+      "pdf_id": 16,
+      "title": "Student Portal System",
+      "state": "unbuilt"
+    },
+    {
+      "pdf_id": 17,
+      "title": "Quiz Application",
+      "state": "unbuilt"
+    },
+    {
+      "pdf_id": 18,
+      "title": "Code Learning Platform",
+      "state": "unbuilt"
+    },
+    {
+      "pdf_id": 19,
+      "title": "Netflix Clone",
+      "state": "unbuilt"
+    },
+    {
+      "pdf_id": 20,
+      "title": "YouTube Clone",
+      "state": "unbuilt"
+    },
+    {
+      "pdf_id": 21,
+      "title": "Spotify Clone",
+      "state": "unbuilt"
+    },
+    {
+      "pdf_id": 22,
+      "title": "Music Streaming App",
+      "state": "unbuilt"
+    },
+    {
+      "pdf_id": 23,
+      "title": "Video Conferencing App (Zoom Clone)",
+      "state": "unbuilt"
+    },
+    {
+      "pdf_id": 24,
+      "title": "Blog Platform (Medium Clone)",
+      "state": "unbuilt"
+    },
+    {
+      "pdf_id": 25,
+      "title": "Podcast Platform",
+      "state": "unbuilt"
+    },
+    {
+      "pdf_id": 26,
+      "title": "Hotel Booking System",
+      "state": "unbuilt"
+    },
+    {
+      "pdf_id": 27,
+      "title": "Airbnb Clone",
+      "state": "unbuilt"
+    },
+    {
+      "pdf_id": 28,
+      "title": "Restaurant Reservation System",
+      "state": "unbuilt"
+    },
+    {
+      "pdf_id": 29,
+      "title": "Movie Ticket Booking",
+      "state": "unbuilt"
+    },
+    {
+      "pdf_id": 30,
+      "title": "Flight Booking System",
+      "state": "unbuilt"
+    },
+    {
+      "pdf_id": 31,
+      "title": "Trello Clone",
+      "state": "unbuilt"
+    },
+    {
+      "pdf_id": 32,
+      "title": "Notion Clone",
+      "state": "unbuilt"
+    },
+    {
+      "pdf_id": 33,
+      "title": "Jira Clone",
+      "state": "unbuilt",
+      "reference_url": "https://github.com/oldboyxx/jira_clone",
+      "license_checked": false
+    },
+    {
+      "pdf_id": 34,
+      "title": "Task Management App",
+      "state": "unbuilt"
+    },
+    {
+      "pdf_id": 35,
+      "title": "Calendar Scheduling App",
+      "state": "unbuilt"
+    },
+    {
+      "pdf_id": 36,
+      "title": "Kanban Board",
+      "state": "unbuilt"
+    },
+    {
+      "pdf_id": 37,
+      "title": "Note-Taking App (Evernote Clone)",
+      "state": "unbuilt"
+    },
+    {
+      "pdf_id": 38,
+      "title": "Food Delivery App (Uber Eats Clone)",
+      "state": "unbuilt"
+    },
+    {
+      "pdf_id": 39,
+      "title": "Recipe Sharing Platform",
+      "state": "unbuilt"
+    },
+    {
+      "pdf_id": 40,
+      "title": "Restaurant Menu Management",
+      "state": "unbuilt"
+    },
+    {
+      "pdf_id": 41,
+      "title": "Meal Planner App",
+      "state": "unbuilt"
+    },
+    {
+      "pdf_id": 42,
+      "title": "Banking Application",
+      "state": "unbuilt"
+    },
+    {
+      "pdf_id": 43,
+      "title": "Expense Tracker",
+      "state": "unbuilt"
+    },
+    {
+      "pdf_id": 44,
+      "title": "Cryptocurrency Dashboard",
+      "state": "unbuilt"
+    },
+    {
+      "pdf_id": 45,
+      "title": "Invoice Management System",
+      "state": "unbuilt",
+      "reference_url": "https://github.com/invoiceninja/invoiceninja",
+      "license_checked": false
+    },
+    {
+      "pdf_id": 46,
+      "title": "Budget Planning App",
+      "state": "unbuilt"
+    },
+    {
+      "pdf_id": 47,
+      "title": "Stock Market Portfolio Tracker",
+      "state": "unbuilt"
+    },
+    {
+      "pdf_id": 48,
+      "title": "Hospital Management System",
+      "state": "unbuilt"
+    },
+    {
+      "pdf_id": 49,
+      "title": "Doctor Appointment System",
+      "state": "unbuilt"
+    },
+    {
+      "pdf_id": 50,
+      "title": "Fitness Tracker",
+      "state": "unbuilt"
+    },
+    {
+      "pdf_id": 51,
+      "title": "Telemedicine Platform",
+      "state": "unbuilt"
+    },
+    {
+      "pdf_id": 52,
+      "title": "Pharmacy Management System",
+      "state": "unbuilt"
+    },
+    {
+      "pdf_id": 53,
+      "title": "Uber Clone",
+      "state": "unbuilt"
+    },
+    {
+      "pdf_id": 54,
+      "title": "Car Rental System",
+      "state": "unbuilt"
+    },
+    {
+      "pdf_id": 55,
+      "title": "Travel Planner App",
+      "state": "unbuilt",
+      "reference_url": "https://github.com/adrianhajdin/project_travel_advisor",
+      "license_checked": false
+    },
+    {
+      "pdf_id": 56,
+      "title": "Ride Sharing App",
+      "state": "unbuilt"
+    },
+    {
+      "pdf_id": 57,
+      "title": "Real Estate Listing Platform",
+      "state": "unbuilt"
+    },
+    {
+      "pdf_id": 58,
+      "title": "Property Management System",
+      "state": "unbuilt"
+    },
+    {
+      "pdf_id": 59,
+      "title": "House Rental Platform",
+      "state": "unbuilt"
+    },
+    {
+      "pdf_id": 60,
+      "title": "Gaming Platform",
+      "state": "unbuilt"
+    },
+    {
+      "pdf_id": 61,
+      "title": "Quiz Game Multiplayer",
+      "state": "unbuilt"
+    },
+    {
+      "pdf_id": 62,
+      "title": "Chess Game Online",
+      "state": "unbuilt"
+    },
+    {
+      "pdf_id": 63,
+      "title": "Tic-Tac-Toe Multiplayer",
+      "state": "unbuilt"
+    },
+    {
+      "pdf_id": 64,
+      "title": "Email Client (Gmail Clone)",
+      "state": "unbuilt"
+    },
+    {
+      "pdf_id": 65,
+      "title": "Newsletter Platform",
+      "state": "unbuilt"
+    },
+    {
+      "pdf_id": 66,
+      "title": "SMS Marketing Platform",
+      "state": "unbuilt"
+    },
+    {
+      "pdf_id": 67,
+      "title": "Inventory Management System",
+      "state": "unbuilt",
+      "reference_url": "https://github.com/saadpasta/inventory-management-system",
+      "license_checked": false
+    },
+    {
+      "pdf_id": 68,
+      "title": "CRM Application",
+      "state": "unbuilt"
+    },
+    {
+      "pdf_id": 69,
+      "title": "Warehouse Management",
+      "state": "unbuilt"
+    },
+    {
+      "pdf_id": 70,
+      "title": "Point of Sale (POS) System",
+      "state": "unbuilt"
+    },
+    {
+      "pdf_id": 71,
+      "title": "Progressive Web App (PWA) Store",
+      "state": "unbuilt"
+    },
+    {
+      "pdf_id": 72,
+      "title": "Weather Application",
+      "state": "unbuilt"
+    },
+    {
+      "pdf_id": 73,
+      "title": "News Aggregator",
+      "state": "unbuilt"
+    },
+    {
+      "pdf_id": 74,
+      "title": "Job Board Platform",
+      "state": "unbuilt"
+    },
+    {
+      "pdf_id": 75,
+      "title": "Portfolio Builder",
+      "state": "unbuilt"
+    },
+    {
+      "pdf_id": 76,
+      "title": "Photo Sharing Platform (Instagram Clone)",
+      "state": "unbuilt"
+    },
+    {
+      "pdf_id": 77,
+      "title": "Design Collaboration Tool (Figma Clone)",
+      "state": "unbuilt",
+      "reference_url": "https://github.com/tldraw/tldraw",
+      "license_checked": false
+    },
+    {
+      "pdf_id": 78,
+      "title": "Meme Generator",
+      "state": "unbuilt"
+    },
+    {
+      "pdf_id": 79,
+      "title": "Admin Dashboard",
+      "state": "unbuilt"
+    },
+    {
+      "pdf_id": 80,
+      "title": "Analytics Platform",
+      "state": "unbuilt"
+    },
+    {
+      "pdf_id": 81,
+      "title": "Data Visualization Dashboard",
+      "state": "unbuilt"
+    },
+    {
+      "pdf_id": 82,
+      "title": "Business Intelligence Tool",
+      "state": "unbuilt"
+    },
+    {
+      "pdf_id": 83,
+      "title": "Authentication System (OAuth)",
+      "state": "unbuilt"
+    },
+    {
+      "pdf_id": 84,
+      "title": "Password Manager",
+      "state": "unbuilt"
+    },
+    {
+      "pdf_id": 85,
+      "title": "Two-Factor Authentication System",
+      "state": "unbuilt"
+    },
+    {
+      "pdf_id": 86,
+      "title": "Chatbot Platform",
+      "state": "unbuilt"
+    },
+    {
+      "pdf_id": 87,
+      "title": "Image Recognition App",
+      "state": "unbuilt"
+    },
+    {
+      "pdf_id": 88,
+      "title": "Recommendation System",
+      "state": "unbuilt"
+    },
+    {
+      "pdf_id": 89,
+      "title": "Sentiment Analysis Tool",
+      "state": "unbuilt"
+    },
+    {
+      "pdf_id": 90,
+      "title": "Location-Based Service",
+      "state": "unbuilt"
+    },
+    {
+      "pdf_id": 91,
+      "title": "Map Visualization Tool",
+      "state": "unbuilt"
+    },
+    {
+      "pdf_id": 92,
+      "title": "Delivery Route Optimizer",
+      "state": "built",
+      "reference_url": "https://github.com/VROOM-Project/vroom",
+      "license_checked": true
+    },
+    {
+      "pdf_id": 93,
+      "title": "CMS Platform (WordPress Alternative)",
+      "state": "unbuilt"
+    },
+    {
+      "pdf_id": 94,
+      "title": "Wiki System",
+      "state": "unbuilt"
+    },
+    {
+      "pdf_id": 95,
+      "title": "Forum Platform (Reddit Clone)",
+      "state": "unbuilt"
+    },
+    {
+      "pdf_id": 96,
+      "title": "Documentation Platform",
+      "state": "unbuilt"
+    },
+    {
+      "pdf_id": 97,
+      "title": "Code Snippet Manager",
+      "state": "unbuilt"
+    },
+    {
+      "pdf_id": 98,
+      "title": "API Testing Tool (Postman Clone)",
+      "state": "unbuilt",
+      "reference_url": "https://github.com/hoppscotch/hoppscotch",
+      "license_checked": false
+    },
+    {
+      "pdf_id": 99,
+      "title": "DevOps Dashboard",
+      "state": "unbuilt"
+    },
+    {
+      "pdf_id": 100,
+      "title": "URL Shortener",
+      "state": "unbuilt"
+    }
+  ]
+}
