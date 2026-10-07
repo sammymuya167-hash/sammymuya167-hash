@@ -1,11 +1,13 @@
 # SHADOWNET projects
 
-A growing collection of full-stack portfolio projects selected from the supplied 100-project PDF.
+A growing collection of working full-stack projects from the supplied 100-project PDF. Source and live demos are public; each visitor's saved data is private to their account.
 
-| Build | Project | Focus | Documentation |
+| Build | PDF idea | Project | Explore |
 |---|---|---|---|
-| 01 · 2026-10-07 | **RouteForge** | Constraint-aware delivery route planning and durable private scenarios | [Open project](routeforge) |
+| 01 · 2026-10-07 | 92 · Delivery Route Optimizer | **RouteForge** — constrained fleet planning and driver manifests | [Source](routeforge) · [Live](https://routeforge-shadownet.sammymuya167.chatgpt.site) |
+| 02 · 2026-10-08 | 33 · Jira Clone | **SprintForge** — sprint board, dependencies, burndown and project activity | [Source](sprintforge) · [Live](https://sprintforge-shadownet.sammymuya167.chatgpt.site) |
+| 03 · 2026-10-08 | 98 · API Testing Tool | **RequestLab** — real requests, assertions, environments and a server sandbox | [Source](requestlab) · [Live](https://requestlab-shadownet.sammymuya167.chatgpt.site) |
 
 [100 project ideas](routeforge/docs/catalog.json) · [Build log and candidate sequence](routeforge/docs/ROADMAP.md)
 
-Each release should include working server features, a coherent interface, reproducible checks, deployment details and source attribution. Unbuilt ideas are not presented as completed software.
+Each release includes a working server, setup instructions, architecture, source attribution, honest limitations and meaningful verification. Unbuilt ideas are not presented as completed software. The continuing daily build task checks this log before choosing an unbuilt project.

@@ -12,20 +12,23 @@ My work focuses on useful workflows, clear interfaces, tested server behavior, a
 
 | Project | What it demonstrates | Explore |
 |---|---|---|
-| **RouteForge** | Delivery planning with capacity constraints, arrival windows, an original TypeScript optimizer, private D1 storage, and CSV manifests | [Source & setup](projects/routeforge) · [Owner preview](https://routeforge-shadownet.sammymuya167.chatgpt.site) |
+| **RouteForge** | Delivery planning with capacity constraints, arrival windows, an original TypeScript optimizer, private D1 storage, and CSV manifests | [Source & setup](projects/routeforge) · [Live demo](https://routeforge-shadownet.sammymuya167.chatgpt.site) |
+| **SprintForge** | Sprint planning with Kanban, dependency graphs, burndown, comments, private D1 autosave and revision conflict protection | [Source & setup](projects/sprintforge) · [Live demo](https://sprintforge-shadownet.sammymuya167.chatgpt.site) |
+| **RequestLab** | Real HTTP requests, collections, environments, declarative assertions, a live mock API and private saved run summaries | [Source & setup](projects/requestlab) · [Live demo](https://requestlab-shadownet.sammymuya167.chatgpt.site) |
 | **IT operations & security portfolio** | Support tracking, authentication log triage, and an offline network configuration auditor; synthetic case studies and 19 automated tests | [Source & case studies](portfolio/README.md) |
 | **Jumia WhatsApp Importer** | Product export parsing, image processing, category matching, pricing, validation, and marketplace integration | [Private repository](https://github.com/sammymuya167-hash/jumia-whatsapp-importer) |
 
-## Latest build: RouteForge
+## Latest builds
 
-Project 92 from the supplied *Full Stack Projects* catalogue, released as a complete planning workspace.
+Three projects from the supplied *Full Stack Projects* catalogue are now built, publicly deployed, and documented.
 
-- Edit delivery stops or import a validated CSV.
-- Set fleet capacity, working hours, availability, and per-kilometre costs.
-- Optimize on the server, inspect ordered stops, and identify infeasible deliveries.
-- Save scenarios, retain run history, archive/restore plans, and export driver manifests.
+- **RouteForge (#92):** optimize constrained delivery routes and export driver manifests.
+- **SprintForge (#33):** plan sprints, enforce dependencies, track progress and retain project activity.
+- **RequestLab (#98):** inspect real HTTP responses and run repeatable API contract tests.
 
-The live app currently uses private owner access. Its source and documentation are public. Distances and arrival times are estimates; it does not claim live traffic or turn-by-turn navigation.
+The two new builds have 27 domain/request tests and 33 built-Worker/D1 integration checks. Their suites cover useful behavior, account isolation, storage, and concurrent updates.
+
+Portfolio source and demo access are public. Saved workspaces remain private to each signed-in account. Distances and arrival times are estimates; it does not claim live traffic or turn-by-turn navigation.
 
 [Read the architecture](projects/routeforge/docs/ARCHITECTURE.md) · [Build roadmap](projects/routeforge/docs/ROADMAP.md) · [100 project ideas](projects/routeforge/docs/catalog.json)
 

@@ -1,0 +1,39 @@
+name: Portfolio apps
+
+on:
+  push:
+    branches: [main]
+    paths: ['projects/sprintforge/**', 'projects/requestlab/**', '.github/workflows/portfolio-apps.yml']
+  pull_request:
+    paths: ['projects/sprintforge/**', 'projects/requestlab/**', '.github/workflows/portfolio-apps.yml']
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        project: [sprintforge, requestlab]
+    defaults:
+      run:
+        working-directory: projects/${{ matrix.project }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.25.0
+          package_json_file: projects/${{ matrix.project }}/package.json
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: pnpm
+          cache-dependency-path: projects/${{ matrix.project }}/pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run typecheck
+      - run: pnpm run lint
+      - run: pnpm test
+      - run: pnpm run build
+      - run: pnpm run test:integration

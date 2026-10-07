@@ -167,9 +167,16 @@
     {
       "pdf_id": 33,
       "title": "Jira Clone",
-      "state": "unbuilt",
+      "state": "built",
       "reference_url": "https://github.com/oldboyxx/jira_clone",
-      "license_checked": false
+      "license_checked": true,
+      "project": "SprintForge",
+      "source_path": "projects/sprintforge",
+      "live_url": "https://sprintforge-shadownet.sammymuya167.chatgpt.site",
+      "released_at": "2026-10-08",
+      "reference_license": "MIT",
+      "implementation": "Original AI-assisted implementation; upstream is credited as a reference, not embedded source.",
+      "release_timezone": "Africa/Nairobi"
     },
     {
       "pdf_id": 34,
@@ -474,7 +481,8 @@
       "title": "Delivery Route Optimizer",
       "state": "built",
       "reference_url": "https://github.com/VROOM-Project/vroom",
-      "license_checked": true
+      "license_checked": true,
+      "access": "public demo; saved plans require sign-in and remain account-private"
     },
     {
       "pdf_id": 93,
@@ -504,9 +512,16 @@
     {
       "pdf_id": 98,
       "title": "API Testing Tool (Postman Clone)",
-      "state": "unbuilt",
+      "state": "built",
       "reference_url": "https://github.com/hoppscotch/hoppscotch",
-      "license_checked": false
+      "license_checked": true,
+      "project": "RequestLab",
+      "source_path": "projects/requestlab",
+      "live_url": "https://requestlab-shadownet.sammymuya167.chatgpt.site",
+      "released_at": "2026-10-08",
+      "reference_license": "MIT",
+      "implementation": "Original AI-assisted implementation; upstream is credited as a reference, not embedded source.",
+      "release_timezone": "Africa/Nairobi"
     },
     {
       "pdf_id": 99,

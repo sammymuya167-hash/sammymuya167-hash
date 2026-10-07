@@ -4,7 +4,7 @@
 
 [Open the deployed app](https://routeforge-shadownet.sammymuya167.chatgpt.site) · [Architecture](docs/ARCHITECTURE.md) · [Build roadmap](docs/ROADMAP.md) · [MIT licence](LICENSE)
 
-The deployment is currently private to its owner and requires ChatGPT sign-in. The source is public. Project 92 from the supplied *Full Stack Projects* PDF inspired the product direction.
+The live demo and source are public. ChatGPT sign-in is required to optimize and save; saved plans and run history remain private to each account. Project 92 from the supplied *Full Stack Projects* PDF inspired the product direction.
 
 ## What works
 
@@ -18,7 +18,7 @@ The deployment is currently private to its owner and requires ChatGPT sign-in. T
 
 ## Try it
 
-1. Open the app and use **Load sample** for 16 synthetic Nairobi deliveries.
+1. Open the public preview, sign in for optimization/saving, and use **Load sample** for 16 synthetic Nairobi deliveries.
 2. Choose **Optimize routes**, then inspect a route card for its driver manifest.
 3. Change a delivery window or vehicle capacity, optimize again and inspect unassigned stops.
 4. Use **Save plan** and revisit it from **Saved plans**. Export CSV for the ordered stop list.
