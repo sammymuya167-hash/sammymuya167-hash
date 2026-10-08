@@ -31,7 +31,7 @@ public final class TrackingService extends Service implements LocationListener {
  @Override public int onStartCommand(Intent intent,int flags,int startId) {
   if(intent!=null&&"PAUSE".equals(intent.getAction())){Session.prefs(this).edit().putBoolean("duty",false).apply();try{DriverApi.enqueue(this,new JSONObject().put("action","pause"));}catch(Exception ignored){}stopSelf();return START_NOT_STICKY;}
   if(started)return START_NOT_STICKY;
-  if(Session.get(this)==null||checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION)!=PackageManager.PERMISSION_GRANTED||(Build.VERSION.SDK_INT>=33&&checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS)!=PackageManager.PERMISSION_GRANTED)){stopSelf();return START_NOT_STICKY;}
+  if(!Session.loggedIn(this)||checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION)!=PackageManager.PERMISSION_GRANTED||(Build.VERSION.SDK_INT>=33&&checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS)!=PackageManager.PERMISSION_GRANTED)){stopSelf();return START_NOT_STICKY;}
   try{
    NotificationChannel channel=new NotificationChannel("trip-recording","Trip recording",NotificationManager.IMPORTANCE_LOW);channel.setSound(null,null);channel.enableVibration(false);channel.setShowBadge(false);getSystemService(NotificationManager.class).createNotificationChannel(channel);
    PendingIntent open=PendingIntent.getActivity(this,1,new Intent(this,MainActivity.class),PendingIntent.FLAG_IMMUTABLE|PendingIntent.FLAG_UPDATE_CURRENT);
@@ -74,9 +74,9 @@ public final class TrackingService extends Service implements LocationListener {
  @Override public void onDestroy(){
   running=false;if(locations!=null)locations.removeUpdates(this);if(connectivity!=null)try{connectivity.unregisterNetworkCallback(networkCallback);}catch(Exception ignored){}
   for(ScheduledExecutorService executor:new ScheduledExecutorService[]{sync,offers,commands})if(executor!=null)executor.shutdownNow();
-  if(started)try{record("stop");if(Session.prefs(this).getBoolean("duty",false)&&Session.get(this)!=null)DriverApi.enqueue(this,new JSONObject().put("action","pause"));}catch(Exception ignored){}
+  if(started)try{record("stop");if(Session.prefs(this).getBoolean("duty",false)&&Session.loggedIn(this))DriverApi.enqueue(this,new JSONObject().put("action","pause"));}catch(Exception ignored){}
   Session.prefs(this).edit().remove("trip").putBoolean("duty",false).apply();
-  if(Session.get(this)!=null||Session.pendingUnlink(this)!=null){SyncJob.retry(this);new Thread(()->{DriverApi.flush(getApplicationContext());Api.sync(getApplicationContext());},"routeforge-final-sync").start();}
+  if(Session.loggedIn(this)||Session.pendingUnlink(this)!=null){SyncJob.retry(this);new Thread(()->{DriverApi.flush(getApplicationContext());Api.sync(getApplicationContext());},"routeforge-final-sync").start();}
   stopForeground(STOP_FOREGROUND_REMOVE);super.onDestroy();
  }
  @Override public void onProviderDisabled(String provider){Session.error(this,"Phone location is disabled. Enable GPS to resume fixes.");}

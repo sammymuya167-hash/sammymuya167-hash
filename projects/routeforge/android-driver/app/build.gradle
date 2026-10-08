@@ -3,7 +3,7 @@ android {
  namespace 'app.shadownet.routeforge.driver'
  compileSdk 35
  buildToolsVersion '35.0.0'
- defaultConfig { applicationId 'app.shadownet.routeforge.rider'; minSdk 26; targetSdk 35; versionCode 3; versionName '1.1-rider'; testInstrumentationRunner 'app.shadownet.routeforge.driver.QueueInstrumentation' }
+ defaultConfig { applicationId 'app.shadownet.routeforge.rider'; minSdk 26; targetSdk 35; versionCode 4; versionName '1.2-rider'; testInstrumentationRunner 'app.shadownet.routeforge.driver.QueueInstrumentation' }
  compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
  lint { abortOnError true }
 }

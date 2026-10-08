@@ -1,6 +1,6 @@
-import { getChatGPTUser } from "../app/chatgpt-auth";
+import { officeOwner } from "./accounts";
 export async function currentOwner() {
-  return (await getChatGPTUser())?.userId ?? null;
+  return officeOwner();
 }
 export function checkOrigin(request: Request) {
   const origin = request.headers.get("origin");

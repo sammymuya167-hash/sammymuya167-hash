@@ -1,11 +1,13 @@
-# RouteForge Rider 1.1 update
+# RouteForge Rider 1.2 update
 
-The office and rider app share one delivery reservation per phone. Rider 1.1 fixes delivery visibility and alerts while retaining the previous dashboard's planning and financial tools.
+The office and rider app share one delivery reservation per phone. Rider 1.2 adds office and rider accounts, required-phone onboarding and 30-second offers. It retains the previous fixes for delivery visibility and alerts while retaining the previous dashboard's planning and financial tools.
 
 | Requested feature | Implemented behaviour | Verification |
 | --- | --- | --- |
+| Office and rider logins | Secure office cookie and encrypted native rider session. Roles and company ownership are checked by the server. | Worker login/isolation checks and Android session checks |
+| New driver onboarding | Required phone number, optional custom username, generated password shown once, and office password reset. | Validation and Worker account lifecycle checks |
 | New delivery sound and popup | Free, on-duty riders see a high-importance Android offer alert and an in-app banner on every tab. Account exposes sound/popup settings and a test alert. | Android channel/posting checks and packaged UI tests |
-| Five-second claim line | The claim timer fills from left to right using the office deadline. The office displays the eligible-rider count and refreshes offer status every second. | UI deadline/expiry tests and Worker offer flows |
+| Thirty-second claim line | The claim timer fills from left to right using the office deadline. The office displays the eligible-rider count and refreshes offer status every second. | UI deadline/expiry tests and Worker offer flows |
 | Automatic assignment visible on phone | An assigned ride has a separate notification and persistent in-app banner, with collection, destination and finish controls. | Android assignment alert checks and Worker state tests |
 | Busy rider cannot collect another order | Busy phones receive no claim controls. Native and server checks reject claims; the database reservation prevents concurrent double booking. | Stale-control, simultaneous claim and concurrent assignment tests |
 | Random fallback | After the claim deadline, one currently free, on-duty rider with fresh GPS is selected randomly. With no eligible rider, the order returns to the office queue. | Worker deadline and fallback tests |
@@ -18,11 +20,11 @@ The office and rider app share one delivery reservation per phone. Rider 1.1 fix
 
 ## Install and check
 
-Install the published Rider 1.1 APK over the existing RouteForge Rider app on each rider phone. It uses the same package and signing certificate, so retain the current device link and local queue. No new pairing code is needed for an existing Rider installation.
+Install the published Rider 1.2 APK over the existing RouteForge Rider app on each rider phone. It uses the same package and signing certificate. Keep local storage and queues, then sign in with the office-issued rider username and password. Existing accounts keep their driver record and assignments. See [ACCOUNT_LOGINS.md](ACCOUNT_LOGINS.md).
 
 In Account, use **Play delivery alert test**, then check both offer and assigned-delivery sound/popup settings. Start duty with GPS enabled and a fresh fix before offering work. A newly assigned order appears on Home and in the banner on every tab. Confirm collection, finish delivery, then enter cash or company till payment; review the report in office Sales & totals.
 
-The five-second deadline is enforced by the server. Phones need a working connection and an active app service to receive offers promptly; Android volume, notification permission, channel settings, Do Not Disturb, scheduling and cooldown still govern sound and popups. Hardware sound and real-phone background delivery require a field check. Automated browser QA was unavailable in the managed build environment; no browser gesture result is claimed.
+The 30-second deadline is enforced by the server. Phones need a working connection and an active app service to receive offers promptly; Android volume, notification permission, channel settings, Do Not Disturb, scheduling and cooldown still govern sound and popups. Hardware sound and real-phone background delivery require a field check. Automated browser QA was unavailable in the managed build environment; no browser gesture result is claimed.
 
 ## Why the update was needed
 

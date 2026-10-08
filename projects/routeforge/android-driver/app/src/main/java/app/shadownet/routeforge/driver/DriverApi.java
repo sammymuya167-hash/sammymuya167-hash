@@ -17,7 +17,7 @@ final class DriverApi {
  static boolean completedLocally(Context c,JSONObject a){if(a==null)return false;if(!a.optString("orderId").isEmpty())return EventQueue.get(c).completedLocally(a.optString("id"));JSONArray stops=a.optJSONArray("stops");if(stops==null||stops.length()==0)return false;for(int i=0;i<stops.length();i++){JSONObject s=stops.optJSONObject(i);if(s.isNull("deliveredAt")&&!EventQueue.get(c).completedStopLocally(a.optString("id"),s.optString("id")))return false;}return true;}
  static boolean canStop(Context c){JSONObject a=cached(c).optJSONObject("assignment");return !hasActive(c)||completedLocally(c,a);}
  static JSONObject enqueue(Context c,JSONObject command)throws Exception{
-  JSONObject session=Session.get(c);if(session==null)throw new IllegalStateException("Pair the rider phone first.");
+  JSONObject session=Session.get(c);if(!Session.loggedIn(c))throw new IllegalStateException("Sign in with your rider account first.");
   command.put("operationId",UUID.randomUUID().toString());EventQueue.get(c).addCommand(session.getString("deviceId"),command);SyncJob.retry(c);return command;
  }
  static synchronized boolean flush(Context c){
@@ -28,7 +28,7 @@ final class DriverApi {
     catch(Api.Rejected e){if(e.status!=401)throw e;}
     Session.prefs(c).edit().remove("pending_unlink").putString("error","").commit();
    }
-   JSONObject session=Session.get(c);if(session==null)return EventQueue.get(c).commandCount()==0;
+   JSONObject session=Session.get(c);if(!Session.loggedIn(c))return EventQueue.get(c).commandCount()==0;
    for(int i=0;i<12;i++){
     JSONObject row=EventQueue.get(c).command();if(row==null)return true;
     if(!row.getString("deviceId").equals(session.getString("deviceId"))){Session.error(c,"A saved action belongs to an earlier link. Review it before pairing another driver.");return false;}
@@ -36,7 +36,7 @@ final class DriverApi {
     if(!row.optString("error").isEmpty()){Session.error(c,row.optString("error"));return false;}
     try{Api.post("/api/driver/actions",row.getJSONObject("payload"),session.getString("token"),12000);EventQueue.get(c).commandDone(row.getString("id"));}
     catch(Api.Rejected e){
-     if(e.status==401){Session.clear(c);c.stopService(new Intent(c,TrackingService.class));Session.error(c,"This phone was unlinked by the office. Saved reports remain here for review.");}
+     if(e.status==401){Session.clear(c);c.stopService(new Intent(c,TrackingService.class));Session.error(c,"Your session ended. Sign in to the same rider account to sync saved reports.");}
      else if(e.status==409||e.status==404||e.status==422)EventQueue.get(c).commandError(row.getString("id"),e.getMessage());
      Session.error(c,e.getMessage());return false;
     }
@@ -48,8 +48,8 @@ final class DriverApi {
   if(!polling.compareAndSet(false,true))return;
   try{
    if(Session.pendingUnlink(c)!=null){flush(c);return;}
-   JSONObject session=Session.get(c);if(session==null)return;
-   JSONObject response=Api.post("/api/driver/state",new JSONObject().put("appVersion",3).put("onDuty",TrackingService.running&&Session.prefs(c).getBoolean("duty",false)).put("gpsEnabled",gpsEnabled(c)),session.getString("token"),12000);
+   JSONObject session=Session.get(c);if(!Session.loggedIn(c))return;
+   JSONObject response=Api.post("/api/driver/state",new JSONObject().put("appVersion",4).put("onDuty",TrackingService.running&&Session.prefs(c).getBoolean("duty",false)).put("gpsEnabled",gpsEnabled(c)),session.getString("token"),12000);
    JSONObject current=Session.get(c);if(current==null||!current.optString("token").equals(session.optString("token")))return;
    response.put("receivedAt",System.currentTimeMillis());Session.prefs(c).edit().putString("rider_state",response.toString()).putString("state_error","").apply();DriverAlerts.sync(c,response);
   }catch(Api.Rejected e){if(e.status==401){Session.clear(c);c.stopService(new Intent(c,TrackingService.class));}Session.prefs(c).edit().putString("state_error",e.getMessage()).apply();}

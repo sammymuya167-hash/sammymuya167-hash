@@ -23,13 +23,14 @@ final class Api {
   }finally{connection.disconnect();}
  }
  static synchronized boolean sync(Context c) {
-  JSONObject session=Session.get(c);if(session==null)return EventQueue.get(c).count()==0;
+  JSONObject session=Session.get(c);if(!Session.loggedIn(c))return EventQueue.get(c).count()==0;
+  if(EventQueue.get(c).count()>0&&!Session.queueOwner(c).equals(session.optString("deviceId"))){Session.error(c,"Saved GPS belongs to another rider. Sign in to the original account.");return false;}
   try{for(int rounds=0;rounds<10;rounds++){JSONArray batch=EventQueue.get(c).batch();if(batch.length()==0){Session.error(c,"");return true;}
     JSONObject response=post("/api/tracking/ingest",new JSONObject().put("events",batch),session.getString("token"));
     JSONArray ack=response.getJSONArray("acknowledged");if(ack.length()==0)throw new java.io.IOException("Portal did not acknowledge this batch.");
     EventQueue.get(c).acknowledge(batch,ack);Session.prefs(c).edit().putLong("last_sync",System.currentTimeMillis()).apply();Session.error(c,"");
    }return EventQueue.get(c).count()==0;
-  }catch(Rejected e){if(e.status==401){Session.clear(c);c.stopService(new Intent(c,TrackingService.class));Session.error(c,"The dispatcher unlinked this phone. Recording stopped. Unsent events remain on the phone.");}else Session.error(c,e.getMessage());return false;}
+  }catch(Rejected e){if(e.status==401){Session.clear(c);c.stopService(new Intent(c,TrackingService.class));Session.error(c,"Your rider session ended. Recording stopped. Sign in to the same account to sync unsent events.");}else Session.error(c,e.getMessage());return false;}
   catch(Exception e){Session.error(c,"Offline or unable to sync. Journey events remain on this phone.");return false;}
  }
 }

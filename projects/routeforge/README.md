@@ -11,7 +11,7 @@ The public shell is accessible to visitors. Company orders, partner destinations
 - The main office uses actual paired company phones and an OpenStreetMap basemap. Live counters and fleet records contain no seeded vehicles or orders.
 - Persistent collection/delivery requests, a waiting queue and a retained completed/cancelled order history.
 - Saved partner shops, searched location suggestions, latitude/longitude selection and a draggable map crosshair for checking the entrance.
-- Five-second delivery offers to eligible, free, on-duty riders; the first accepted claim wins. Unclaimed offers select a free rider at random. Longest-idle and manual assignment remain available.
+- Thirty-second delivery offers to eligible, free, on-duty riders; the first accepted claim wins. Unclaimed offers select a free rider at random. Longest-idle and manual assignment remain available.
 - A single active assignment per phone, protected against simultaneous dispatchers and order double-booking.
 - Two-stage collection and drop-off: conservative GPS arrival, office confirmation, and progress shared with the tracking portal.
 - Driver details, vehicle/contact updates, click-to-call links and optional per-kilometre rates.
@@ -31,7 +31,7 @@ The public shell is accessible to visitors. Company orders, partner destinations
 5. Follow the driver in **Live tracking**. Riders confirm collection and finish delivery in the Rider app; office confirmation after GPS arrival remains available.
 6. Review actual cash/company-till reports in **Sales & totals**. Verify receipts before marking them office verified. Review mileage before paying a rider. The app records reports and estimates; it does not transfer money.
 
-Download [RouteForge Rider](https://routeforge-shadownet.sammymuya167.chatgpt.site/downloads/routeforge-rider.apk) from the tracking portal. For an existing pilot phone, sync its queue and stop its trip first, then generate **Rider app upgrade code** on its existing driver card. Install Rider alongside the pilot and pair with that code to retain the driver, assignment and history. If Rider is already installed, install the new APK over it to keep its link and queue; no new code is needed. In Account, use **Play delivery alert test** and check the offer and assignment sound settings. See [the tracking guide](docs/TRACKING.md) and [the completed update checklist](docs/RIDER_UPDATE.md).
+Download [RouteForge Rider 1.2](https://routeforge-shadownet.sammymuya167.chatgpt.site/downloads/routeforge-rider.apk) from the tracking portal. Install it over an existing Rider installation, then sign in with the office-issued username and password. Saved reports remain on the phone and can resume only under the same rider account. In Account, use **Play delivery alert test**. Create new driver logins under **Drivers & fleet** with a required phone number, an optional custom username and a generated password. See [the login guide](docs/ACCOUNT_LOGINS.md) and [the tracking guide](docs/TRACKING.md).
 
 ## Stack
 
@@ -92,4 +92,4 @@ The hosting and authentication scaffold comes from the Sites Vinext starter. Thi
 
 ## Driver tracking pilot
 
-[Open the tracking portal](https://routeforge-shadownet.sammymuya167.chatgpt.site/tracking) to pair a consenting Android driver, follow live GPS, inspect journeys and unlink devices. Offline SQLite queues preserve GPS events and rider reports until the server acknowledges them. The signed Rider APK, native source, release metadata and [operating guide](docs/TRACKING.md) are included. The pilot remains downloadable for compatibility. Rider upgrades use the same driver record; the original pilot's unavailable signing key prevents an install-over update. The Rider 1.1 checks cover 51 unit cases, 61 Worker/D1 flows and eleven Android instrumentation cases. Browser gestures and real-phone background behaviour still need field verification.
+[Open the tracking portal](https://routeforge-shadownet.sammymuya167.chatgpt.site/tracking) to create a login for a consenting Android driver, follow live GPS, inspect journeys and unlink devices. Offline SQLite queues preserve GPS events and rider reports until the server acknowledges them. The signed Rider APK, native source, release metadata and [operating guide](docs/TRACKING.md) are included. The pilot remains downloadable for compatibility. Rider upgrades use the same driver record; the original pilot's unavailable signing key prevents an install-over update. The release metadata records the current Node, Worker/D1 and Android instrumentation checks. Browser gestures and real-phone background behaviour still need field verification.

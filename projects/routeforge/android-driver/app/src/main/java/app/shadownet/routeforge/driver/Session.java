@@ -26,15 +26,18 @@ final class Session {
   if(!prefs(c).edit().putString(field,value).commit())throw new java.io.IOException("Could not save this device link.");
  }
  static synchronized void save(Context c,JSONObject data) throws Exception {
-  clear(c);store(c,"session",data);prefs(c).edit().putString("driver",data.getString("driverName")).putString("device_id",data.getString("deviceId")).commit();
+  String previous=queueOwner(c);if((EventQueue.get(c).count()>0||EventQueue.get(c).commandCount()>0)&&!previous.equals(data.getString("deviceId")))throw new IllegalStateException("Sync saved reports with the original rider account first.");
+  clear(c);store(c,"session",data);prefs(c).edit().putString("driver",data.getString("driverName")).putString("device_id",data.getString("deviceId")).putString("queue_device_id",data.getString("deviceId")).commit();
  }
  static JSONObject get(Context c){return read(c,"session");}
+ static boolean loggedIn(Context c){JSONObject s=get(c);return s!=null&&s.optBoolean("loggedIn",false);}
+ static String queueOwner(Context c){String id=prefs(c).getString("device_id",prefs(c).getString("queue_device_id",""));if(id.isEmpty())try{JSONObject row=EventQueue.get(c).command();if(row!=null)id=row.optString("deviceId");}catch(Exception ignored){error(c,"Could not read the saved rider reports. Review the queue with your office.");}return id;}
  static JSONObject pendingUnlink(Context c){return read(c,"pending_unlink");}
  static void saveUnlink(Context c,JSONObject data)throws Exception{store(c,"pending_unlink",data);}
  private static synchronized JSONObject read(Context c,String field) {
   String value=prefs(c).getString(field,null);if(value==null)return null;
-  try{String[] parts=value.split(":",2);Cipher cipher=Cipher.getInstance("AES/GCM/NoPadding");cipher.init(Cipher.DECRYPT_MODE,key(),new GCMParameterSpec(128,Base64.decode(parts[0],Base64.NO_WRAP)));return new JSONObject(new String(cipher.doFinal(Base64.decode(parts[1],Base64.NO_WRAP)),java.nio.charset.StandardCharsets.UTF_8));}catch(Exception e){error(c,"Device credentials are unavailable. Clear the old link and pair again.");return null;}
+  try{String[] parts=value.split(":",2);Cipher cipher=Cipher.getInstance("AES/GCM/NoPadding");cipher.init(Cipher.DECRYPT_MODE,key(),new GCMParameterSpec(128,Base64.decode(parts[0],Base64.NO_WRAP)));return new JSONObject(new String(cipher.doFinal(Base64.decode(parts[1],Base64.NO_WRAP)),java.nio.charset.StandardCharsets.UTF_8));}catch(Exception e){error(c,"Device credentials are unavailable. Sign in again with your rider username and password.");return null;}
  }
- static void clear(Context c){DriverAlerts.clear(c);prefs(c).edit().remove("session").remove("driver").remove("trip").remove("last_fix").remove("last_sync").remove("last_point").remove("rider_state").remove("device_id").remove("duty").remove("notified").remove("notified_assignment").remove("active_offer_alerts").remove("active_assignment_alert").remove("state_error").remove("alerts_error").putString("error","").commit();}
+ static void clear(Context c){String owner=prefs(c).getString("device_id","");if(!owner.isEmpty())prefs(c).edit().putString("queue_device_id",owner).commit();DriverAlerts.clear(c);prefs(c).edit().remove("session").remove("driver").remove("trip").remove("last_fix").remove("last_sync").remove("last_point").remove("rider_state").remove("device_id").remove("duty").remove("notified").remove("notified_assignment").remove("active_offer_alerts").remove("active_assignment_alert").remove("state_error").remove("alerts_error").putString("error","").commit();}
  static void error(Context c,String message){prefs(c).edit().putString("error",message).apply();}
 }

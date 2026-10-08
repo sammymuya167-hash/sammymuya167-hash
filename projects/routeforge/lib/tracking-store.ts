@@ -1,6 +1,8 @@
 import { env } from "cloudflare:workers";
 import { z } from "zod";
 import { reconcileDispatch } from "./dispatch-store";
+import { requiredPhone } from "./account-input";
+import { ensureAccounts } from "./accounts";
 import {
   type Device,
   type TrackingEvent,
@@ -70,6 +72,8 @@ export async function createDevice(owner: string, payload: unknown) {
       422,
       "Enter a driver name and valid device labels.",
     );
+  const phone=requiredPhone.safeParse(input.data.phoneLabel);
+  if(!phone.success)throw new TrackingError(422,"A valid phone number is required for a new driver.");
   const id = crypto.randomUUID(),
     code = randomSecret(10).toUpperCase(),
     now = Date.now(),
@@ -83,7 +87,7 @@ export async function createDevice(owner: string, payload: unknown) {
       owner,
       input.data.driverName,
       input.data.vehicleLabel,
-      input.data.phoneLabel,
+      phone.data,
       now,
       await hashSecret(code),
       expiresAt,
@@ -123,6 +127,7 @@ export async function changeDevice(owner: string, payload: unknown) {
     await db().batch([
       db().prepare("UPDATE office_orders SET status='cancelled',payload_json=json_set(payload_json,'$.status','cancelled','$.updatedAt',?,'$.version',version+1),version=version+1,updated_at=? WHERE device_id=? AND owner_id=? AND status NOT IN ('delivered','cancelled') AND EXISTS(SELECT 1 FROM tracking_devices WHERE id=? AND owner_id=? AND revoked_at IS NOT NULL)").bind(removedAt,removedAt,id,owner,id,owner),
       db().prepare("DELETE FROM driver_dispatches WHERE device_id=? AND owner_id=?").bind(id,owner),
+      db().prepare("DELETE FROM company_accounts WHERE device_id=? AND owner_id=? AND role='rider' AND EXISTS(SELECT 1 FROM tracking_devices WHERE id=? AND owner_id=? AND revoked_at IS NOT NULL)").bind(id,owner,id,owner),
       db()
         .prepare(
           "DELETE FROM tracking_events WHERE device_id IN (SELECT id FROM tracking_devices WHERE id=? AND owner_id=? AND revoked_at IS NOT NULL)",
@@ -137,6 +142,7 @@ export async function changeDevice(owner: string, payload: unknown) {
     return { ok: true };
   }
   if(action==="upgrade"){
+    if(await db().prepare("SELECT id FROM company_accounts WHERE device_id=? AND owner_id=?").bind(id,owner).first())throw new TrackingError(409,"This driver uses a username login. Install the latest Rider app and sign in.");
     if(!row.paired_at||row.revoked_at)throw new TrackingError(409,"Choose an existing paired, non-revoked phone to upgrade.");
     const code=randomSecret(10).toUpperCase(),expiresAt=Date.now()+600000;
     await db().prepare("UPDATE tracking_devices SET pair_code_hash=?,pair_expires_at=? WHERE id=? AND owner_id=? AND revoked_at IS NULL").bind(await hashSecret(code),expiresAt,id,owner).run();
@@ -163,7 +169,7 @@ export async function changeDevice(owner: string, payload: unknown) {
       );
     return { id, code: code.match(/.{1,5}/g)!.join("-"), expiresAt };
   }
-  await unlinkDevice(owner,id);
+  await unlinkDevice(owner,id,true);
   return { ok: true };
 }
 export async function pairDevice(payload: unknown) {
@@ -184,7 +190,7 @@ export async function pairDevice(payload: unknown) {
     now = Date.now();
   const row = await db()
     .prepare(
-      "UPDATE tracking_devices SET token_hash=?,paired_at=COALESCE(paired_at,?),device_name=?,pair_code_hash=NULL,pair_expires_at=NULL WHERE pair_code_hash=? AND pair_expires_at>? AND revoked_at IS NULL RETURNING *",
+      "UPDATE tracking_devices SET token_hash=?,paired_at=COALESCE(paired_at,?),device_name=?,pair_code_hash=NULL,pair_expires_at=NULL WHERE pair_code_hash=? AND pair_expires_at>? AND revoked_at IS NULL AND NOT EXISTS(SELECT 1 FROM company_accounts WHERE device_id=tracking_devices.id AND role='rider') RETURNING *",
     )
     .bind(
       await hashSecret(token),
@@ -213,9 +219,10 @@ export async function pairDevice(payload: unknown) {
     token,
   };
 }
-export async function unlinkDevice(owner:string,id:string){
+export async function unlinkDevice(owner:string,id:string,disableAccount=false){
   const now=Date.now();
   await db().batch([
+    db().prepare("UPDATE company_accounts SET enabled=0,version=version+1,updated_at=? WHERE device_id=? AND owner_id=? AND role='rider' AND ?=1").bind(now,id,owner,Number(disableAccount)),
     db().prepare("UPDATE tracking_devices SET revoked_at=?,token_hash=NULL,pair_code_hash=NULL,pair_expires_at=NULL WHERE id=? AND owner_id=?").bind(now,id,owner),
     db().prepare("UPDATE office_orders SET status='cancelled',payload_json=json_set(payload_json,'$.status','cancelled','$.driverIssue','Device unlinked; office follow-up required','$.updatedAt',?,'$.version',version+1),version=version+1,updated_at=? WHERE device_id=? AND owner_id=? AND status NOT IN ('delivered','cancelled')").bind(now,now,id,owner),
     db().prepare("DELETE FROM driver_dispatches WHERE device_id=? AND owner_id=?").bind(id,owner),
@@ -224,21 +231,22 @@ export async function unlinkDevice(owner:string,id:string){
   ]);
 }
 export async function authenticateDevice(request: Request) {
+  await ensureAccounts();
   const match = /^Bearer ([a-f0-9]{64})$/.exec(
     request.headers.get("authorization") ?? "",
   );
-  if (!match) throw new TrackingError(401, "Pair your device before syncing.");
+  if (!match) throw new TrackingError(401, "Sign in to your rider account before syncing.");
   const hash = await hashSecret(match[1]);
   const row = await db()
     .prepare(
-      "SELECT * FROM tracking_devices WHERE token_hash=? AND revoked_at IS NULL",
+      "SELECT d.* FROM tracking_devices d WHERE d.token_hash=? AND d.revoked_at IS NULL AND (NOT EXISTS(SELECT 1 FROM company_accounts a WHERE a.device_id=d.id AND a.role='rider') OR EXISTS(SELECT 1 FROM company_accounts a JOIN rider_logins s ON s.account_id=a.id WHERE a.device_id=d.id AND a.role='rider' AND a.enabled=1 AND s.device_id=d.id AND s.account_version=a.version AND s.token_hash=d.token_hash))",
     )
     .bind(hash)
     .first<Row>();
   if (!row)
     throw new TrackingError(
       401,
-      "This device link was revoked. Contact your dispatcher.",
+      "Sign in again with your rider username and password, or contact your office.",
     );
   return { id: row.id, hash, owner: row.owner_id };
 }

@@ -1,13 +1,15 @@
 import OfficeWorkspace from "./office/workspace";
-import { getChatGPTUser, chatGPTSignInPath } from "./chatgpt-auth";
+import { officeIdentity } from "../lib/accounts";
+import LoginScreen from "./login/screen";
 export const dynamic = "force-dynamic";
 export default async function Home() {
-  const user = await getChatGPTUser();
+  const user = await officeIdentity();
+  if(!user)return <LoginScreen/>;
   return (
     <OfficeWorkspace
-      userName={user?.fullName ?? "SHADOWNET"}
-      signedIn={!!user}
-      signInPath={chatGPTSignInPath("/")}
+      userName={user.name}
+      signedIn={true}
+      signInPath="/login"
     />
   );
 }

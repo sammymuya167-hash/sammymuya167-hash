@@ -22,7 +22,7 @@ export async function assignOrder(owner:string,row:OrderRow,deviceId:string,offe
   if(!candidates.length)throw new TrackingError(409,"No selected driver is free, on duty and sending live GPS. The order stays queued.");
   for(const choice of candidates){
     const {device,profile}=choice,now=Date.now(),id=crypto.randomUUID();
-    if(offerMode==="claim"&&now>=offer!.expires_at)throw new TrackingError(409,"The five-second offer has expired.");
+    if(offerMode==="claim"&&now>=offer!.expires_at)throw new TrackingError(409,"The 30-second offer has expired.");
     const dispatch:Dispatch={id,deviceId:device.id,orderId:current.id,name:current.title,vehicleId:device.id,vehicleName:device.vehicleLabel||"Linked driver vehicle",radius:100,assignedAt:now,updatedAt:now,revision:1,checkedAt:0,stops:[{...current.pickup,id:`pickup-${current.id}`,name:`Collect · ${current.pickup.name}`,arrivedAt:null,deliveredAt:null},{...current.destination,id:`delivery-${current.id}`,name:`Deliver · ${current.destination.name}`,arrivedAt:null,deliveredAt:null}]};
     const estimatedKm=(distanceMeters(current.pickup,current.destination)+(device.latestPoint?distanceMeters(device.latestPoint,current.pickup):0))/1000;
     const next:OfficeOrder={...current,status:"assigned",deviceId:device.id,dispatchId:id,driverName:device.driverName,vehicleLabel:device.vehicleLabel,assignedAt:now,estimatedKm:Math.round(estimatedKm*100)/100,ratePerKm:profile?.ratePerKm??null,offerDeadline:null,driverIssue:null,updatedAt:now,version:row.version+1};

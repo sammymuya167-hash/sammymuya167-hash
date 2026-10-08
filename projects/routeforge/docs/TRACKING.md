@@ -1,21 +1,21 @@
 # Driver tracking
-RouteForge pairs consenting Android drivers using a one-time code. A phone number or IMEI alone cannot locate a phone. Phone and vehicle fields are labels; no IMEI lookup, SMS lookup, contact access or hidden recording is implemented.
+RouteForge Rider 1.2 uses office-issued rider accounts. A phone number is required for onboarding; location comes from the consenting rider's GPS while on duty.
 
 ## Dispatcher setup
-1. Sign in at /tracking and choose **Link a driver**.
-2. Enter a driver name, vehicle label and optional phone label.
-3. Share the 20-character code privately with that driver. It expires after ten minutes and can be used once.
-4. On the driver's Android 8+ phone, download the signed **RouteForge Rider** APK from the portal, install it and enter the code.
-5. The driver reads the sharing disclosure, agrees and grants precise location and notification permissions. New enrollment starts duty after permissions are granted; **Start duty** is available for later sessions. Phone location being enabled and receiving a fresh GPS fix are displayed separately.
+1. Sign in to the dashboard with your office username and password.
+2. Open **Drivers & fleet → Driver logins** or the logins section in /tracking.
+3. Enter a driver name and mandatory phone number. Add an optional vehicle label and custom username; otherwise the username is generated. The system generates a password, shown once for you to share privately with the rider.
+4. On the driver's Android 8+ phone, install the signed **RouteForge Rider 1.2** APK and sign in. The rider agrees to location sharing and chooses **Start duty**, then grants precise location and notification permissions.
+5. Check GPS enabled, the first fresh fix, and both notification channels using the Account alert test.
 6. See the driver's GPS map and timeline. Choose a past journey or the last 24 hours. Load earlier points when the page reports more history.
-7. **Unlink device** revokes upload credentials immediately. Existing uploaded history remains private to its dispatcher. An explicit delete action is available after unlinking.
+7. **Reset password** generates a replacement and ends the previous phone session. The driver keeps the same record, history and assignment. Office **Unlink device** disables login and cancels unfinished work for office follow-up. Generate a replacement password to restore access. Uploaded history remains until explicitly deleted.
 
 ## Live dispatch and map controls
 The main **Dispatch** and **Drivers & fleet** views show only paired, non-revoked company phones. Available counts require on-duty status, fresh GPS and no unfinished assignment. The **Live tracking** button opens a map dialog with a driver column. Previous planner scenarios remain under Saved plans. Select a driver to centre on their latest fix. The full tracker adds capture-time journey history.
 
 Drag to pan, use arrow keys with the map focused, scroll at a location to zoom there, or pinch with two fingers. Plus/minus zoom around the followed driver. **Follow driver** recentres and follows new fixes; manual pan or wheel zoom pauses follow. **Fit journey** includes fixes, linked driver markers and destinations. Zoom reaches level 19, and fullscreen expands the map. Street detail depends on available map tiles and the phone's accuracy; extra zoom cannot improve GPS accuracy.
 
-Create a collection/delivery from the office or the selected driver in the tracker. Locations offer registered partner suggestions, place search and a checked map pin; coordinates populate from the selection. Offer the order to free riders for five seconds, use longest-idle assignment or choose an available company driver manually. The first accepted offer wins; otherwise a free eligible driver is selected at random. One current dispatch exists per phone. Canceling leaves recording and GPS history intact. New office orders retain completed/cancelled history; legacy standalone dispatches retain no separate audit archive. See [OFFICE.md](OFFICE.md) for setup and assignment rules.
+Create a collection/delivery from the office or the selected driver in the tracker. Locations offer registered partner suggestions, place search and a checked map pin; coordinates populate from the selection. Offer the order to free riders for 30 seconds, use longest-idle assignment or choose an available company driver manually. The first accepted offer wins; otherwise a free eligible driver is selected at random. One current dispatch exists per phone. Canceling leaves recording and GPS history intact. New office orders retain completed/cancelled history; legacy standalone dispatches retain no separate audit archive. See [OFFICE.md](OFFICE.md) for setup and assignment rules.
 
 GPS arrival requires two distinct fixes at least 15 seconds apart in the same trip, with at most a two-minute gap. Both must have accuracy no worse than 50 m (or half the radius) and their position plus uncertainty must fit inside the arrival radius, normally 100 m. Fixes before assignment or the previous delivery confirmation do not count. Leaving the radius resets the candidate. Offline arrivals retain their capture timestamp when the stored queue returns. The server reads immutable stored GPS events, never an altered upload retry.
 
@@ -25,21 +25,15 @@ The Street View link opens available historical surroundings imagery on Google M
 
 ## Updating an active fleet
 
-**Already using RouteForge Rider 1.0:** install Rider 1.1 over the existing Rider app. The package and owner signing certificate stay the same, so keep the current link and local queue. Do not unlink, clear storage or request a new pairing code just to install this update. In Account, play the delivery alert test and check both offer and assigned-delivery settings.
+**Already using RouteForge Rider:** install Rider 1.2 over the existing Rider app. The package and owner signing certificate stay the same. Keep local storage and queues, then sign in with your existing rider account. A session from an older app is not sufficient for account access. Saved reports can resume only under the same driver record; the app blocks switching accounts while another rider's reports remain unsynced.
 
-This release includes a new, owner-signed Rider app, using application ID `app.shadownet.routeforge.rider`. The old pilot's signing key is unavailable, so Rider installs alongside it for the one-time migration. Future Rider releases must use the same retained owner signing key for install-over upgrades.
+The original pilot uses a different package and its signing key is unavailable. For a pilot-only phone, sync and stop the pilot, then install Rider and sign in to the account the office attached to its existing driver record. Keep the pilot stopped to avoid duplicate tracking.
 
-1. In the old pilot, sync until its local queue is empty, then stop its trip. Keep it stopped so both apps do not record the same journey.
-2. In the office tracking portal, find the existing driver and choose **Rider app upgrade code**. The code expires after ten minutes and can be used once.
-3. Install `/downloads/routeforge-rider.apk`, open **RouteForge Rider**, agree to sharing and enter that upgrade code.
-4. Allow precise location and notifications. The upgrade rotates the phone token and reconnects the same driver, current assignment, payment records and uploaded history. The old pilot token stops working after the new app pairs.
-5. Check that Rider shows phone location enabled and receives a fresh GPS fix. Refresh the office dashboard to load the new interface.
-
-For a new driver, use **Link a driver** rather than an upgrade code. Clearing a phone link and its local queue sends a durable unlink request to the office; when received, it marks the driver unlinked/off duty and cancels unfinished assignments without deleting uploaded history. An offline unlink request retries after reconnection and must sync before the phone can pair again.
+In Account, **Sign out** ends duty and uploads saved reports first. Finish active delivery before normal sign-out. Privacy pause always stops GPS immediately. Sign-out preserves office history. **Unlink phone & clear local queue** is a separate confirmed action that discards unsent data and cancels unfinished work when acknowledged. An offline unlink must sync before the phone can sign in again.
 
 ## Rider delivery and payment controls
 
-Rider 1.1 has Home, Offers, Route, Trips and Account views with animated navigation. New offers appear in a banner on every tab, with a claim button and a left-to-right five-second progress line. Assigned deliveries have their own sound/popup notification and an active-ride banner with navigation and completion controls. Offers appear while a linked rider is free and on duty. The server accepts only claims received before its five-second deadline. Polling, internet access and Android scheduling govern notification delivery; a powered-off or offline phone cannot receive an offer promptly.
+Rider 1.2 has Home, Offers, Route, Trips and Account views with animated navigation. New offers appear in a banner on every tab, with a claim button and a left-to-right 30-second progress line. Assigned deliveries have their own sound/popup notification and an active-ride banner with navigation and completion controls. Offers appear while a linked rider is free and on duty. The server accepts only claims received before its 30-second deadline. Polling, internet access and Android scheduling govern notification delivery; a powered-off or offline phone cannot receive an offer promptly.
 
 The rider confirms product collection, then taps **Finish delivery / ride** to close the same order shown in the office. Legacy multi-stop assignments confirm the next stop by its identity, so retrying one confirmation cannot complete a later stop. **End duty** is blocked during an unfinished assignment. **Privacy pause** always stops GPS immediately and keeps unfinished work flagged for office follow-up.
 
