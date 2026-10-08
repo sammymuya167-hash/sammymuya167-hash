@@ -2,7 +2,8 @@ plugins { id 'com.android.application' }
 android {
  namespace 'app.shadownet.routeforge.driver'
  compileSdk 35
- defaultConfig { applicationId 'app.shadownet.routeforge.driver'; minSdk 26; targetSdk 35; versionCode 1; versionName '0.1-pilot'; testInstrumentationRunner 'app.shadownet.routeforge.driver.QueueInstrumentation' }
+ buildToolsVersion '35.0.0'
+ defaultConfig { applicationId 'app.shadownet.routeforge.rider'; minSdk 26; targetSdk 35; versionCode 2; versionName '1.0-rider'; testInstrumentationRunner 'app.shadownet.routeforge.driver.QueueInstrumentation' }
  compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
  lint { abortOnError true }
 }

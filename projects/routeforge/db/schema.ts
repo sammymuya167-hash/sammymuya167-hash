@@ -113,3 +113,16 @@ export const placeSearchCache = sqliteTable("place_search_cache", {
 export const placeSearchGate = sqliteTable("place_search_gate", {
   provider: text("provider").primaryKey(), nextAllowedAt: integer("next_allowed_at").notNull(),
 });
+export const driverRuntime = sqliteTable("driver_runtime", {
+  deviceId:text("device_id").primaryKey().references(()=>trackingDevices.id,{onDelete:"cascade"}),ownerId:text("owner_id").notNull(),
+  appVersion:integer("app_version").notNull().default(1),onDuty:integer("on_duty").notNull().default(0),gpsEnabled:integer("gps_enabled").notNull().default(0),heartbeatAt:integer("heartbeat_at").notNull(),
+},t=>[index("driver_runtime_owner").on(t.ownerId)]);
+export const orderOffers = sqliteTable("order_offers", {
+  orderId:text("order_id").primaryKey().references(()=>officeOrders.id),ownerId:text("owner_id").notNull(),expiresAt:integer("expires_at").notNull(),eligibleJson:text("eligible_json").notNull(),
+},t=>[index("order_offers_owner_deadline").on(t.ownerId,t.expiresAt)]);
+export const driverReceipts = sqliteTable("driver_receipts", {
+  deviceId:text("device_id").notNull(),operationId:text("operation_id").notNull(),ownerId:text("owner_id").notNull(),requestJson:text("request_json").notNull(),responseJson:text("response_json").notNull(),createdAt:integer("created_at").notNull(),
+},t=>[primaryKey({columns:[t.deviceId,t.operationId]}),index("driver_receipts_owner").on(t.ownerId,t.createdAt)]);
+export const officePayments = sqliteTable("office_payments", {
+  orderId:text("order_id").primaryKey().references(()=>officeOrders.id),ownerId:text("owner_id").notNull(),deviceId:text("device_id").notNull(),status:text("status").notNull(),amountMinor:integer("amount_minor").notNull(),payloadJson:text("payload_json").notNull(),updatedAt:integer("updated_at").notNull(),version:integer("version").notNull(),
+},t=>[index("office_payments_owner").on(t.ownerId,t.updatedAt)]);

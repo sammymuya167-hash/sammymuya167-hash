@@ -64,6 +64,15 @@ export async function verifyOffice({mf,db,request,passed,geocoderCalls}) {
   assert.equal((await action(queued,"assign",b.deviceId)).status,409);
   assert.equal((await action(queued,"assign",pending.id)).status,409);
   assert.equal((await profile(b)).status,200);
+  const planner=await api("/planner");assert.equal(planner.status,200);
+  const plannerHtml=await planner.text();
+  assert.match(plannerHtml,/Company delivery plan/);
+  assert.match(plannerHtml,/Synthetic driver A/);
+  assert.doesNotMatch(plannerHtml,/Bike 01/);
+  const privatePlannerHtml=await (await api("/planner","GET",undefined,other)).text();
+  assert.match(privatePlannerHtml,/Locate your main office first/);
+  assert.doesNotMatch(privatePlannerHtml,/Synthetic driver A/);
+  passed("the restored planner loads only the signed-in company's office, queued deliveries and paired fleet");
   await db.prepare("UPDATE office_driver_profiles SET profile_json=json_set(profile_json,'$.lastAssignedAt',?) WHERE device_id=?").bind(Date.now()-5000,b.deviceId).run();
   const operation=await jsonOk(await action(queued,"assign","auto"));
   assert.equal(operation.deviceId,a.deviceId);assert.equal(operation.ratePerKm,25);

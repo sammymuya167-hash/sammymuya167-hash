@@ -31,6 +31,7 @@ type Row = {
   last_event_kind: string | null;
   latest_point_json: string | null;
   token_hash: string | null;
+  rider_version?:number|null;rider_duty?:number;rider_gps?:number;rider_heartbeat?:number;
 };
 function view(row: Row): Device {
   const d = {
@@ -49,13 +50,14 @@ function view(row: Row): Device {
     latestPoint: row.latest_point_json
       ? JSON.parse(row.latest_point_json)
       : null,
+    ...(row.rider_version?{rider:{onDuty:!!row.rider_duty,gpsEnabled:!!row.rider_gps,appVersion:row.rider_version,heartbeatAt:row.rider_heartbeat??0}}:{}),
   };
   return { ...d, status: deviceStatus(d) };
 }
 export async function listDevices(owner: string) {
   const rows = await db()
     .prepare(
-      "SELECT * FROM tracking_devices WHERE owner_id=? ORDER BY created_at DESC",
+      "SELECT d.*,r.app_version AS rider_version,r.on_duty AS rider_duty,r.gps_enabled AS rider_gps,r.heartbeat_at AS rider_heartbeat FROM tracking_devices d LEFT JOIN driver_runtime r ON r.device_id=d.id WHERE d.owner_id=? ORDER BY d.created_at DESC",
     )
     .bind(owner)
     .all<Row>();
@@ -99,7 +101,7 @@ export async function changeDevice(owner: string, payload: unknown) {
   const parsed = z
     .object({
       id: z.string().uuid(),
-      action: z.enum(["revoke", "renew", "remove"]),
+      action: z.enum(["revoke", "renew", "upgrade", "remove"]),
     })
     .strict()
     .safeParse(payload);
@@ -134,6 +136,12 @@ export async function changeDevice(owner: string, payload: unknown) {
     ]);
     return { ok: true };
   }
+  if(action==="upgrade"){
+    if(!row.paired_at||row.revoked_at)throw new TrackingError(409,"Choose an existing paired, non-revoked phone to upgrade.");
+    const code=randomSecret(10).toUpperCase(),expiresAt=Date.now()+600000;
+    await db().prepare("UPDATE tracking_devices SET pair_code_hash=?,pair_expires_at=? WHERE id=? AND owner_id=? AND revoked_at IS NULL").bind(await hashSecret(code),expiresAt,id,owner).run();
+    return {id,code:code.match(/.{1,5}/g)!.join("-"),expiresAt,upgrade:true};
+  }
   if (action === "renew") {
     if (row.paired_at || row.revoked_at)
       throw new TrackingError(
@@ -155,12 +163,7 @@ export async function changeDevice(owner: string, payload: unknown) {
       );
     return { id, code: code.match(/.{1,5}/g)!.join("-"), expiresAt };
   }
-  await db()
-    .prepare(
-      "UPDATE tracking_devices SET revoked_at=?,token_hash=NULL,pair_code_hash=NULL,pair_expires_at=NULL WHERE id=? AND owner_id=?",
-    )
-    .bind(Date.now(), id, owner)
-    .run();
+  await unlinkDevice(owner,id);
   return { ok: true };
 }
 export async function pairDevice(payload: unknown) {
@@ -168,6 +171,7 @@ export async function pairDevice(payload: unknown) {
     .object({
       code: z.string().max(40),
       deviceName: z.string().trim().min(1).max(100),
+      appVersion:z.number().int().min(1).max(10000).optional(),
     })
     .strict()
     .safeParse(payload);
@@ -180,7 +184,7 @@ export async function pairDevice(payload: unknown) {
     now = Date.now();
   const row = await db()
     .prepare(
-      "UPDATE tracking_devices SET token_hash=?,paired_at=?,device_name=?,pair_code_hash=NULL,pair_expires_at=NULL WHERE pair_code_hash=? AND pair_expires_at>? AND paired_at IS NULL AND revoked_at IS NULL RETURNING *",
+      "UPDATE tracking_devices SET token_hash=?,paired_at=COALESCE(paired_at,?),device_name=?,pair_code_hash=NULL,pair_expires_at=NULL WHERE pair_code_hash=? AND pair_expires_at>? AND revoked_at IS NULL RETURNING *",
     )
     .bind(
       await hashSecret(token),
@@ -195,12 +199,29 @@ export async function pairDevice(payload: unknown) {
       401,
       "The pairing code is invalid, used or expired.",
     );
+  if((input.data.appVersion??1)>=2){
+    const profile={deviceId:row.id,vehicleLabel:row.vehicle_label,phone:row.phone_label,onDuty:false,ratePerKm:null,lastAssignedAt:null,lastReleasedAt:null};
+    await db().batch([
+      db().prepare("INSERT INTO driver_runtime(device_id,owner_id,app_version,on_duty,gps_enabled,heartbeat_at) VALUES(?,?,?,0,0,?) ON CONFLICT(device_id) DO UPDATE SET app_version=excluded.app_version,on_duty=0,gps_enabled=0,heartbeat_at=excluded.heartbeat_at").bind(row.id,row.owner_id,input.data.appVersion,now),
+      db().prepare("INSERT INTO office_driver_profiles(device_id,owner_id,profile_json,updated_at) VALUES(?,?,?,?) ON CONFLICT(device_id) DO UPDATE SET profile_json=json_set(office_driver_profiles.profile_json,'$.onDuty',json('false')),updated_at=excluded.updated_at").bind(row.id,row.owner_id,JSON.stringify(profile),now),
+    ]);
+  }
   return {
     deviceId: row.id,
     driverName: row.driver_name,
     vehicleLabel: row.vehicle_label,
     token,
   };
+}
+export async function unlinkDevice(owner:string,id:string){
+  const now=Date.now();
+  await db().batch([
+    db().prepare("UPDATE tracking_devices SET revoked_at=?,token_hash=NULL,pair_code_hash=NULL,pair_expires_at=NULL WHERE id=? AND owner_id=?").bind(now,id,owner),
+    db().prepare("UPDATE office_orders SET status='cancelled',payload_json=json_set(payload_json,'$.status','cancelled','$.driverIssue','Device unlinked; office follow-up required','$.updatedAt',?,'$.version',version+1),version=version+1,updated_at=? WHERE device_id=? AND owner_id=? AND status NOT IN ('delivered','cancelled')").bind(now,now,id,owner),
+    db().prepare("DELETE FROM driver_dispatches WHERE device_id=? AND owner_id=?").bind(id,owner),
+    db().prepare("UPDATE driver_runtime SET on_duty=0,heartbeat_at=? WHERE device_id=? AND owner_id=?").bind(now,id,owner),
+    db().prepare("UPDATE office_driver_profiles SET profile_json=json_set(profile_json,'$.onDuty',json('false'),'$.lastReleasedAt',?),updated_at=? WHERE device_id=? AND owner_id=?").bind(now,now,id,owner),
+  ]);
 }
 export async function authenticateDevice(request: Request) {
   const match = /^Bearer ([a-f0-9]{64})$/.exec(

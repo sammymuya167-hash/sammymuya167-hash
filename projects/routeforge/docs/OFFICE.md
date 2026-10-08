@@ -1,6 +1,6 @@
 # Main office operations
 
-The office reads the owner's existing paired phones. It seeds no drivers, vehicles, orders, partner shops or office address. Existing devices, phone credentials, GPS history, APK and saved planning records are preserved. Refresh the office browser after deployment; there is no phone reinstall or re-pairing step for this release.
+The office reads the owner's existing paired phones. It seeds no drivers, vehicles, orders, partner shops or office address. Existing devices, GPS history, the pilot APK and saved planning records are preserved. Refresh the office browser after deployment. Phone-side offers, completion and payment reports require the new signed Rider app; use an existing driver's upgrade code to retain its record and assignment.
 
 ## First setup
 
@@ -17,6 +17,8 @@ The system cannot infer the real office address, shop registry, vehicle registra
 
 Automatic assignment chooses the free, on-duty, non-revoked paired driver with a GPS fix and phone contact within 90 seconds. Longest idle time means the oldest of the driver's latest office assignment/release cycle; a driver never assigned here comes first. Ties use straight-line pickup proximity, then a stable ID. It does not interpret a stationary phone as proof the driver is available. Manual selection lists only onboarded drivers and applies the same availability rules. If another dispatcher assigns work first, the losing request stays queued.
 
+**Offer to riders · 5s** broadcasts the stored order to eligible free riders. Android Rider phones poll for offers while on duty and show a delivery notification. The first claim received before the server deadline wins, using a database reservation to prevent double assignment. After five seconds, the server chooses a free eligible driver at random; if none is available, the order returns to the queue. The durable deadline is recovered by subsequent office/rider polls if the best-effort server wakeup is interrupted. Internet loss or Android scheduling can delay an alert; an offline phone cannot claim an expired offer.
+
 The pickup and destination are shown on the actual GPS map. GPS arrival needs two precise fixes inside the 100 m radius, at least 15 seconds apart in one trip and no more than two minutes apart. The office confirms collection, then follows the destination and confirms delivery. GPS arrival does not prove a parcel handover. Cancellation from either the office or tracker closes the same order and keeps the phone recorder running.
 
 ## Monitor and contact
@@ -31,13 +33,21 @@ Initial distance is straight-line driver-to-pickup plus pickup-to-destination. R
 
 ## Driver app boundary
 
-Existing Android phones keep their current location service, offline queue, token and acknowledgement protocol. Office assignments are durable and their destination pins are visible here. Driver-side assignment retrieval, destination maps, acceptance and turn-by-turn directions belong to the later native update requested by the owner; this release does not claim to send those screens to an installed APK.
+The signed **RouteForge Rider** app retrieves the same office assignment and provides destination maps, offer acceptance, collection confirmation, delivery/ride completion and customer payment reports. Maps show recorded GPS and destination pins; external navigation opens the destination in Google Maps. The office retains its GPS-arrival confirmation controls. **End duty** requires completion of active deliveries. **Privacy pause** always stops sharing immediately and flags unfinished work for follow-up.
+
+Existing pilot apps retain their GPS upload protocol. Before migrating, sync the pilot queue and stop its trip. Generate **Rider app upgrade code** on the existing driver card, install Rider alongside the pilot, then pair Rider with that code. This rotates the token while retaining the driver, assignments and payment/history records. Phone-side unlinking revokes the link, ends duty and cancels unfinished assignments when its request reaches the server; offline unlink requests remain encrypted and retry when connected.
+
+## Sales and payment review
+
+Enter the expected customer amount when creating an order. After finishing delivery, a rider reports the amount actually received as **Cash** or **Company till**, with an optional receipt/reference. Completion and payment reports have durable operation IDs and retry in order after an outage; repeat uploads cannot create duplicate sales. Reports contribute to customer collection totals immediately, with **Awaiting office review** clearly shown. Office staff verify cash or the till receipt, then mark it **Office verified**, or **Void report** while retaining its audit record. The app does not transfer money or automatically verify M-Pesa receipts.
+
+**Sales & totals** shows reported cash/till, verified collections, today's Nairobi collections, expected order value, delivered orders awaiting reports and recorded mileage/driver-cost estimates. All-time totals include records older than the latest 500 displayed rows. CSV export covers the currently displayed payment reports.
 
 ## Data and limits
 
 All office records and GPS endpoints require the trusted hosting identity and filter by owner. Mutation endpoints enforce same origin and reject a submitted owner ID. Responses use `Cache-Control: private, no-store`. Public GitHub source and the public sign-in shell contain no production company contacts or coordinates. The current office is one account's workspace; shared staff roles are not implemented.
 
-Limits: 50 linked/pending phones under the existing tracking quota; 250 partners; 300 open requests; 500 displayed recent orders with open requests first. Older orders remain stored but do not yet have pagination. Saved planning scenarios remain archived separately. Apply migrations `0000` through `0003` in order for a new installation; the hosting deployment applies additive migrations to the existing D1 database.
+Limits: 50 linked/pending phones under the existing tracking quota; 250 partners; 300 open requests; 500 displayed recent orders and payment reports, with open orders first. Older records remain stored and contribute to all-time totals but do not yet have pagination. **Route planner & costs** loads the office's saved depot, queued destinations and paired fleet; planner drafts calculate capacity, shifts, manifests and estimates without dispatching live work. Saved planning scenarios remain archived separately. Apply migrations `0000` through `0004` in order for a new installation; the hosting deployment applies additive migrations to the existing D1 database.
 
 ## Place search, attribution and reuse
 

@@ -4,7 +4,7 @@ Build one substantial project at a time, aiming for a daily release with working
 
 | Build | PDF idea | Project | State |
 |---|---|---|---|
-| 01 · 2026-10-07 | 92 · Delivery Route Optimizer | RouteForge | Built · public demo · live tracking + dispatch |
+| 01 · 2026-10-07 | 92 · Delivery Route Optimizer | RouteForge | Built · public demo · signed Rider + dispatch + sales |
 | 02 · 2026-10-08 | 33 · Jira Clone | SprintForge | Built · public demo · 28 checks |
 | 03 · 2026-10-08 | 98 · API Testing Tool | RequestLab | Built · public demo · 32 checks |
 | 04 · 2026-10-08 | 77 · Design Collaboration Tool | CanvasRoom | Built · public demo · 5 domain tests |
@@ -31,12 +31,14 @@ Verification: 40 Node tests, clean lint and typecheck, additive migration `0003`
 
 Deployment confirmed: existing public RouteForge version 5 succeeded at `https://routeforge-shadownet.sammymuya167.chatgpt.site`, from Sites source commit `ff8e68f4297958aecc081024d98cb81b4c548998`. Existing audience and runtime integrations were preserved. Native deployment status and the current live Site URL were verified; interactive production browser QA was unavailable.
 
-## RouteForge Rider release unfinished · 2026-10-08
+## RouteForge Rider and office release · 2026-10-08
 
-The authorized native Rider and office update is in progress. **Finish it before the next portfolio build.** [Release checkpoint](RIDER-RELEASE-CHECKPOINT.md) records the implementation, evidence and remaining steps; [draft PR #1](https://github.com/sammymuya167-hash/sammymuya167-hash/pull/1) contains the saved native client/CI source.
+Completed the interrupted update and published **version 6** at [RouteForge](https://routeforge-shadownet.sammymuya167.chatgpt.site). Sites source commit: `3a84ed3fad0ff708dd44b148c282bb379dc9eefc`. Deployment: `appgdep_6ac7d191b6e08191928a185ec902e604`, terminal status **succeeded**. The public audience and account-private company data are preserved. This updates completed idea #92; the four-project catalogue state is unchanged.
 
-Native source commit `deb5031ac548e1a30e67118e87391d89cf3f087e` passed Android debug/release compilation and lint plus six API 35 emulator checks in [Actions run 37807999776](https://github.com/sammymuya167-hash/sammymuya167-hash/actions/runs/37807999776). The artifact is unsigned. The private signing backup is saved; no signing credentials were added to GitHub.
+Rider adds phone-location detection and fresh-fix recovery, durable offline unlink, five-second first-claim delivery offers with random idle-driver fallback, collection and delivery/ride completion, cash/company-till reports, assignment maps/navigation and a navy/blue animated interface. The office adds a sales ledger, receipt verification/void controls, all-time amounts and journey/cost totals, while restoring the planner's capacity, shifts, assumptions, imports, exports and manifests. Offline actions retry with durable IDs and preserve legacy stop identity.
 
-The matching office/API work was locally checked with 43 Node tests, 57 Worker/D1 integration groups, lint, typecheck and a production build, but is still uncommitted in the disconnected checkout. Later refinements and a seventh native UI check need final verification. Do not interpret the native branch's baseline web CI result as verification or publication of the new backend.
+Verification: **43 Node unit tests**, TypeScript checks, a successful production Worker build and **60 Worker/D1 integration checks**. The final Android source at `1a9a3419c18ae53402fca2e47da0f3e0f6f7ac5c` passed debug/release compilation, both lint variants and **seven API 35 emulator instrumentation checks** in [Actions run 37811923084](https://github.com/sammymuya167-hash/sammymuya167-hash/actions/runs/37811923084). All 14 files in the unsigned build's source manifest matched the released native source; APK v2/v3 signing and the packaged APK checksum were verified.
 
-Blocker: the execution workspace is offline (`Environment is not connected`), preventing source recovery, final APK signing and Sites packaging. The live office remains confirmed version 5 with its existing public audience; no new release was deployed. Existing projects, production integrations and catalogue completion states remain unchanged.
+The signed [Rider APK](https://routeforge-shadownet.sammymuya167.chatgpt.site/downloads/routeforge-rider.apk) has SHA-256 `552ea88f006d2d12d590e675b8fbdd96090d2e274750cce05575abcc5f738efd`. The old pilot's unavailable signing key requires a one-time install alongside it: sync its queue, stop its trip, then pair Rider with **Rider app upgrade code** from the existing driver card. The same driver ID, assignment and uploaded history are retained. Future Rider updates use the retained private owner signing key.
+
+Five seconds is the server acceptance deadline; phone alerts and fallback timing depend on connectivity, Android scheduling and server wakeup/polling. Customer till entries remain reports until office verification; no bank transfer is performed. Real-phone background behaviour and interactive browser gestures remain field checks. The earlier disconnected-workspace blocker is resolved. [Release record](RIDER-RELEASE-CHECKPOINT.md) contains evidence and installation details.
