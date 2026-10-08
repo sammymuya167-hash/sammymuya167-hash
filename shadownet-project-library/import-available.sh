@@ -25,10 +25,14 @@ while IFS=$'\t' read -r id title upstream ref source status review; do
   if [[ "$review" == "concept_mismatch" && "$include_mismatches" != true ]]; then
     echo "SKIP mismatch #$id: $title (source $upstream)"; ((skipped+=1)); continue
   fi
-  destination="$account/${upstream##*/}"
+  canonical="$(gh api "repos/$upstream" --jq '.full_name' 2>/dev/null || true)"
+  if [[ -z "$canonical" ]]; then
+    echo "FAILED #$id: cannot resolve $upstream"; ((failed+=1)); continue
+  fi
+  destination="$account/${canonical##*/}"
   if gh repo view "$destination" >/dev/null 2>&1; then
     parent="$(gh api "repos/$destination" --jq '.parent.full_name // ""' 2>/dev/null || true)"
-    if [[ "${parent,,}" == "${upstream,,}" ]]; then
+    if [[ "${parent,,}" == "${canonical,,}" ]]; then
       echo "EXISTS fork #$id: $destination"; ((skipped+=1))
     else
       echo "CONFLICT #$id: $destination already exists and is not a fork of $upstream"; ((failed+=1))
