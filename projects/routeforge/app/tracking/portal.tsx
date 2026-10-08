@@ -5,12 +5,10 @@ import {
   ArrowLeft,
   Compass,
   MapPin,
-  Plus,
   RefreshCw,
   ShieldCheck,
   Smartphone,
   Truck,
-  X,
 } from "lucide-react";
 import type { Device, TrackingEvent } from "../../lib/tracking";
 import JourneyMap from "./map";
@@ -18,6 +16,8 @@ import { useFleet } from "./use-fleet";
 import { DispatchProgress, DriverTelemetry, FleetAlerts } from "./operations";
 import { motionOf, motionLabels } from "../../lib/dispatch";
 import { useOffice } from "../office/use-office";
+import { DriverAccounts } from "../office/driver-accounts";
+import { SignOut } from "../office/sign-out";
 import { NewOrderForm, DriverDetails } from "../office/forms";
 type Trip = {
   id: string;
@@ -26,7 +26,6 @@ type Trip = {
   points: number;
   stoppedAt: number | null;
 };
-type Pair = { id: string; code: string; expiresAt: number };
 type Event = TrackingEvent & { receivedAt: number };
 async function api<T>(
   path: string,
@@ -55,7 +54,7 @@ function when(value: number | null) {
     : "No update yet";
 }
 const labels = {
-  pending: "Awaiting pairing",
+  pending: "Awaiting login",
   expired: "Code expired",
   ready: "Awaiting GPS",
   live: "Live",
@@ -80,16 +79,11 @@ export default function TrackingPortal({
     [tripId, setTripId] = useState(""),
     [trips, setTrips] = useState<Trip[]>([]),
     [events, setEvents] = useState<Event[]>([]);
-  const [pair, setPair] = useState<Pair | null>(null),
-    [adding, setAdding] = useState(false),
-    [busy, setBusy] = useState(false),
+  const [busy, setBusy] = useState(false),
     [error, setError] = useState(""),
     [historyBusy, setHistoryBusy] = useState(false),
     [cursor, setCursor] = useState<string | null>(null);
   const [historyRevision, setHistoryRevision] = useState(0);
-  const [name, setName] = useState(""),
-    [vehicle, setVehicle] = useState(""),
-    [phone, setPhone] = useState("");
   const historyGeneration = useRef(0),
     historyInFlight = useRef(false),
     loadedMore = useRef(false);
@@ -198,31 +192,7 @@ export default function TrackingPortal({
       setHistoryBusy(false);
     }
   }
-  async function create(e: React.FormEvent) {
-    e.preventDefault();
-    setBusy(true);
-    setError("");
-    try {
-      const p = await api<Pair>("/api/tracking/devices", "POST", {
-        driverName: name,
-        vehicleLabel: vehicle,
-        phoneLabel: phone,
-      });
-      setPair(p);
-      setAdding(false);
-      setName("");
-      setVehicle("");
-      setPhone("");
-      await refresh();
-      setSelected(p.id);
-      setTripId("");
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Could not add device.");
-    } finally {
-      setBusy(false);
-    }
-  }
-  async function action(d: Device, action: "renew" | "upgrade" | "revoke" | "remove") {
+  async function action(d: Device, action: "revoke" | "remove") {
     if (
       action === "revoke" &&
       !window.confirm(
@@ -241,11 +211,10 @@ export default function TrackingPortal({
       return;
     setBusy(true);
     try {
-      const r = await api<Pair>("/api/tracking/devices", "PATCH", {
+      await api<{ok:boolean}>("/api/tracking/devices", "PATCH", {
         id: d.id,
         action,
       });
-      if (action === "renew" || action === "upgrade") setPair(r);
       if (action === "remove" && d.id === selected) {
         setEvents([]);
         setTrips([]);
@@ -261,7 +230,7 @@ export default function TrackingPortal({
   const points = events.filter(
     (e): e is Extract<Event, { kind: "point" }> => e.kind === "point",
   );
-  const apk = "/downloads/routeforge-rider.apk?v=3";
+  const apk = "/downloads/routeforge-rider.apk?v=4";
   async function refreshOffice(){await Promise.all([refresh(),office.refresh()]);}
   return (
     <main className="tracking-shell">
@@ -277,25 +246,18 @@ export default function TrackingPortal({
         <a href="/" target="_top" className="tracking-back">
           <ArrowLeft size={16} /> Dispatch
         </a>
-        <span className="tracking-user">{userName}</span>
+        <span className="tracking-user">{userName}</span>{signedIn&&<SignOut/>}
       </header>
       <div className="tracking-heading">
         <div>
           <span className="tiny-label">DRIVER OPERATIONS</span>
           <h1>Every journey, in view.</h1>
           <p>
-            Pair a driver&apos;s Android phone. Follow live GPS and recover the
+            Sign in on a driver&apos;s Android phone. Follow live GPS and recover the
             journey after an offline stretch.
           </p>
         </div>
-        <button
-          className="tracking-primary"
-          onClick={() => setAdding(true)}
-          disabled={!signedIn}
-        >
-          <Plus size={17} />
-          Link a driver
-        </button>
+        <a className="tracking-primary" href="#driver-logins">Driver logins ↓</a>
       </div>
       {!signedIn ? (
         <section className="tracking-signin">
@@ -313,6 +275,7 @@ export default function TrackingPortal({
               {error || fleet.error}
             </div>
           )}
+          <div id="driver-logins"><DriverAccounts devices={devices} onChanged={refreshOffice}/></div>
           <div className="tracking-stats">
             <div>
               <span>Linked devices</span>
@@ -360,8 +323,7 @@ export default function TrackingPortal({
                   <Smartphone size={32} />
                   <h3>Link your first driver</h3>
                   <p>
-                    Create a pairing code here, then enter it in the driver app
-                    on their phone.
+                    Create a driver login above, then sign in on their phone.
                   </p>
                 </div>
               )}
@@ -468,15 +430,7 @@ export default function TrackingPortal({
                         ? " · " + selectedDevice.phoneLabel
                         : ""}
                     </span>
-                    {selectedDevice.pairedAt&&!selectedDevice.revokedAt&&<><button onClick={()=>setDetailsOpen(true)}>Driver details / call</button><button disabled={busy} onClick={()=>void action(selectedDevice,"upgrade")}>Rider app upgrade code</button></>}
-                    {["pending", "expired"].includes(selectedDevice.status) && (
-                      <button
-                        disabled={busy}
-                        onClick={() => void action(selectedDevice, "renew")}
-                      >
-                        New pairing code
-                      </button>
-                    )}
+                    {selectedDevice.pairedAt&&!selectedDevice.revokedAt&&<><button onClick={()=>setDetailsOpen(true)}>Driver details / call</button></>}
                     {selectedDevice.status !== "revoked" ? (
                       <button
                         disabled={busy}
@@ -565,10 +519,10 @@ export default function TrackingPortal({
           <Smartphone size={25} />
           <h2>Set up the driver phone</h2>
           <p>
-            Android 8 or newer. Already using RouteForge Rider? Install version 1.1 over it to keep your link and saved queue; no new pairing code is needed. In Account, play the delivery alert test. For a first-time pilot upgrade, sync and stop the old pilot, then use its Rider app upgrade code to keep the same driver record and assignment.
+            Android 8 or newer. Install Rider 1.2 over your existing Rider app to preserve saved reports. Sign in using the office-issued username and password. Existing drivers keep their history and assignment. Go on duty and play the delivery alert test in Account.
           </p>
           <a className="tracking-primary" href={apk}>
-            Download RouteForge Rider 1.1 APK
+            Download RouteForge Rider 1.2 APK
           </a>
           <a
             className="tracking-docs"
@@ -583,7 +537,7 @@ export default function TrackingPortal({
           <ShieldCheck size={25} />
           <h2>Driver controlled recording</h2>
           <p>
-            Start and stop are always visible. A phone number is only a label;
+            Start and stop are always visible. A phone number is required for onboarding;
             the app collects GPS while the driver has a trip running. Offline
             capture needs the phone to remain powered on with location enabled.
             Android may stop the recorder, leaving a gap.
@@ -596,111 +550,6 @@ export default function TrackingPortal({
       </section>
       {newOrderOpen&&selectedDevice&&office.data&&<NewOrderForm data={office.data} devices={devices} dispatches={dispatches} initialDriver={selectedDevice.id} onChanged={refreshOffice} onClose={()=>setNewOrderOpen(false)}/>}
       {detailsOpen&&selectedDevice&&<DriverDetails device={selectedDevice} profile={office.data?.profiles.find(p=>p.deviceId===selectedDevice.id)} dispatches={dispatches} onChanged={refreshOffice} onClose={()=>setDetailsOpen(false)}/>}
-      {adding && (
-        <div className="tracking-modal-wrap">
-          <form
-            className="tracking-modal"
-            onSubmit={create}
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="add-title"
-          >
-            <button
-              type="button"
-              className="modal-close"
-              onClick={() => setAdding(false)}
-              aria-label="Close"
-            >
-              <X size={20} />
-            </button>
-            <h2 id="add-title">Link a driver</h2>
-            <p>
-              The driver must agree to share their location and pair the phone.
-            </p>
-            <label>
-              Driver name
-              <input
-                autoFocus
-                required
-                maxLength={80}
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="Driver name"
-              />
-            </label>
-            <label>
-              Vehicle label
-              <input
-                maxLength={80}
-                value={vehicle}
-                onChange={(e) => setVehicle(e.target.value)}
-                placeholder="Registration or fleet name"
-              />
-            </label>
-            <label>
-              Phone number (optional label)
-              <input
-                maxLength={32}
-                type="tel"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                placeholder="+254…"
-              />
-            </label>
-            <button className="tracking-primary" disabled={busy}>
-              {busy ? "Creating…" : "Create pairing code"}
-            </button>
-          </form>
-        </div>
-      )}
-      {pair && (
-        <div className="tracking-modal-wrap">
-          <div
-            className="tracking-modal"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="pair-title"
-          >
-            <button
-              className="modal-close"
-              onClick={() => setPair(null)}
-              aria-label="Close"
-            >
-              <X size={20} />
-            </button>
-            <Smartphone size={30} />
-            <h2 id="pair-title">Pair the driver&apos;s phone</h2>
-            <p>
-              Open the RouteForge Rider app on the consenting driver&apos;s
-              phone and enter:
-            </p>
-            <code className="pair-code">{pair.code}</code>
-            <p>
-              For an upgrade, sync and stop the old pilot app first. This code reconnects the same driver and rotates the phone token when used. Expires {when(pair.expiresAt)}. Can be used once. Share it only
-              with this driver.
-            </p>
-            <button
-              className="tracking-secondary"
-              onClick={() =>
-                void navigator.clipboard
-                  .writeText(pair.code)
-                  .catch(() => setError("Copy the code shown above."))
-              }
-            >
-              Copy code
-            </button>
-            <a className="tracking-primary" href={apk}>
-              Download RouteForge Rider 1.1 APK
-            </a>
-            <button
-              className="tracking-secondary"
-              onClick={() => setPair(null)}
-            >
-              Done
-            </button>
-          </div>
-        </div>
-      )}
     </main>
   );
 }

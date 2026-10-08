@@ -79,6 +79,17 @@ export const trackingEvents = sqliteTable(
   ],
 );
 
+export const companyAccounts=sqliteTable("company_accounts",{
+  id:text("id").primaryKey(),ownerId:text("owner_id").notNull(),username:text("username").notNull(),usernameKey:text("username_key").notNull().unique(),passwordHash:text("password_hash").notNull(),role:text("role",{enum:["office","rider"]}).notNull(),deviceId:text("device_id").unique(),phone:text("phone").notNull().default(""),enabled:integer("enabled").notNull().default(1),version:integer("version").notNull().default(1),createdAt:integer("created_at").notNull(),updatedAt:integer("updated_at").notNull(),
+},t=>[index("company_accounts_owner").on(t.ownerId,t.role)]);
+export const officeSessions=sqliteTable("office_sessions",{
+  tokenHash:text("token_hash").primaryKey(),accountId:text("account_id").notNull().references(()=>companyAccounts.id,{onDelete:"cascade"}),accountVersion:integer("account_version").notNull(),expiresAt:integer("expires_at").notNull(),
+},t=>[index("office_sessions_expiry").on(t.expiresAt)]);
+export const riderLogins=sqliteTable("rider_logins",{
+  deviceId:text("device_id").primaryKey().references(()=>trackingDevices.id,{onDelete:"cascade"}),accountId:text("account_id").notNull().references(()=>companyAccounts.id,{onDelete:"cascade"}),accountVersion:integer("account_version").notNull(),tokenHash:text("token_hash").notNull(),
+});
+export const loginLimits=sqliteTable("login_limits",{key:text("key").primaryKey(),startedAt:integer("started_at").notNull(),attempts:integer("attempts").notNull()});
+
 export const driverDispatches = sqliteTable("driver_dispatches", {
   deviceId: text("device_id").primaryKey().references(() => trackingDevices.id),
   ownerId: text("owner_id").notNull(),

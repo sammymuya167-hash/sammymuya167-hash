@@ -19,7 +19,7 @@ final class DriverAlerts {
   NotificationManager manager=c.getSystemService(NotificationManager.class);
   for(String id:new String[]{OFFERS,ASSIGNMENTS}){
    NotificationChannel channel=new NotificationChannel(id,id.equals(OFFERS)?"New delivery offers":"Assigned deliveries",NotificationManager.IMPORTANCE_HIGH);
-   channel.setDescription(id.equals(OFFERS)?"Sound, vibration and a popup during the five-second claim window.":"A delivery has been assigned to this rider, including automatic assignments.");
+   channel.setDescription(id.equals(OFFERS)?"Sound, vibration and a popup during the 30-second claim window.":"A delivery has been assigned to this rider, including automatic assignments.");
    channel.setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION),new AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_NOTIFICATION).setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION).build());
    channel.enableVibration(true);channel.setVibrationPattern(new long[]{0,250,150,250});
    manager.createNotificationChannel(channel);
@@ -49,7 +49,7 @@ final class DriverAlerts {
     JSONObject o=offers.getJSONObject(i);String id=o.getString("id");long remaining=o.optLong("offerDeadline")-data.optLong("serverTime");
     if(remaining<=0)continue;current.put(id);
     if(seen.contains(id)||!enabled(manager,OFFERS))continue;
-    manager.notify("offer:"+id,id.hashCode(),base(c,OFFERS,id,"offers").setContentTitle("New delivery · "+o.optString("title")).setContentText("Open to claim · "+Math.max(1,(remaining+999)/1000)+" seconds left").setWhen(System.currentTimeMillis()+remaining).setUsesChronometer(true).setChronometerCountDown(true).setTimeoutAfter(remaining).setProgress(5000,(int)Math.max(0,5000-remaining),false).build());
+    manager.notify("offer:"+id,id.hashCode(),base(c,OFFERS,id,"offers").setContentTitle("New delivery · "+o.optString("title")).setContentText("Open to claim · "+Math.max(1,(remaining+999)/1000)+" seconds left").setWhen(System.currentTimeMillis()+remaining).setUsesChronometer(true).setChronometerCountDown(true).setTimeoutAfter(remaining).setProgress(30000,(int)Math.min(30000,Math.max(0,30000-remaining)),false).build());
     seen+=","+id;
    }
    JSONArray previous=ids(c);for(int i=0;i<previous.length();i++){String id=previous.getString(i);boolean found=false;for(int j=0;j<current.length();j++)if(id.equals(current.getString(j)))found=true;if(!found)manager.cancel("offer:"+id,id.hashCode());}

@@ -32,7 +32,7 @@ public final class QueueInstrumentation extends Instrumentation {
     private void status(int code, String name, int number, String message) {
         activeTest=name;activeNumber=number;
         Bundle b = new Bundle(); b.putString("class", getClass().getName());
-        b.putString("test", name); b.putInt("numtests", 11); b.putInt("current", number);
+        b.putString("test", name); b.putInt("numtests", 12); b.putInt("current", number);
         b.putString("stream", message); sendStatus(code, b);
     }
     private boolean notificationCount(NotificationManager manager,int expected) throws Exception {
@@ -53,7 +53,7 @@ public final class QueueInstrumentation extends Instrumentation {
         AtomicReference<String> value = new AtomicReference<>();
         runOnMainSync(() -> {
             WebView web = (WebView) ((ViewGroup) activity.findViewById(android.R.id.content)).getChildAt(0);
-            web.evaluateJavascript("(function(){if(typeof applyState!=='function'||typeof go!=='function'||typeof Rider==='undefined')return {ready:false};go('trips');var text=document.getElementById('tripcontent').textContent;go('account');return {ready:true,paired:!!state.paired,bridge:typeof Rider.action==='function'&&typeof Rider.settings==='function',credentials:typeof Rider.token!=='undefined'||typeof Rider.session!=='undefined',totals:text.indexOf('REPORTED COLLECTIONS')>=0&&text.indexOf('VERIFIED BY OFFICE')>=0,pairing:document.getElementById('paircard').style.display!=='none',pages:['home','offers','route','trips','account'].every(function(id){return !!document.getElementById(id);})};})()", result -> { value.set(result); done.countDown(); });
+            web.evaluateJavascript("(function(){if(typeof applyState!=='function'||typeof go!=='function'||typeof Rider==='undefined')return {ready:false};go('trips');var text=document.getElementById('tripcontent').textContent;go('account');return {ready:true,paired:!!state.paired,bridge:typeof Rider.action==='function'&&typeof Rider.login==='function'&&typeof Rider.logout==='function'&&typeof Rider.settings==='function',credentials:typeof Rider.token!=='undefined'||typeof Rider.session!=='undefined',totals:text.indexOf('REPORTED COLLECTIONS')>=0&&text.indexOf('VERIFIED BY OFFICE')>=0,login:document.getElementById('loginscreen').style.display!=='none'&&document.getElementById('loginpassword').type==='password'&&document.getElementById('ridernav').style.display==='none',pages:['home','offers','route','trips','account'].every(function(id){return !!document.getElementById(id);})};})()", result -> { value.set(result); done.countDown(); });
         });
         check(done.await(5, TimeUnit.SECONDS), "Packaged UI evaluation must respond");
         return new JSONObject(value.get());
@@ -98,7 +98,7 @@ public final class QueueInstrumentation extends Instrumentation {
             check(queue.count()==1&&queue.commandCount()==0,"Version one GPS events must survive adding the rider action queue");
             status(0, "versionOneJourneyMigrationPreservesEvents", 5, ".");
             status(1, "encryptedLinkClearResetsTelemetryAndRetainsUnlink", 6, "");
-            Session.save(getTargetContext(),new JSONObject().put("deviceId",device).put("driverName","Synthetic rider").put("token","test-only-token"));
+            queue.clear();Session.save(getTargetContext(),new JSONObject().put("deviceId",device).put("driverName","Synthetic rider").put("token","test-only-token"));
             Session.prefs(getTargetContext()).edit().putLong("last_fix",123).putLong("last_sync",456).putString("last_point","{}").putString("rider_state","{}").commit();
             Session.saveUnlink(getTargetContext(),new JSONObject().put("token","test-only-token").put("operationId",UUID.randomUUID().toString()));Session.clear(getTargetContext());
             check(Session.get(getTargetContext())==null&&Session.prefs(getTargetContext()).getLong("last_fix",0)==0&&Session.prefs(getTargetContext()).getLong("last_sync",0)==0,"Clear must reset link and stale telemetry");
@@ -116,7 +116,7 @@ public final class QueueInstrumentation extends Instrumentation {
             check(screen.optBoolean("ready"), "Offline rider interface must load without a server page");
             check(screen.optBoolean("bridge") && !screen.optBoolean("credentials"), "Packaged interface must have native controls without exposing credentials");
             check(screen.optBoolean("pages") && screen.optBoolean("totals"), "Map, offers, trip totals and account controls must remain available");
-            check(screen.optBoolean("pairing") && !screen.optBoolean("paired") && !TrackingService.running, "Opening an unpaired phone must show pairing without starting GPS");
+            check(screen.optBoolean("login") && !screen.optBoolean("paired") && !TrackingService.running, "Opening an unsigned phone must show a login without starting GPS");
             check(queue.count()==0 && queue.commandCount()==0, "Opening the dashboard must not record or submit a trip");
             status(0, "packagedUiLoadsOfflineWithNativeBridge", 7, ".");
             status(1,"deliveryChannelsHaveSoundAndHeadsUp",8,"");
@@ -160,11 +160,21 @@ public final class QueueInstrumentation extends Instrumentation {
             check(clicked,"Finish delivery must show a clickable native confirmation: "+visible+"; JS result="+confirmation.get());
             check(confirmed.await(3,TimeUnit.SECONDS)&&"true".equals(confirmation.get()),"Confirm must return the rider's confirmation to JavaScript: "+confirmation.get());
             status(0,"finishConfirmationUsesAWorkingNativeDialog",11,".");
-            Bundle result = new Bundle(); result.putString("stream", "\nOK (11 tests)\n");
+            status(1,"loginUpgradePreservesQueueOwnerAndEncryptedSession",12,"");
+            Session.save(getTargetContext(),new JSONObject().put("deviceId",device).put("driverName","Synthetic rider").put("token","test-only-token"));queue.add(event());
+            check(!Session.loggedIn(getTargetContext()),"A legacy device token cannot count as a rider login");Session.clear(getTargetContext());
+            check(Session.queueOwner(getTargetContext()).equals(device)&&queue.count()==1,"Session expiry must preserve the rider identity for unsent GPS");
+            boolean different=false;try{Session.save(getTargetContext(),new JSONObject().put("deviceId",UUID.randomUUID().toString()).put("driverName","Other fixture").put("token","other-test-token").put("loggedIn",true));}catch(IllegalStateException expected){different=true;}
+            check(different&&queue.count()==1,"Another account cannot take ownership of saved GPS");
+            Session.save(getTargetContext(),new JSONObject().put("deviceId",device).put("driverName","Synthetic rider").put("username","TestRider").put("token","new-test-token").put("loggedIn",true));
+            check(Session.loggedIn(getTargetContext())&&queue.count()==1,"Same-rider login must retain the queue");
+            String stored=Session.prefs(getTargetContext()).getString("session","");check(!stored.contains("new-test-token")&&!stored.contains("TestRider"),"Native session must remain encrypted in Android storage");Session.clear(getTargetContext());
+            status(0,"loginUpgradePreservesQueueOwnerAndEncryptedSession",12,".");
+            Bundle result = new Bundle(); result.putString("stream", "\nOK (12 tests)\n");
             finish(Activity.RESULT_OK, result);
         } catch (Throwable error) {
             android.util.Log.e("RouteForgeTests",activeTest,error);
-            Bundle failure=new Bundle();failure.putString("class",getClass().getName());failure.putString("test",activeTest);failure.putInt("numtests",11);failure.putInt("current",activeNumber);failure.putString("stack",android.util.Log.getStackTraceString(error));failure.putString("stream",error.toString());sendStatus(-2,failure);
+            Bundle failure=new Bundle();failure.putString("class",getClass().getName());failure.putString("test",activeTest);failure.putInt("numtests",12);failure.putInt("current",activeNumber);failure.putString("stack",android.util.Log.getStackTraceString(error));failure.putString("stream",error.toString());sendStatus(-2,failure);
             Bundle result = new Bundle(); result.putString("stream", "Queue test failed: " + error);
             finish(Activity.RESULT_CANCELED, result);
         } finally { if(ui[0]!=null)runOnMainSync(ui[0]::finish);queue.clear();queue.clearCommands();Session.clear(getTargetContext());Session.prefs(getTargetContext()).edit().remove("pending_unlink").commit(); }

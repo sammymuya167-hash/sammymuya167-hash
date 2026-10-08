@@ -1,0 +1,13 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import { execFileSync } from "node:child_process";
+import { mkdirSync,writeFileSync } from "node:fs";
+import { createRequire } from "node:module";
+import path from "node:path";
+const output=path.resolve(".sites-runtime/account-tests");mkdirSync(output,{recursive:true});
+execFileSync(process.execPath,["node_modules/typescript/bin/tsc","--outDir",output,"--module","commonjs","--moduleResolution","node","--target","es2022","--esModuleInterop","--strict","--skipLibCheck","lib/account-input.ts","lib/login-path.ts"],{stdio:"pipe"});
+writeFileSync(path.join(output,"package.json"),'{"type":"commonjs"}');
+const require=createRequire(import.meta.url),{newDriverInput,requiredPhone,usernameInput,loginInput}=require(path.join(output,"account-input.js")),{loginReturnPath}=require(path.join(output,"login-path.js"));
+test("onboarding requires a valid phone and normalizes Kenyan local formats",()=>{for(const value of ["0712345678","254712345678","+254 712 345 678"])assert.equal(requiredPhone.parse(value),"+254712345678");for(const phone of ["","0712","javascript:1234",undefined])assert.equal(newDriverInput.safeParse({driverName:"Fixture",phone}).success,false);assert.equal(newDriverInput.safeParse({driverName:"Fixture",phone:"+254712345678",ownerId:"spoof"}).success,false);});
+test("usernames accept custom names without permitting ambiguous or oversized account identifiers",()=>{for(const value of ["TestRider","Test_Rider.1","Another-Driver"])assert.equal(usernameInput.safeParse(value).success,true);for(const value of ["12Rider","ab","Has Space","<script>","A".repeat(33)])assert.equal(usernameInput.safeParse(value).success,false);assert.equal(loginInput.safeParse({username:"TestRider",password:"fixture",appVersion:3}).success,false);});
+test("office login return paths stay on this site and avoid login loops",()=>{assert.equal(loginReturnPath("/?view=fleet"),"/?view=fleet");assert.equal(loginReturnPath("/tracking#driver-logins"),"/tracking#driver-logins");for(const value of ["//foreign.test","/\\foreign.test","https://foreign.test","/login?returnTo=/","javascript:alert(1)"])assert.equal(loginReturnPath(value),"/");});

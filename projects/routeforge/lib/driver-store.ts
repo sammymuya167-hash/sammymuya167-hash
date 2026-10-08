@@ -12,12 +12,22 @@ export type DriverIdentity={id:string;hash:string;owner:string};
 export async function driverIdentity(request:Request):Promise<DriverIdentity>{
   return authenticateDevice(request);
 }
+export async function logoutRider(device:DriverIdentity){
+  const rows=await db().batch([
+    db().prepare("UPDATE tracking_devices SET token_hash=NULL WHERE id=? AND owner_id=? AND token_hash=? AND NOT EXISTS(SELECT 1 FROM driver_dispatches d,json_each(d.dispatch_json,'$.stops') s WHERE d.device_id=tracking_devices.id AND d.owner_id=tracking_devices.owner_id AND json_extract(s.value,'$.deliveredAt') IS NULL) RETURNING id").bind(device.id,device.owner,device.hash),
+    db().prepare("UPDATE driver_runtime SET on_duty=0,gps_enabled=0,heartbeat_at=? WHERE device_id=? AND owner_id=? AND EXISTS(SELECT 1 FROM tracking_devices WHERE id=? AND owner_id=? AND token_hash IS NULL)").bind(Date.now(),device.id,device.owner,device.id,device.owner),
+    db().prepare("UPDATE office_driver_profiles SET profile_json=json_set(profile_json,'$.onDuty',json('false')),updated_at=? WHERE device_id=? AND owner_id=? AND EXISTS(SELECT 1 FROM tracking_devices WHERE id=? AND owner_id=? AND token_hash IS NULL)").bind(Date.now(),device.id,device.owner,device.id,device.owner),
+    db().prepare("DELETE FROM rider_logins WHERE device_id=? AND token_hash=? AND EXISTS(SELECT 1 FROM tracking_devices WHERE id=? AND owner_id=? AND token_hash IS NULL)").bind(device.id,device.hash,device.id,device.owner),
+  ]);
+  if(!rows[0].results.length)throw new TrackingError(409,"Finish the current delivery before signing out. Privacy pause is always available.");
+  return {ok:true};
+}
 export async function driverState(device:DriverIdentity,payload:unknown){
   const parsed=z.object({appVersion:z.number().int().min(2).max(10000),onDuty:z.boolean(),gpsEnabled:z.boolean()}).strict().safeParse(payload);
   if(!parsed.success)throw new TrackingError(422,"Send the rider app's duty and location state.");
   const now=Date.now(),input=parsed.data;
   // One device-scoped database round trip. Do not reconcile every company route
-  // or mileage record before the phone can receive its five-second offer.
+  // or mileage record before the phone can receive its 30-second offer.
   const rows=await db().batch<Record<string,unknown>>([
     db().prepare("INSERT INTO driver_runtime(device_id,owner_id,app_version,on_duty,gps_enabled,heartbeat_at) SELECT id,?,?,?,?,? FROM tracking_devices WHERE id=? AND owner_id=? AND token_hash=? AND revoked_at IS NULL ON CONFLICT(device_id) DO UPDATE SET app_version=excluded.app_version,on_duty=excluded.on_duty,gps_enabled=excluded.gps_enabled,heartbeat_at=excluded.heartbeat_at WHERE driver_runtime.heartbeat_at<? OR driver_runtime.on_duty<>excluded.on_duty OR driver_runtime.gps_enabled<>excluded.gps_enabled OR driver_runtime.app_version<>excluded.app_version").bind(device.owner,input.appVersion,Number(input.onDuty),Number(input.gpsEnabled),now,device.id,device.owner,device.hash,now-10000),
     db().prepare("SELECT driver_name,vehicle_label,phone_label FROM tracking_devices WHERE id=? AND owner_id=? AND token_hash=? AND revoked_at IS NULL").bind(device.id,device.owner,device.hash),

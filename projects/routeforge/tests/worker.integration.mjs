@@ -4,6 +4,8 @@ import { readFileSync, readdirSync } from "node:fs";
 import path from "node:path";
 import { verifyDriver } from "./driver.integration.mjs";
 import { verifyOffice } from "./office.integration.mjs";
+import { verifyBootstrap } from "./bootstrap.integration.mjs";
+import { verifyAccounts } from "./accounts.integration.mjs";
 
 // Run the built production Worker against a disposable D1 database. Fixture
 // identity headers emulate the trusted hosting gateway only inside this test.
@@ -21,7 +23,7 @@ function moduleFiles(directory) {
 }
 const main = path.join(serverRoot, "index.js");
 const geocoderCalls=[];
-const mf = new Miniflare({
+const workerOptions = {
   modules: [
     main,
     ...moduleFiles(serverRoot).filter((file) => file !== main),
@@ -48,7 +50,8 @@ const mf = new Miniflare({
     },
   },
   port: 0,
-});
+};
+const mf=new Miniflare(workerOptions);
 const scenario = {
   name: "Integration fixture",
   depot: { name: "Test depot", lat: -1.27, lng: 36.8 },
@@ -438,6 +441,7 @@ try {
   const olderInvite = await (
     await request("/api/tracking/devices", "POST", {
       driverName: "Expired fixture",
+      phoneLabel: "+254700000000",
     })
   ).json();
   await db
@@ -557,6 +561,8 @@ try {
   passed("the built Worker publicly serves the signed Rider APK and matching release metadata while preserving the pilot");
   await verifyDriver({mf,db,request,passed});
   await verifyOffice({mf,db,request,passed,geocoderCalls});
+  await verifyAccounts({mf,db,request,passed});
+  await verifyBootstrap({createWorker:seed=>new Miniflare({...workerOptions,bindings:{ROUTEFORGE_AUTH_BOOTSTRAP:seed}}),resetWorker:(worker,seed,revision)=>worker.setOptions({...workerOptions,bindings:{ROUTEFORGE_AUTH_BOOTSTRAP:seed,AUTH_TEST_RELOAD:revision}}),passed});
 
 
   console.log(`${checked} Worker/D1 integration checks passed.`);

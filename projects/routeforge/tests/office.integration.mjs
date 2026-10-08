@@ -54,7 +54,7 @@ export async function verifyOffice({mf,db,request,passed,geocoderCalls}) {
   passed("order retries are idempotent, arbitrary drivers are rejected and unavailable assignments stay queued");
 
   const a=await enroll("Synthetic driver A"),b=await enroll("Synthetic driver B");
-  const pending=await jsonOk(await api("/api/tracking/devices","POST",{driverName:"Pending fixture"}),201);
+  const pending=await jsonOk(await api("/api/tracking/devices","POST",{driverName:"Pending fixture",phoneLabel:"+254700000000"}),201);
   assert.equal((await profile({deviceId:pending.id})).status,404);
   assert.equal((await profile(a)).status,200);assert.equal((await profile(b)).status,200);
   assert.equal((await api("/api/office/drivers","PATCH",{deviceId:a.deviceId,vehicleLabel:"foreign",phone:"",onDuty:true,ratePerKm:null},other)).status,404);
