@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-html-link-for-pages -- These office transitions intentionally reload the full document in the Sites host. */
 "use client";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
@@ -31,7 +32,7 @@ import {
   Zap,
 } from "lucide-react";
 import RouteMap from "./route-map";
-import LiveDispatch from "./live-dispatch";
+
 import type {
   Delivery,
   OptimizationResult,
@@ -40,7 +41,7 @@ import type {
   Vehicle,
 } from "../lib/model";
 import { clock, money } from "../lib/model";
-import { demoScenario } from "../lib/demo";
+
 import { deliverySchema, scenarioSchema } from "../lib/validation";
 import { deliveriesCsv, importDeliveries, routeCsv } from "../lib/csv";
 
@@ -93,7 +94,7 @@ export default function DispatchWorkspace({
   signInPath,
 }: {
   initialScenario: Scenario;
-  initialResult: OptimizationResult;
+  initialResult: OptimizationResult | null;
   userName: string;
   signedIn: boolean;
   signInPath: string;
@@ -104,7 +105,7 @@ export default function DispatchWorkspace({
     [selected, setSelected] = useState<string | null>(null),
     [routeDetail, setRouteDetail] = useState<string | null>(null);
   const [busy, setBusy] = useState(false),
-    [status, setStatus] = useState("Sample plan preview"),
+    [status, setStatus] = useState("Company planning draft"),
     [message, setMessage] = useState("");
   const [plans, setPlans] = useState<SavedPlan[]>([]),
     [runs, setRuns] = useState<Run[]>([]),
@@ -203,12 +204,13 @@ export default function DispatchWorkspace({
   }
   function load(
     s: Scenario,
-    r: OptimizationResult,
+    r: OptimizationResult | null,
     id: string | null,
     state: string,
   ) {
-    setScenario(s);
-    setResult(r);
+    const connected={...s,vehicles:initialScenario.vehicles.map(v=>{const saved=s.vehicles.find(x=>x.id===v.id);return saved?{...saved,id:v.id,name:v.name,driver:v.driver}:v;})};
+    setScenario(connected);
+    setResult(connected.vehicles.length===s.vehicles.length&&connected.vehicles.every(v=>s.vehicles.some(x=>x.id===v.id))?r:null);
     setPlanId(id);
     setSelected(null);
     setStatus(state);
@@ -252,7 +254,7 @@ export default function DispatchWorkspace({
       .includes(search.toLowerCase()),
   );
   return (
-    <div className="app-shell">
+    <div className="app-shell planning-workspace">
       <aside className="sidebar">
         <Link className="brand" href="/" aria-label="RouteForge home">
           <span className="brand-mark">
@@ -318,7 +320,7 @@ export default function DispatchWorkspace({
                 {userName.includes("@") ? userName.split("@")[0] : userName}
               </strong>
               <small>
-                {signedIn ? "Private workspace" : "Sample workspace"}
+                {signedIn ? "Private workspace" : "Sign in to plan"}
               </small>
             </div>
             <MoreHorizontal size={17} />
@@ -336,7 +338,7 @@ export default function DispatchWorkspace({
             </strong>
           </div>
           <div className="topbar-right">
-            <span className="beta-tag">PORTFOLIO / 01</span>
+            <a className="button secondary small" href="/" target="_top">Main office ↗</a>
             {signedIn ? (
               <span className="private-label">
                 <span className="live-dot" />
@@ -418,21 +420,7 @@ export default function DispatchWorkspace({
                 <FolderOpen size={14} />
                 Save plan
               </button>
-              <button
-                className="text-button"
-                onClick={() => {
-                  load(
-                    structuredClone(demoScenario),
-                    initialResult,
-                    null,
-                    "Sample plan preview",
-                  );
-                  setMessage("Loaded synthetic Nairobi deliveries.");
-                }}
-              >
-                <RotateCcw size={14} />
-                <span className="reset-label">Load sample</span>
-              </button>
+              <a className="text-button" href="/planner" target="_top"><RotateCcw size={14}/> Reload company orders</a>
             </div>
           </div>
           {view === "dispatch" && (
@@ -473,7 +461,7 @@ export default function DispatchWorkspace({
                   detail="Based on your per-km fleet rates"
                 />
               </div>
-              <LiveDispatch scenario={scenario} result={result} signedIn={signedIn}/>
+              <section className="planner-office-link"><strong>Live deliveries stay connected to the office.</strong><p>This planner calculates routes, capacity and cost estimates. Its drafts do not assign work to a rider.</p><a className="button secondary small" href="/" target="_top">Open main office & dispatch →</a></section>
               <div className="dispatch-grid">
                 <div>
                   <div className="section-heading">
@@ -814,46 +802,15 @@ export default function DispatchWorkspace({
           )}
           {view === "fleet" && (
             <>
-              <LiveDispatch scenario={scenario} result={result} signedIn={signedIn}/>
+              <section className="planner-office-link"><strong>Live deliveries stay connected to the office.</strong><p>This planner calculates routes, capacity and cost estimates. Its drafts do not assign work to a rider.</p><a className="button secondary small" href="/" target="_top">Open main office & dispatch →</a></section>
               <div className="section-heading">
                 <div>
                   <h2>Vehicles & working hours</h2>
                   <p>
-                    Changes apply to your current draft. Save the plan to keep
-                    them.
+                    Paired company vehicles only. Capacity, shifts and rates apply to this planning draft; they do not override office duty status.
                   </p>
                 </div>
-                <button
-                  className="button secondary small"
-                  onClick={() => {
-                    if (scenario.vehicles.length >= 8) {
-                      setMessage("This release supports up to 8 vehicles.");
-                      return;
-                    }
-                    update({
-                      ...scenario,
-                      vehicles: [
-                        ...scenario.vehicles,
-                        {
-                          id: crypto.randomUUID(),
-                          name: `Van ${scenario.vehicles.length + 1}`,
-                          driver: "",
-                          capacity: 60,
-                          costPerKm: 30,
-                          shiftStart: 540,
-                          shiftEnd: 1080,
-                          active: true,
-                          color: ["#5078ed", "#c079dc", "#da9343", "#469c87"][
-                            scenario.vehicles.length % 4
-                          ],
-                        },
-                      ],
-                    });
-                  }}
-                >
-                  <Plus size={15} />
-                  Add vehicle
-                </button>
+                <a className="button secondary small" href="/tracking" target="_top"><Plus size={15}/> Onboard company vehicle</a>
               </div>
               <div className="fleet-grid">
                 {scenario.vehicles.map((v) => (
@@ -1314,17 +1271,14 @@ function FleetCard({
         Vehicle name
         <input
           value={v.name}
-          maxLength={80}
-          onChange={(e) => onUpdate({ ...v, name: e.target.value })}
+          readOnly
         />
       </label>
       <label>
         Driver
         <input
           value={v.driver}
-          maxLength={80}
-          placeholder="Driver name"
-          onChange={(e) => onUpdate({ ...v, driver: e.target.value })}
+          readOnly
         />
       </label>
       <div className="form-grid">

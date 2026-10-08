@@ -50,6 +50,7 @@ export type Device = {
   lastSeenAt: number | null;
   lastEventAt: number | null;
   lastEventKind: string | null;
+  rider?:{onDuty:boolean;gpsEnabled:boolean;appVersion:number;heartbeatAt:number};
   latestPoint:
     | (Extract<TrackingEvent, { kind: "point" }> & { receivedAt: number })
     | null;

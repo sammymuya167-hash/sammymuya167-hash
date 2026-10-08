@@ -29,6 +29,13 @@
       "when": 1791458420450,
       "tag": "0003_mixed_ego",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1791473744975,
+      "tag": "0004_rainy_sentinel",
+      "breakpoints": true
     }
   ]
 }

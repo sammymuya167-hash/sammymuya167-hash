@@ -12,14 +12,14 @@ import { PlacePicker } from "./place-picker";
 type Shared={data:OfficeData;devices:Device[];dispatches:Dispatch[];onChanged:()=>Promise<void>;onClose:()=>void};
 function DriverSelect({value,onChange,devices,profiles,dispatches,pickup}:{value:string;onChange:(id:string)=>void;devices:Device[];profiles:DriverProfile[];dispatches:Dispatch[];pickup?:Place|null}) {
   const choices=driverChoices(devices,profiles,dispatches,pickup),recommended=choices.find(c=>c.available);
-  return <div className="office-driver-choice"><label>Assign a company driver<select value={value} onChange={event=>onChange(event.target.value)}><option value="auto">Automatic · free driver with longest idle time</option>{choices.map(c=><option key={c.device.id} value={c.device.id} disabled={!c.available}>{c.device.driverName} · {c.device.vehicleLabel||"Linked vehicle"} · {c.reason}</option>)}</select></label><p><UserRound size={15}/>{value==="auto"?recommended?`Suggested: ${recommended.device.driverName}${recommended.pickupMeters!=null?` · ${(recommended.pickupMeters/1000).toFixed(1)} km straight-line from pickup`:""}`:"No free driver with fresh GPS. Save the request to the queue.":"Manual assignment — availability is rechecked when you dispatch."}</p><small>Only paired company drivers appear. Busy, off-duty or delayed devices cannot receive a new dispatch. Ties use pickup proximity.</small></div>;
+  return <div className="office-driver-choice"><label>Assign a company driver<select value={value} onChange={event=>onChange(event.target.value)}><option value="offer">Broadcast · 5 seconds to accept, then a random free rider</option><option value="auto">Automatic · free driver with longest idle time</option>{choices.map(c=><option key={c.device.id} value={c.device.id} disabled={!c.available}>{c.device.driverName} · {c.device.vehicleLabel||"Linked vehicle"} · {c.reason}</option>)}</select></label><p><UserRound size={15}/>{value==="offer"?"All eligible riders get an offer. First server acceptance wins; after 5 seconds a free driver is selected randomly.":value==="auto"?recommended?`Suggested: ${recommended.device.driverName}${recommended.pickupMeters!=null?` · ${(recommended.pickupMeters/1000).toFixed(1)} km straight-line from pickup`:""}`:"No free driver with fresh GPS. Save the request to the queue.":"Manual assignment — availability is rechecked when you dispatch."}</p><small>Only paired company drivers appear. Busy, off-duty or delayed devices cannot receive a new dispatch. Ties use pickup proximity.</small></div>;
 }
 export function NewOrderForm({data,devices,dispatches,onChanged,onClose,initialDriver,previous=[]}:Shared&{initialDriver?:string;previous?:Place[]}){
-  const [requestId]=useState(()=>crypto.randomUUID()),[title,setTitle]=useState(""),[notes,setNotes]=useState("");
+  const [requestId]=useState(()=>crypto.randomUUID()),[title,setTitle]=useState(""),[notes,setNotes]=useState(""),[amountDue,setAmountDue]=useState("");
   const [pickup,setPickup]=useState<Place|null>(data.settings.location?{...data.settings.location,name:data.settings.name,source:"office"}:null),[destination,setDestination]=useState<Place|null>(null);
-  const [driver,setDriver]=useState(initialDriver??"auto"),[remember,setRemember]=useState(false),[busy,setBusy]=useState(false),[error,setError]=useState("");
+  const [driver,setDriver]=useState(initialDriver&&initialDriver!=="auto"?initialDriver:"offer"),[remember,setRemember]=useState(false),[busy,setBusy]=useState(false),[error,setError]=useState("");
   const [created,setCreated]=useState<OfficeOrder|null>(null);
-  const choices=driverChoices(devices,data.profiles,dispatches,pickup),available=driver==="auto"?choices.some(c=>c.available):choices.some(c=>c.device.id===driver&&c.available);
+  const choices=driverChoices(devices,data.profiles,dispatches,pickup),available=(driver==="auto"||driver==="offer")?choices.some(c=>c.available):choices.some(c=>c.device.id===driver&&c.available);
   async function submit(dispatch:boolean){
     if(!created&&(!title.trim()||!pickup||!destination)){setError("Name the request and select both pickup and delivery locations.");return;}
     setBusy(true);setError("");
@@ -28,9 +28,9 @@ export function NewOrderForm({data,devices,dispatches,onChanged,onClose,initialD
       if(!order){
         let target=destination!;
         if(remember&&!target.partnerId){const partner=await fleetApi<{id:string;name:string;location:Place}>("/api/office/partners","POST",{name:target.name,location:target,phone:"",contact:""});target={...partner.location,name:partner.name,source:"partner",partnerId:partner.id};setDestination(target);}
-        order=await fleetApi<OfficeOrder>("/api/office/orders","POST",{id:requestId,title:title.trim(),pickup,destination:target,notes:notes.trim()});setCreated(order);
+        order=await fleetApi<OfficeOrder>("/api/office/orders","POST",{id:requestId,title:title.trim(),pickup,destination:target,notes:notes.trim(),amountDue:amountDue.trim()?Number(amountDue):null});setCreated(order);
       }
-      if(dispatch){const current=data.orders.find(o=>o.id===order!.id)??order;setCreated(await fleetApi<OfficeOrder>("/api/office/orders","PATCH",{id:current.id,version:current.version,action:"assign",deviceId:driver}));}
+      if(dispatch){const current=data.orders.find(o=>o.id===order!.id)??order;setCreated(await fleetApi<OfficeOrder>("/api/office/orders","PATCH",{id:current.id,version:current.version,action:driver==="offer"?"offer":"assign",...(driver==="offer"?{}:{deviceId:driver})}));}
       await onChanged();onClose();
     }catch(e){setError(e instanceof Error?e.message:"Could not save the delivery request.");await onChanged().catch(()=>{});}finally{setBusy(false);}
   }
@@ -41,18 +41,19 @@ export function NewOrderForm({data,devices,dispatches,onChanged,onClose,initialD
       {data.settings.location&&<button type="button" className="office-inline-button" onClick={()=>setPickup({...data.settings.location!,name:data.settings.name,source:"office"})}>Use main office as pickup</button>}
       <PlacePicker label="Deliver to" value={destination} onChange={setDestination} partners={data.partners} previous={previous} initialCenter={pickup??data.settings.location??undefined}/>
       {destination&&!destination.partnerId&&<label className="office-checkbox"><input type="checkbox" checked={remember} onChange={e=>setRemember(e.target.checked)}/> Register this destination as a partner for future deliveries</label>}
+      <label>Expected customer payment / pay on delivery (KSh)<input type="number" min={0} max={10000000} step="0.01" value={amountDue} onChange={e=>setAmountDue(e.target.value)} placeholder="Leave blank if not yet known"/><small>Riders report the actual amount received after delivery. The office reviews each payment.</small></label>
       <label>Collection / delivery instructions<textarea value={notes} onChange={e=>setNotes(e.target.value)} maxLength={1000} rows={2} placeholder="Contact person, parcel reference or entrance instructions"/></label>
     </fieldset>
     <DriverSelect value={driver} onChange={setDriver} devices={devices} profiles={data.profiles} dispatches={dispatches} pickup={pickup}/>
     {error&&<p role="alert" className="office-form-error">{error}{created?" Your saved request is retained. Check its latest office status.":""}</p>}
     <div className="office-form-actions"><button type="button" className="office-secondary" disabled={busy} onClick={()=>created?onClose():void submit(false)}>{created?"Close":"Save to queue"}</button><button className="tracking-primary" disabled={busy||!available||!!created&&(data.orders.find(o=>o.id===created.id)??created).status!=="queued"}><Send size={16}/>{busy?"Saving…":created?"Dispatch saved request":"Create & dispatch"}</button></div>
-    <p className="office-note">The driver app keeps recording as it does now. The office tracks this assignment; driver-side route guidance will be added in the later app update.</p>
+    <p className="office-note">The Rider app shows the destination, collection and delivery controls, and cash / till payment reporting. Offline riders cannot accept a timed offer; unavailable requests remain saved in the queue.</p>
   </form></OfficeModal>;
 }
 export function AssignOrderForm({order,data,devices,dispatches,onChanged,onClose}:Shared&{order:OfficeOrder}){
-  const [driver,setDriver]=useState("auto"),[busy,setBusy]=useState(false),[error,setError]=useState("");
-  const choices=driverChoices(devices,data.profiles,dispatches,order.pickup),available=driver==="auto"?choices.some(c=>c.available):choices.some(c=>c.device.id===driver&&c.available);
-  async function submit(event:React.FormEvent){event.preventDefault();setBusy(true);setError("");try{await fleetApi("/api/office/orders","PATCH",{id:order.id,version:order.version,action:"assign",deviceId:driver});await onChanged();onClose();}catch(e){setError(e instanceof Error?e.message:"Dispatch failed.");await onChanged().catch(()=>{});}finally{setBusy(false);}}
+  const [driver,setDriver]=useState("offer"),[busy,setBusy]=useState(false),[error,setError]=useState("");
+  const choices=driverChoices(devices,data.profiles,dispatches,order.pickup),available=(driver==="auto"||driver==="offer")?choices.some(c=>c.available):choices.some(c=>c.device.id===driver&&c.available);
+  async function submit(event:React.FormEvent){event.preventDefault();setBusy(true);setError("");try{await fleetApi("/api/office/orders","PATCH",{id:order.id,version:order.version,action:driver==="offer"?"offer":"assign",...(driver==="offer"?{}:{deviceId:driver})});await onChanged();onClose();}catch(e){setError(e instanceof Error?e.message:"Dispatch failed.");await onChanged().catch(()=>{});}finally{setBusy(false);}}
   return <OfficeModal title={`Dispatch ${order.title}`} onClose={onClose}><form className="office-form" onSubmit={submit}><div className="office-route-summary"><strong>Collect: {order.pickup.name}</strong><span>Deliver: {order.destination.name}</span></div><DriverSelect value={driver} onChange={setDriver} devices={devices} profiles={data.profiles} dispatches={dispatches} pickup={order.pickup}/>{error&&<p role="alert" className="office-form-error">{error}</p>}<div className="office-form-actions"><button type="button" className="office-secondary" onClick={onClose}>Back to office</button><button className="tracking-primary" disabled={busy||!available}><Send size={16}/>{busy?"Dispatching…":"Dispatch driver"}</button></div></form></OfficeModal>;
 }
 export function PartnerForm({data,devices,onChanged,onClose}:Pick<Shared,"data"|"devices"|"onChanged"|"onClose">){

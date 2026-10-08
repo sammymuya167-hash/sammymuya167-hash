@@ -33,10 +33,11 @@ export const orderInput = z.object({
   id: z.string().uuid(), title: z.string().trim().min(1).max(100),
   pickup: placeInput, destination: placeInput,
   notes: z.string().trim().max(1000).default(""),
+  amountDue: z.number().finite().min(0).max(10000000).refine(v=>Math.abs(v*100-Math.round(v*100))<0.000001,"Use at most two decimal places.").nullable().default(null),
 }).strict();
-export type OrderStatus = "queued" | "assigned" | "pickup_arrived" | "en_route" | "arrived" | "delivered" | "cancelled";
+export type OrderStatus = "queued" | "offered" | "assigned" | "pickup_arrived" | "en_route" | "arrived" | "delivered" | "cancelled";
 export const orderStatusLabels: Record<OrderStatus, string> = {
-  queued: "Awaiting driver", assigned: "Heading to pickup", pickup_arrived: "At pickup",
+  queued: "Awaiting driver", offered: "Offered to riders", assigned: "Heading to pickup", pickup_arrived: "At pickup",
   en_route: "On delivery", arrived: "At destination", delivered: "Delivered", cancelled: "Cancelled",
 };
 export type OfficeOrder = z.infer<typeof orderInput> & {
@@ -46,8 +47,17 @@ export type OfficeOrder = z.infer<typeof orderInput> & {
   deliveredAt: number | null; updatedAt: number; version: number;
   estimatedKm: number | null; measuredKm: number; excludedSegments: number;
   ratePerKm: number | null; distanceCheckedAt: number;
+  offerDeadline?: number | null; completionSource?: "office"|"driver"; driverIssue?: string | null;
 };
-export type OfficeData = { orders: OfficeOrder[]; partners: Partner[]; profiles: DriverProfile[]; settings: OfficeSettings; serverTime: number };
+export type Payment = {orderId:string;deviceId:string;driverName:string;method:"cash"|"till";amountMinor:number;reference:string;reportedAt:number;status:"reported"|"verified"|"void";verifiedAt:number|null;version:number};
+export type SalesSummary = {reportedMinor:number;verifiedMinor:number;cashMinor:number;tillMinor:number;expectedMinor:number;pendingReview:number;unpaidDelivered:number;delivered:number;todayMinor:number;measuredKm:number;estimatedDriverCostMinor:number};
+export type OfficeData = { orders: OfficeOrder[]; partners: Partner[]; profiles: DriverProfile[]; settings: OfficeSettings; serverTime: number; payments?:Payment[];sales?:SalesSummary };
+export function amountMinor(value:number){return Math.round(value*100);}
+export function moneyExact(minor:number){return `KSh ${(minor/100).toLocaleString("en-KE",{minimumFractionDigits:2,maximumFractionDigits:2})}`;}
+export function salesSummary(orders:OfficeOrder[],payments:Payment[],now=Date.now()):SalesSummary{
+  const active=payments.filter(p=>p.status!=="void"),today=new Intl.DateTimeFormat("en-CA",{timeZone:"Africa/Nairobi"}).format(now);
+  return {reportedMinor:active.reduce((s,p)=>s+p.amountMinor,0),verifiedMinor:active.filter(p=>p.status==="verified").reduce((s,p)=>s+p.amountMinor,0),cashMinor:active.filter(p=>p.method==="cash").reduce((s,p)=>s+p.amountMinor,0),tillMinor:active.filter(p=>p.method==="till").reduce((s,p)=>s+p.amountMinor,0),expectedMinor:orders.filter(o=>o.status!=="cancelled").reduce((s,o)=>s+amountMinor(o.amountDue??0),0),pendingReview:active.filter(p=>p.status==="reported").length,unpaidDelivered:orders.filter(o=>o.status==="delivered"&&!active.some(p=>p.orderId===o.id)).length,delivered:orders.filter(o=>o.status==="delivered").length,todayMinor:active.filter(p=>new Intl.DateTimeFormat("en-CA",{timeZone:"Africa/Nairobi"}).format(p.reportedAt)===today).reduce((s,p)=>s+p.amountMinor,0),measuredKm:orders.reduce((s,o)=>s+o.measuredKm,0),estimatedDriverCostMinor:orders.reduce((s,o)=>s+amountMinor(o.measuredKm*(o.ratePerKm??0)),0)};
+}
 export function isOpenOrder(order: OfficeOrder) { return order.status !== "delivered" && order.status !== "cancelled"; }
 export function phoneLink(phone: string) {
   const normalized = phone.replace(/[ ()-]/g, "");
@@ -57,7 +67,7 @@ export function driverChoices(devices: Device[], profiles: DriverProfile[], disp
   return devices.filter(d => d.pairedAt && !d.revokedAt).map(device => {
     const profile = profiles.find(p => p.deviceId === device.id);
     const busy = dispatches.some(d => d.deviceId === device.id && d.stops.some(s => !s.deliveredAt));
-    const reason = profile?.onDuty === false ? "Off duty" : busy ? "On an active order" : device.status !== "live" ? "Waiting for live GPS" : "Available";
+    const reason = profile?.onDuty === false || device.rider?.onDuty===false ? "Off duty" : busy ? "On an active order" : device.status !== "live" ? "Waiting for live GPS" : "Available";
     return {
       device, profile, available: reason === "Available", reason,
       lastAssignedAt: Math.max(profile?.lastAssignedAt ?? 0, profile?.lastReleasedAt ?? 0),

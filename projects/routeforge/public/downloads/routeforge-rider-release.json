@@ -1,0 +1,17 @@
+{
+  "app": "RouteForge Rider",
+  "applicationId": "app.shadownet.routeforge.rider",
+  "versionCode": 2,
+  "versionName": "1.0-rider",
+  "minimumAndroidApi": 26,
+  "targetAndroidApi": 35,
+  "apkPath": "/downloads/routeforge-rider.apk",
+  "apkSha256": "552ea88f006d2d12d590e675b8fbdd96090d2e274750cce05575abcc5f738efd",
+  "certificateSha256": "e0c3213d4cbb6cc15c5792d8f7ffecaa6758b963d6998b9afc9511c6c45dc72c",
+  "sourceCommit": "1a9a3419c18ae53402fca2e47da0f3e0f6f7ac5c",
+  "buildCheckoutCommit": "be49b78907d8f2443b11070a3871d0532c999920",
+  "workflowRun": 37811923084,
+  "unsignedArtifactId": 11565158726,
+  "androidChecks": 7,
+  "migration": "Install alongside pilot after its queue is synced and stopped; use an existing-driver upgrade code."
+}

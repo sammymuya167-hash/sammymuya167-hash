@@ -1,0 +1,91 @@
+import { env } from "cloudflare:workers";
+import { z } from "zod";
+import { authenticateDevice, unlinkDevice } from "./tracking-store";
+import { TrackingError } from "./tracking";
+import { listDispatches } from "./dispatch-store";
+import type { Dispatch } from "./dispatch";
+import { syncOfficeDispatch } from "./office-sync";
+import { claimOffer, reconcileOffers } from "./offer-store";
+import { amountMinor, type OfficeOrder, type Payment } from "./office";
+const db=()=>env.DB as D1Database;
+export type DriverIdentity={id:string;hash:string;owner:string};
+export async function driverIdentity(request:Request):Promise<DriverIdentity>{
+  const device=await authenticateDevice(request);
+  const row=await db().prepare("SELECT owner_id FROM tracking_devices WHERE id=? AND token_hash=? AND revoked_at IS NULL").bind(device.id,device.hash).first<{owner_id:string}>();
+  if(!row)throw new TrackingError(401,"This device link is no longer active.");
+  return {...device,owner:row.owner_id};
+}
+export async function driverState(device:DriverIdentity,payload:unknown){
+  const parsed=z.object({appVersion:z.number().int().min(2).max(10000),onDuty:z.boolean(),gpsEnabled:z.boolean()}).strict().safeParse(payload);
+  if(!parsed.success)throw new TrackingError(422,"Send the rider app's duty and location state.");
+  const now=Date.now(),input=parsed.data;
+  await db().prepare("INSERT INTO driver_runtime(device_id,owner_id,app_version,on_duty,gps_enabled,heartbeat_at) SELECT id,?,?,?,?,? FROM tracking_devices WHERE id=? AND owner_id=? AND token_hash=? AND revoked_at IS NULL ON CONFLICT(device_id) DO UPDATE SET app_version=excluded.app_version,on_duty=excluded.on_duty,gps_enabled=excluded.gps_enabled,heartbeat_at=excluded.heartbeat_at WHERE driver_runtime.heartbeat_at<? OR driver_runtime.on_duty<>excluded.on_duty OR driver_runtime.gps_enabled<>excluded.gps_enabled OR driver_runtime.app_version<>excluded.app_version").bind(device.owner,input.appVersion,Number(input.onDuty),Number(input.gpsEnabled),now,device.id,device.owner,device.hash,now-10000).run();
+  await reconcileOffers(device.owner);
+  const dispatches=await listDispatches(device.owner),assignment=dispatches.find(d=>d.deviceId===device.id)??null;
+  if(assignment)await syncOfficeDispatch(device.owner,assignment);
+  const [deviceRow,orders,payment,offers]=await Promise.all([
+    db().prepare("SELECT driver_name,vehicle_label,phone_label,last_event_kind,latest_point_json FROM tracking_devices WHERE id=? AND owner_id=?").bind(device.id,device.owner).first<{driver_name:string;vehicle_label:string;phone_label:string;last_event_kind:string;latest_point_json:string|null}>(),
+    db().prepare("SELECT payload_json FROM office_orders WHERE owner_id=? AND device_id=? ORDER BY updated_at DESC LIMIT 10").bind(device.owner,device.id).all<{payload_json:string}>(),
+    db().prepare("SELECT payload_json FROM office_payments WHERE owner_id=? AND device_id=? ORDER BY updated_at DESC LIMIT 10").bind(device.owner,device.id).all<{payload_json:string}>(),
+    db().prepare("SELECT o.payload_json FROM office_orders o JOIN order_offers f ON f.order_id=o.id WHERE f.owner_id=? AND o.status='offered' AND f.expires_at>? AND EXISTS(SELECT 1 FROM json_each(f.eligible_json) WHERE value=?) ORDER BY f.expires_at LIMIT 5").bind(device.owner,now,device.id).all<{payload_json:string}>(),
+  ]);
+  const totals=await db().prepare("SELECT COALESCE(SUM(CASE WHEN status<>'void' THEN amount_minor ELSE 0 END),0) AS reportedMinor,COALESCE(SUM(CASE WHEN status='verified' THEN amount_minor ELSE 0 END),0) AS verifiedMinor,COALESCE(SUM(CASE WHEN status<>'void' AND json_extract(payload_json,'$.method')='cash' THEN amount_minor ELSE 0 END),0) AS cashMinor,COALESCE(SUM(CASE WHEN status<>'void' AND json_extract(payload_json,'$.method')='till' THEN amount_minor ELSE 0 END),0) AS tillMinor FROM office_payments WHERE owner_id=? AND device_id=?").bind(device.owner,device.id).first();
+  const assignedOrders=orders.results.map(r=>JSON.parse(r.payload_json) as OfficeOrder),pending=assignment?.stops.some(s=>!s.deliveredAt);
+  return {totals,deviceId:device.id,driverName:deviceRow?.driver_name,vehicleLabel:deviceRow?.vehicle_label,phone:deviceRow?.phone_label,assignment,order:assignedOrders.find(o=>o.dispatchId===assignment?.id)??null,recentOrders:assignedOrders,payments:payment.results.map(r=>JSON.parse(r.payload_json) as Payment),offers:pending||!input.onDuty?[]:offers.results.map(r=>JSON.parse(r.payload_json) as OfficeOrder),canStop:!pending,serverTime:Date.now()};
+}
+const actionInput=z.object({operationId:z.string().uuid(),action:z.enum(["start_duty","stop_duty","pause","accept","collected","delivered","payment","unlink"]),orderId:z.string().uuid().optional(),dispatchId:z.string().uuid().optional(),stopId:z.string().trim().min(1).max(80).optional(),method:z.enum(["cash","till"]).optional(),amount:z.number().finite().min(0).max(10000000).refine(v=>Math.abs(v*100-Math.round(v*100))<0.000001).optional(),reference:z.string().trim().max(80).default("")}).strict();
+export async function driverAction(device:DriverIdentity,payload:unknown){
+  const parsed=actionInput.safeParse(payload);if(!parsed.success)throw new TrackingError(422,"Check the rider action and payment amount.");
+  const input=parsed.data,request=JSON.stringify(input),old=await db().prepare("SELECT request_json,response_json FROM driver_receipts WHERE device_id=? AND operation_id=? AND owner_id=?").bind(device.id,input.operationId,device.owner).first<{request_json:string;response_json:string}>();
+  if(old){if(old.request_json!==request)throw new TrackingError(409,"This action ID was already used with different details.");return JSON.parse(old.response_json);}
+  const now=Date.now();let result:unknown;
+  if(input.action==="unlink"){await unlinkDevice(device.owner,device.id);result={ok:true,unlinked:true};}
+  else if(["start_duty","stop_duty","pause"].includes(input.action)){
+    const current=await db().prepare("SELECT dispatch_json FROM driver_dispatches WHERE device_id=? AND owner_id=?").bind(device.id,device.owner).first<{dispatch_json:string}>();
+    const dispatch=current?JSON.parse(current.dispatch_json) as Dispatch:null;
+    if(input.action==="stop_duty"&&dispatch?.stops.some(s=>!s.deliveredAt))throw new TrackingError(409,"Finish the current delivery before stopping duty. Emergency location withdrawal remains available.");
+    const on=input.action==="start_duty";
+    const dutyResult=await db().batch([
+      db().prepare("UPDATE driver_runtime SET on_duty=?,heartbeat_at=? WHERE device_id=? AND owner_id=? AND (?<>'stop_duty' OR NOT EXISTS(SELECT 1 FROM driver_dispatches d,json_each(d.dispatch_json,'$.stops') s WHERE d.device_id=driver_runtime.device_id AND d.owner_id=driver_runtime.owner_id AND json_extract(s.value,'$.deliveredAt') IS NULL)) RETURNING device_id").bind(Number(on),now,device.id,device.owner,input.action),
+      db().prepare("UPDATE office_driver_profiles SET profile_json=json_set(profile_json,'$.onDuty',json(?)),updated_at=? WHERE device_id=? AND owner_id=? AND EXISTS(SELECT 1 FROM driver_runtime r WHERE r.device_id=office_driver_profiles.device_id AND r.owner_id=office_driver_profiles.owner_id AND r.on_duty=? AND r.heartbeat_at=?)").bind(JSON.stringify(on),now,device.id,device.owner,Number(on),now),
+      db().prepare("UPDATE office_orders SET payload_json=json_set(payload_json,'$.driverIssue',?,'$.updatedAt',?,'$.version',version+1),version=version+1,updated_at=? WHERE device_id=? AND owner_id=? AND status NOT IN ('delivered','cancelled')").bind(input.action==="pause"?"Rider stopped location sharing before completing delivery; office follow-up required":null,now,now,device.id,device.owner),
+    ]);if(!dutyResult[0].results.length)throw new TrackingError(409,"A delivery was assigned as duty changed. Refresh before ending duty.");result={ok:true,onDuty:on};
+  }else if(input.action==="accept"){
+    if(!input.orderId)throw new TrackingError(422,"Choose the offered order.");
+    const order=await claimOffer(device.owner,device.id,input.orderId);result={ok:true,order};
+  }else if(input.action==="payment"){
+    if(!input.orderId||input.amount==null||!input.method)throw new TrackingError(422,"Choose cash or company till and enter the amount actually received.");
+    const row=await db().prepare("SELECT payload_json FROM office_orders WHERE id=? AND owner_id=? AND device_id=? AND status='delivered'").bind(input.orderId,device.owner,device.id).first<{payload_json:string}>();
+    if(!row)throw new TrackingError(409,"Finish your assigned delivery before recording payment.");
+    const order=JSON.parse(row.payload_json) as OfficeOrder,payment:Payment={orderId:order.id,deviceId:device.id,driverName:order.driverName??"Company rider",method:input.method,amountMinor:amountMinor(input.amount),reference:input.reference,reportedAt:now,status:"reported",verifiedAt:null,version:1};
+    const added=await db().prepare("INSERT INTO office_payments(order_id,owner_id,device_id,status,amount_minor,payload_json,updated_at,version) VALUES(?,?,?,'reported',?,?,?,1) ON CONFLICT(order_id) DO NOTHING RETURNING order_id").bind(order.id,device.owner,device.id,payment.amountMinor,JSON.stringify(payment),now).first();
+    if(!added){const existing=await db().prepare("SELECT payload_json FROM office_payments WHERE order_id=? AND owner_id=? AND device_id=?").bind(order.id,device.owner,device.id).first<{payload_json:string}>();const p=existing?JSON.parse(existing.payload_json) as Payment:null;if(!p||p.method!==payment.method||p.amountMinor!==payment.amountMinor||p.reference!==payment.reference||p.status==="void")throw new TrackingError(409,"Payment is already recorded. Ask the office to review it.");result={ok:true,payment:p};}else result={ok:true,payment};
+  }else{
+    const row=await db().prepare("SELECT dispatch_json,revision FROM driver_dispatches WHERE device_id=? AND owner_id=?").bind(device.id,device.owner).first<{dispatch_json:string;revision:number}>();
+    if(!row)throw new TrackingError(404,"No assignment is active on this rider phone.");
+    const dispatch=JSON.parse(row.dispatch_json) as Dispatch;
+    if(input.dispatchId!==dispatch.id||input.orderId&&input.orderId!==dispatch.orderId)throw new TrackingError(409,"This assignment changed. Refresh your rider app.");
+    const index=dispatch.stops.findIndex(s=>!s.deliveredAt),target=dispatch.orderId?(input.action==="collected"?0:dispatch.stops.length-1):dispatch.stops.findIndex(s=>s.id===input.stopId);
+    if(target<0)throw new TrackingError(422,"Choose the stop from this assignment.");
+    if(dispatch.stops[target]?.deliveredAt){result={ok:true,finished:input.action==="delivered"&&target===dispatch.stops.length-1};}
+    else{
+      if(index!==target)throw new TrackingError(409,input.action==="collected"?"Collection was already recorded.":"Confirm collection before finishing delivery.");
+      const next={...dispatch,stops:dispatch.stops.map((s,i)=>i===target?{...s,deliveredAt:now}:s),revision:row.revision+1,checkedAt:0,updatedAt:now};
+      const changed=await db().prepare("UPDATE driver_dispatches SET dispatch_json=?,revision=revision+1,updated_at=? WHERE device_id=? AND owner_id=? AND revision=? AND dispatch_json=? RETURNING device_id").bind(JSON.stringify(next),now,device.id,device.owner,row.revision,row.dispatch_json).first();
+      if(!changed)throw new TrackingError(409,"The assignment changed while confirming. Refresh and retry.");
+      await syncOfficeDispatch(device.owner,next);
+      if(dispatch.orderId)await db().prepare("UPDATE office_orders SET payload_json=json_set(payload_json,'$.completionSource','driver','$.driverIssue',null) WHERE id=? AND owner_id=? AND dispatch_id=?").bind(dispatch.orderId,device.owner,dispatch.id).run();
+      result={ok:true,finished:input.action==="delivered"&&target===dispatch.stops.length-1};
+    }
+  }
+  const response=JSON.stringify(result);
+  await db().prepare("INSERT INTO driver_receipts(device_id,operation_id,owner_id,request_json,response_json,created_at) VALUES(?,?,?,?,?,?) ON CONFLICT(device_id,operation_id) DO NOTHING").bind(device.id,input.operationId,device.owner,request,response,now).run();
+  return result;
+}
+export async function reviewPayment(owner:string,payload:unknown){
+  const parsed=z.object({orderId:z.string().uuid(),version:z.number().int().positive(),status:z.enum(["verified","void"])}).strict().safeParse(payload);
+  if(!parsed.success)throw new TrackingError(422,"Select the payment record to review.");
+  const {orderId,version,status}=parsed.data,now=Date.now();
+  const changed=await db().prepare("UPDATE office_payments SET status=?,payload_json=json_set(payload_json,'$.status',?,'$.verifiedAt',?,'$.version',version+1),version=version+1,updated_at=? WHERE order_id=? AND owner_id=? AND version=? AND status='reported' RETURNING order_id").bind(status,status,status==="verified"?now:null,now,orderId,owner,version).first();
+  if(!changed)throw new TrackingError(409,"The payment was already reviewed or is not in your office.");return {ok:true};
+}

@@ -1,16 +1,17 @@
 import { env } from "cloudflare:workers";
 import { z } from "zod";
 import { TrackingError } from "./tracking";
-import { listDevices } from "./tracking-store";
 import { changeDispatch, listDispatches } from "./dispatch-store";
-import { distanceMeters, type Dispatch } from "./dispatch";
-import { driverChoices, driverProfileInput, orderInput, partnerInput, settingsInput, type OfficeData, type OfficeOrder, type OfficeSettings, type DriverProfile, type Partner, type Place } from "./office";
+import type { Dispatch } from "./dispatch";
+import { driverProfileInput, orderInput, partnerInput, settingsInput, salesSummary, type Payment, type OfficeData, type OfficeOrder, type OfficeSettings, type DriverProfile, type Partner, type Place } from "./office";
 import { syncOfficeDispatch } from "./office-sync";
+import { assignOrder, type OrderRow } from "./assignment-store";
+import { offerOrder, reconcileOffers } from "./offer-store";
 
 const db = () => env.DB as D1Database;
-type OrderRow = { payload_json:string;input_json:string;version:number;dispatch_id:string|null };
 const parse = <T>(row:{payload_json:string}) => JSON.parse(row.payload_json) as T;
 export async function officeData(owner:string):Promise<OfficeData> {
+  await reconcileOffers(owner);
   // A portal refresh also recovers a dispatch sync interrupted after durable GPS.
   const dispatches=await listDispatches(owner);
   await Promise.all(dispatches.map(d=>syncOfficeDispatch(owner,d)));
@@ -20,7 +21,13 @@ export async function officeData(owner:string):Promise<OfficeData> {
     db().prepare("SELECT profile_json FROM office_driver_profiles WHERE owner_id=?").bind(owner).all<{profile_json:string}>(),
     db().prepare("SELECT payload_json FROM office_settings WHERE owner_id=?").bind(owner).first<{payload_json:string}>(),
   ]);
-  return {orders:orders.results.map(r=>parse<OfficeOrder>(r)),partners:partners.results.map(r=>parse<Partner>(r)),profiles:profiles.results.map(r=>JSON.parse(r.profile_json) as DriverProfile),settings:settings?parse<OfficeSettings>(settings):{name:"SHADOWNET Office",location:null},serverTime:Date.now()};
+  const payments=await db().prepare("SELECT payload_json FROM office_payments WHERE owner_id=? ORDER BY updated_at DESC LIMIT 500").bind(owner).all<{payload_json:string}>();
+  const orderList=orders.results.map(r=>parse<OfficeOrder>(r)),paymentList=payments.results.map(r=>parse<Payment>(r));
+  const totals=await db().prepare("SELECT COALESCE(SUM(CASE WHEN status<>'void' THEN amount_minor ELSE 0 END),0) AS reportedMinor,COALESCE(SUM(CASE WHEN status='verified' THEN amount_minor ELSE 0 END),0) AS verifiedMinor,COALESCE(SUM(CASE WHEN status<>'void' AND json_extract(payload_json,'$.method')='cash' THEN amount_minor ELSE 0 END),0) AS cashMinor,COALESCE(SUM(CASE WHEN status<>'void' AND json_extract(payload_json,'$.method')='till' THEN amount_minor ELSE 0 END),0) AS tillMinor,COALESCE(SUM(CASE WHEN status='reported' THEN 1 ELSE 0 END),0) AS pendingReview FROM office_payments WHERE owner_id=?").bind(owner).first<Pick<ReturnType<typeof salesSummary>,"reportedMinor"|"verifiedMinor"|"cashMinor"|"tillMinor"|"pendingReview">>();
+  const todayStart=Math.floor((Date.now()+10800000)/86400000)*86400000-10800000;
+  const allOrders=await db().prepare("SELECT COALESCE(SUM(CASE WHEN o.status<>'cancelled' THEN ROUND(COALESCE(json_extract(o.payload_json,'$.amountDue'),0)*100) ELSE 0 END),0) AS expectedMinor,COALESCE(SUM(CASE WHEN o.status='delivered' THEN 1 ELSE 0 END),0) AS delivered,COALESCE(SUM(CASE WHEN o.status='delivered' AND NOT EXISTS(SELECT 1 FROM office_payments p WHERE p.order_id=o.id AND p.owner_id=o.owner_id AND p.status<>'void') THEN 1 ELSE 0 END),0) AS unpaidDelivered,COALESCE(SUM(json_extract(o.payload_json,'$.measuredKm')),0) AS measuredKm,COALESCE(SUM(ROUND(COALESCE(json_extract(o.payload_json,'$.measuredKm'),0)*COALESCE(json_extract(o.payload_json,'$.ratePerKm'),0)*100)),0) AS estimatedDriverCostMinor FROM office_orders o WHERE o.owner_id=?").bind(owner).first<Pick<ReturnType<typeof salesSummary>,"expectedMinor"|"delivered"|"unpaidDelivered"|"measuredKm"|"estimatedDriverCostMinor">>();
+  const today=await db().prepare("SELECT COALESCE(SUM(amount_minor),0) AS todayMinor FROM office_payments WHERE owner_id=? AND status<>'void' AND json_extract(payload_json,'$.reportedAt')>=? AND json_extract(payload_json,'$.reportedAt')<?").bind(owner,todayStart,todayStart+86400000).first<{todayMinor:number}>();
+  return {orders:orderList,partners:partners.results.map(r=>parse<Partner>(r)),profiles:profiles.results.map(r=>JSON.parse(r.profile_json) as DriverProfile),settings:settings?parse<OfficeSettings>(settings):{name:"SHADOWNET Office",location:null},payments:paymentList,sales:{...salesSummary(orderList,paymentList),...totals,...allOrders,...today},serverTime:Date.now()};
 }
 async function resolvePlace(owner:string,place:Place) {
   if(!place.partnerId)return place;
@@ -33,11 +40,11 @@ export async function createOrder(owner:string,payload:unknown) {
   const parsed=orderInput.safeParse(payload);
   if(!parsed.success)throw new TrackingError(422,"Add a title and select valid pickup and delivery locations.");
   const input=parsed.data,existing=await db().prepare("SELECT payload_json,input_json FROM office_orders WHERE id=? AND owner_id=?").bind(input.id,owner).first<OrderRow>();
-  if(existing){if(existing.input_json!==JSON.stringify(input))throw new TrackingError(409,"This request was already saved with different details.");return parse<OfficeOrder>(existing);}
+  if(existing){if(JSON.stringify(orderInput.parse(JSON.parse(existing.input_json)))!==JSON.stringify(input))throw new TrackingError(409,"This request was already saved with different details.");return parse<OfficeOrder>(existing);}
   const [pickup,destination]=await Promise.all([resolvePlace(owner,input.pickup),resolvePlace(owner,input.destination)]);
   const now=Date.now(),order:OfficeOrder={...input,pickup,destination,status:"queued",deviceId:null,dispatchId:null,driverName:null,vehicleLabel:null,createdAt:now,assignedAt:null,pickedUpAt:null,arrivedAt:null,deliveredAt:null,updatedAt:now,version:1,estimatedKm:null,measuredKm:0,excludedSegments:0,ratePerKm:null,distanceCheckedAt:0};
   const inserted=await db().prepare("INSERT INTO office_orders(id,owner_id,status,input_json,payload_json,version,updated_at) SELECT ?,?,'queued',?,?,1,? WHERE (SELECT COUNT(*) FROM office_orders WHERE owner_id=? AND status NOT IN ('cancelled','delivered')) < 300 ON CONFLICT(id) DO NOTHING RETURNING id").bind(order.id,owner,JSON.stringify(input),JSON.stringify(order),now,owner).first();
-  if(!inserted){const retry=await db().prepare("SELECT payload_json,input_json FROM office_orders WHERE id=? AND owner_id=?").bind(order.id,owner).first<OrderRow>();if(retry&&retry.input_json===JSON.stringify(input))return parse<OfficeOrder>(retry);throw new TrackingError(409,"Could not save this request. Check the active order limit or refresh.");}
+  if(!inserted){const retry=await db().prepare("SELECT payload_json,input_json FROM office_orders WHERE id=? AND owner_id=?").bind(order.id,owner).first<OrderRow>();if(retry&&JSON.stringify(orderInput.parse(JSON.parse(retry.input_json)))===JSON.stringify(input))return parse<OfficeOrder>(retry);throw new TrackingError(409,"Could not save this request. Check the active order limit or refresh.");}
   return order;
 }
 export async function createPartner(owner:string,payload:unknown) {
@@ -69,38 +76,15 @@ export async function updateSettings(owner:string,payload:unknown){
   if(!parsed.success)throw new TrackingError(422,"Choose the office name and a valid map location.");
   await db().prepare("INSERT INTO office_settings(owner_id,payload_json,updated_at) VALUES(?,?,?) ON CONFLICT(owner_id) DO UPDATE SET payload_json=excluded.payload_json,updated_at=excluded.updated_at").bind(owner,JSON.stringify(parsed.data),Date.now()).run();return {ok:true};
 }
-async function assignOrder(owner:string,row:OrderRow,deviceId:string){
-  const current=parse<OfficeOrder>(row);
-  if(current.status!=="queued")throw new TrackingError(409,"This order is already assigned or closed.");
-  const [devices,dispatches,profiles]=await Promise.all([listDevices(owner),listDispatches(owner),db().prepare("SELECT profile_json FROM office_driver_profiles WHERE owner_id=?").bind(owner).all<{profile_json:string}>()]);
-  const choices=driverChoices(devices,profiles.results.map(r=>JSON.parse(r.profile_json)),dispatches,current.pickup);
-  const candidates=deviceId==="auto"?choices.filter(c=>c.available):choices.filter(c=>c.device.id===deviceId&&c.available);
-  if(!candidates.length)throw new TrackingError(409,"No selected driver is free, on duty and sending live GPS. The order stays queued.");
-  for(const choice of candidates){
-    const {device,profile}=choice,now=Date.now(),id=crypto.randomUUID();
-    const dispatch:Dispatch={id,deviceId:device.id,orderId:current.id,name:current.title,vehicleId:device.id,vehicleName:device.vehicleLabel||"Linked driver vehicle",radius:100,assignedAt:now,updatedAt:now,revision:1,checkedAt:0,stops:[{...current.pickup,id:`pickup-${current.id}`,name:`Collect · ${current.pickup.name}`,arrivedAt:null,deliveredAt:null},{...current.destination,id:`delivery-${current.id}`,name:`Deliver · ${current.destination.name}`,arrivedAt:null,deliveredAt:null}]};
-    const estimatedKm=(distanceMeters(current.pickup,current.destination)+(device.latestPoint?distanceMeters(device.latestPoint,current.pickup):0))/1000;
-    const next:OfficeOrder={...current,status:"assigned",deviceId:device.id,dispatchId:id,driverName:device.driverName,vehicleLabel:device.vehicleLabel,assignedAt:now,estimatedKm:Math.round(estimatedKm*100)/100,ratePerKm:profile?.ratePerKm??null,updatedAt:now,version:row.version+1};
-    const defaultProfile:DriverProfile={deviceId:device.id,vehicleLabel:device.vehicleLabel,phone:device.phoneLabel,onDuty:true,ratePerKm:null,lastAssignedAt:now,lastReleasedAt:null};
-    const result=await db().batch([
-      db().prepare("DELETE FROM driver_dispatches WHERE device_id=? AND owner_id=? AND NOT EXISTS(SELECT 1 FROM json_each(driver_dispatches.dispatch_json,'$.stops') WHERE json_extract(value,'$.deliveredAt') IS NULL) AND EXISTS(SELECT 1 FROM office_orders WHERE id=? AND owner_id=? AND status='queued' AND version=?)").bind(device.id,owner,current.id,owner,row.version),
-      db().prepare("INSERT INTO driver_dispatches(device_id,owner_id,dispatch_json,revision,updated_at) SELECT id,?,?,1,? FROM tracking_devices WHERE id=? AND owner_id=? AND paired_at IS NOT NULL AND revoked_at IS NULL AND last_event_kind='point' AND latest_point_at>? AND last_seen_at>? AND COALESCE((SELECT json_extract(profile_json,'$.onDuty') FROM office_driver_profiles WHERE device_id=?),1)=1 AND EXISTS(SELECT 1 FROM office_orders WHERE id=? AND owner_id=? AND status='queued' AND version=?) ON CONFLICT(device_id) DO NOTHING RETURNING device_id").bind(owner,JSON.stringify(dispatch),now,device.id,owner,now-90000,now-90000,device.id,current.id,owner,row.version),
-      db().prepare("UPDATE office_orders SET device_id=?,dispatch_id=?,status='assigned',payload_json=?,version=version+1,updated_at=? WHERE id=? AND owner_id=? AND status='queued' AND version=? AND EXISTS(SELECT 1 FROM driver_dispatches WHERE device_id=? AND owner_id=? AND json_extract(dispatch_json,'$.id')=?) RETURNING id").bind(device.id,id,JSON.stringify(next),now,current.id,owner,row.version,device.id,owner,id),
-      db().prepare("INSERT INTO office_driver_profiles(device_id,owner_id,profile_json,updated_at) SELECT ?,?,?,? WHERE EXISTS(SELECT 1 FROM office_orders WHERE id=? AND owner_id=? AND dispatch_id=?) ON CONFLICT(device_id) DO UPDATE SET profile_json=json_set(office_driver_profiles.profile_json,'$.lastAssignedAt',?),updated_at=excluded.updated_at WHERE office_driver_profiles.owner_id=excluded.owner_id").bind(device.id,owner,JSON.stringify(defaultProfile),now,current.id,owner,id,now),
-    ]);
-    if(result[2].results.length)return next;
-    if(deviceId!=="auto")break;
-  }
-  throw new TrackingError(409,"The driver or order changed while dispatching. Refresh and try another available driver.");
-}
 export async function changeOrder(owner:string,payload:unknown){
-  const parsed=z.object({id:z.string().uuid(),version:z.number().int().positive(),action:z.enum(["assign","confirm_pickup","confirm_delivery","cancel"]),deviceId:z.union([z.literal("auto"),z.string().uuid()]).optional()}).strict().safeParse(payload);
+  const parsed=z.object({id:z.string().uuid(),version:z.number().int().positive(),action:z.enum(["assign","offer","confirm_pickup","confirm_delivery","cancel"]),deviceId:z.union([z.literal("auto"),z.string().uuid()]).optional()}).strict().safeParse(payload);
   if(!parsed.success)throw new TrackingError(422,"Choose the order and an available onboarded driver.");
   const {id,version,action,deviceId}=parsed.data;
   const row=await db().prepare("SELECT * FROM office_orders WHERE id=? AND owner_id=?").bind(id,owner).first<OrderRow>();
   if(!row)throw new TrackingError(404,"Order not found in your office.");
   if(action==="assign"&&row.version!==version)throw new TrackingError(409,"This order has updated. Refresh before continuing.");
   const current=parse<OfficeOrder>(row);
+  if(action==="offer")return offerOrder(owner,id,version);
   if(action==="assign")return assignOrder(owner,row,deviceId??"auto");
   if(current.status==="delivered"||current.status==="cancelled")throw new TrackingError(409,"This order is already closed.");
   if(current.dispatchId&&current.deviceId){
@@ -114,10 +98,13 @@ export async function changeOrder(owner:string,payload:unknown){
     const stop=dispatch.stops[action==="confirm_pickup"?0:1];
     await changeDispatch(owner,{id:dispatch.id,deviceId:dispatch.deviceId,action:"deliver",stopId:stop.id});
     const updated=await db().prepare("SELECT dispatch_json FROM driver_dispatches WHERE device_id=? AND owner_id=?").bind(current.deviceId,owner).first<{dispatch_json:string}>();
-    if(updated)await syncOfficeDispatch(owner,JSON.parse(updated.dispatch_json));return {ok:true};
+    if(updated)await syncOfficeDispatch(owner,JSON.parse(updated.dispatch_json));
+    if(action==="confirm_delivery")await db().prepare("UPDATE office_orders SET payload_json=json_set(payload_json,'$.completionSource','office') WHERE id=? AND owner_id=? AND status='delivered'").bind(id,owner).run();
+    return {ok:true};
   }
   if(action!=="cancel")throw new TrackingError(409,"Assign a driver before confirming progress.");
   const next={...current,status:"cancelled",version:row.version+1,updatedAt:Date.now()};
-  const changed=await db().prepare("UPDATE office_orders SET status='cancelled',payload_json=?,version=version+1,updated_at=? WHERE id=? AND owner_id=? AND version=? AND status='queued' RETURNING id").bind(JSON.stringify(next),next.updatedAt,id,owner,row.version).first();
-  if(!changed)throw new TrackingError(409,"The order changed at the same time. Refresh.");return {ok:true};
+  const changed=await db().prepare("UPDATE office_orders SET status='cancelled',payload_json=?,version=version+1,updated_at=? WHERE id=? AND owner_id=? AND version=? AND status IN ('queued','offered') RETURNING id").bind(JSON.stringify(next),next.updatedAt,id,owner,row.version).first();
+  if(!changed)throw new TrackingError(409,"The order changed at the same time. Refresh.");
+  await db().prepare("DELETE FROM order_offers WHERE order_id=? AND owner_id=?").bind(id,owner).run();return {ok:true};
 }

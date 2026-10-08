@@ -11,13 +11,14 @@ The public shell is accessible to visitors. Company orders, partner destinations
 - The main office uses actual paired company phones and an OpenStreetMap basemap. Live counters and fleet records contain no seeded vehicles or orders.
 - Persistent collection/delivery requests, a waiting queue and a retained completed/cancelled order history.
 - Saved partner shops, searched location suggestions, latitude/longitude selection and a draggable map crosshair for checking the entrance.
-- Automatic assignment to a free, on-duty driver with fresh GPS, prioritizing longest idle time then pickup proximity. Manual assignment uses the same onboarded directory and server checks.
+- Five-second delivery offers to eligible, free, on-duty riders; the first accepted claim wins. Unclaimed offers select a free rider at random. Longest-idle and manual assignment remain available.
 - A single active assignment per phone, protected against simultaneous dispatchers and order double-booking.
 - Two-stage collection and drop-off: conservative GPS arrival, office confirmation, and progress shared with the tracking portal.
 - Driver details, vehicle/contact updates, click-to-call links and optional per-kilometre rates.
 - A functional Live tracking dialog with a driver column, live map, movement/battery telemetry and selected driver's recent GPS journey.
 - Recorded GPS mileage and suggested pay estimates, excluding gaps and uncertain segments; office CSV export.
-- Consensual Android GPS tracking with an offline queue and unchanged upload contract. Existing phones keep their current APK and pairing.
+- A signed Android Rider app with an animated dashboard, assignment maps, collection and delivery controls, cash/company-till reports and durable offline queues. Existing pilot GPS uploads remain compatible.
+- Customer payment totals, office verification, payment CSV exports and all-time mileage/cost totals, including older records outside the recent-order view.
 - Pointer-anchored map zoom, drag/pinch, keyboard controls, driver follow, fullscreen, creative movement icons and zoom level 19.
 - Previous saved planning scenarios, runs and manifests remain in the Saved plans archive. The constrained optimizer remains in the source and authenticated API.
 
@@ -26,11 +27,11 @@ The public shell is accessible to visitors. Company orders, partner destinations
 1. Sign in at the [main office](https://routeforge-shadownet.sammymuya167.chatgpt.site). Existing paired phones appear automatically.
 2. Open **Main office** settings and check the actual office entrance pin. Open **Driver details** to complete vehicle, phone, duty and optional rate fields.
 3. Register your shops in **Partner destinations**. Search an address and check the pin on the map; saved partners are suggested immediately.
-4. Choose **New delivery**, select collection and destination locations, and choose automatic or manual assignment. Save to queue when no driver is available.
-5. Follow the driver in **Live tracking**. Confirm collection after GPS pickup arrival; confirm delivery after destination arrival.
-6. Review recorded mileage before paying. Export orders from **Deliveries**; payments are handled outside this app.
+4. Choose **New delivery**, select collection and destination locations, enter the expected customer payment if known, and offer to riders or assign manually. Save to queue when no driver is available.
+5. Follow the driver in **Live tracking**. Riders confirm collection and finish delivery in the Rider app; office confirmation after GPS arrival remains available.
+6. Review actual cash/company-till reports in **Sales & totals**. Verify receipts before marking them office verified. Review mileage before paying a rider. The app records reports and estimates; it does not transfer money.
 
-Driver-side destination navigation is reserved for the later Android update. This release manages assignments in the office while the existing phone recorder continues unchanged.
+Download [RouteForge Rider](https://routeforge-shadownet.sammymuya167.chatgpt.site/downloads/routeforge-rider.apk) from the tracking portal. For an existing pilot phone, sync its queue and stop its trip first, then generate **Rider app upgrade code** on its existing driver card. Install Rider alongside the pilot and pair with that code to retain the driver, assignment and history. See [the tracking guide](docs/TRACKING.md).
 
 ## Stack
 
@@ -91,4 +92,4 @@ The hosting and authentication scaffold comes from the Sites Vinext starter. Thi
 
 ## Driver tracking pilot
 
-[Open the tracking portal](https://routeforge-shadownet.sammymuya167.chatgpt.site/tracking) to pair a consenting Android driver, follow live GPS, inspect journeys and unlink devices. An offline SQLite queue on the phone uploads acknowledged, idempotent events after reconnection. The APK, native source and [operating guide](docs/TRACKING.md) are included. The owner reports a successful real journey test; broad device/OS coverage and offline recovery still require field verification. This dashboard release preserves the installed APK and upload contract. Refresh the web dashboard to receive interface changes; drivers do not need to reinstall or pair again.
+[Open the tracking portal](https://routeforge-shadownet.sammymuya167.chatgpt.site/tracking) to pair a consenting Android driver, follow live GPS, inspect journeys and unlink devices. Offline SQLite queues preserve GPS events and rider reports until the server acknowledges them. The signed Rider APK, native source, release metadata and [operating guide](docs/TRACKING.md) are included. The pilot remains downloadable for compatibility. Rider upgrades use the same driver record; the original pilot's unavailable signing key prevents an install-over update. Automated checks cover 43 unit cases, 60 Worker/D1 flows and seven Android instrumentation cases. Browser gestures and real-phone background behaviour still need field verification.

@@ -222,7 +222,7 @@ export default function TrackingPortal({
       setBusy(false);
     }
   }
-  async function action(d: Device, action: "renew" | "revoke" | "remove") {
+  async function action(d: Device, action: "renew" | "upgrade" | "revoke" | "remove") {
     if (
       action === "revoke" &&
       !window.confirm(
@@ -245,7 +245,7 @@ export default function TrackingPortal({
         id: d.id,
         action,
       });
-      if (action === "renew") setPair(r);
+      if (action === "renew" || action === "upgrade") setPair(r);
       if (action === "remove" && d.id === selected) {
         setEvents([]);
         setTrips([]);
@@ -261,7 +261,7 @@ export default function TrackingPortal({
   const points = events.filter(
     (e): e is Extract<Event, { kind: "point" }> => e.kind === "point",
   );
-  const apk = "/downloads/routeforge-driver.apk";
+  const apk = "/downloads/routeforge-rider.apk";
   async function refreshOffice(){await Promise.all([refresh(),office.refresh()]);}
   return (
     <main className="tracking-shell">
@@ -468,7 +468,7 @@ export default function TrackingPortal({
                         ? " · " + selectedDevice.phoneLabel
                         : ""}
                     </span>
-                    {selectedDevice.pairedAt&&!selectedDevice.revokedAt&&<button onClick={()=>setDetailsOpen(true)}>Driver details / call</button>}
+                    {selectedDevice.pairedAt&&!selectedDevice.revokedAt&&<><button onClick={()=>setDetailsOpen(true)}>Driver details / call</button><button disabled={busy} onClick={()=>void action(selectedDevice,"upgrade")}>Rider app upgrade code</button></>}
                     {["pending", "expired"].includes(selectedDevice.status) && (
                       <button
                         disabled={busy}
@@ -565,12 +565,10 @@ export default function TrackingPortal({
           <Smartphone size={25} />
           <h2>Set up the driver phone</h2>
           <p>
-            Android 8 or newer. Install the pilot app, enter the pairing code,
-            allow location and tap Start trip. The phone keeps a silent “Trip
-            recording” notification with a Stop action.
+            Android 8 or newer. Install RouteForge Rider, enter the pairing code and allow precise location and notifications. For an existing driver, choose Rider app upgrade code above; sync and stop the old pilot app first. The new app keeps the same driver record and assignment.
           </p>
           <a className="tracking-primary" href={apk}>
-            Download Android pilot APK
+            Download RouteForge Rider APK
           </a>
           <a
             className="tracking-docs"
@@ -673,12 +671,12 @@ export default function TrackingPortal({
             <Smartphone size={30} />
             <h2 id="pair-title">Pair the driver&apos;s phone</h2>
             <p>
-              Open the RouteForge Driver app on the consenting driver&apos;s
+              Open the RouteForge Rider app on the consenting driver&apos;s
               phone and enter:
             </p>
             <code className="pair-code">{pair.code}</code>
             <p>
-              Expires {when(pair.expiresAt)}. Can be used once. Share it only
+              For an upgrade, sync and stop the old pilot app first. This code reconnects the same driver and rotates the phone token when used. Expires {when(pair.expiresAt)}. Can be used once. Share it only
               with this driver.
             </p>
             <button
@@ -692,7 +690,7 @@ export default function TrackingPortal({
               Copy code
             </button>
             <a className="tracking-primary" href={apk}>
-              Download Android pilot APK
+              Download RouteForge Rider APK
             </a>
             <button
               className="tracking-secondary"
