@@ -41,6 +41,13 @@ public final class QueueInstrumentation extends Instrumentation {
         for(int attempt=0;attempt<40;attempt++){if(manager.getActiveNotifications().length==expected)return true;Thread.sleep(75);}
         return manager.getActiveNotifications().length==expected;
     }
+    private String windowText(AccessibilityNodeInfo node) {
+        if(node==null)return "<no active window>";
+        StringBuilder text=new StringBuilder();
+        if(node.getText()!=null)text.append(node.getClassName()).append(':').append(node.getText()).append(';');
+        for(int i=0;i<node.getChildCount();i++)text.append(windowText(node.getChild(i)));
+        return text.toString();
+    }
     private JSONObject inspectUi(Activity activity) throws Exception {
         CountDownLatch done = new CountDownLatch(1);
         AtomicReference<String> value = new AtomicReference<>();
@@ -142,8 +149,16 @@ public final class QueueInstrumentation extends Instrumentation {
             status(1,"finishConfirmationUsesAWorkingNativeDialog",11,"");
             CountDownLatch confirmed=new CountDownLatch(1);AtomicReference<String> confirmation=new AtomicReference<>();
             runOnMainSync(()->{WebView web=(WebView)((ViewGroup)ui[0].findViewById(android.R.id.content)).getChildAt(0);web.evaluateJavascript("confirm('Synthetic delivery confirmation fixture')",value->{confirmation.set(value);confirmed.countDown();});});
-            boolean clicked=false;for(int attempt=0;attempt<30&&!clicked;attempt++){AccessibilityNodeInfo root=getUiAutomation().getRootInActiveWindow();if(root!=null)for(AccessibilityNodeInfo node:root.findAccessibilityNodeInfosByText("Confirm"))if("Confirm".contentEquals(node.getText()==null?"":node.getText()))clicked=node.performAction(AccessibilityNodeInfo.ACTION_CLICK)||clicked;if(!clicked)Thread.sleep(100);}
-            check(clicked&&confirmed.await(3,TimeUnit.SECONDS)&&"true".equals(confirmation.get()),"Finish delivery must show a native dialog and return the rider's confirmation to JavaScript");
+            // The platform theme presents button labels in capitals. Locate
+            // the actual dialog button without depending on that casing.
+            boolean clicked=false;String visible="";
+            for(int attempt=0;attempt<50&&!clicked;attempt++){
+                AccessibilityNodeInfo root=getUiAutomation().getRootInActiveWindow();visible=windowText(root);
+                if(root!=null&&visible.contains("Synthetic delivery confirmation fixture"))for(AccessibilityNodeInfo node:root.findAccessibilityNodeInfosByText("Confirm"))if("android.widget.Button".contentEquals(node.getClassName())&&"Confirm".equalsIgnoreCase(String.valueOf(node.getText())))clicked=node.performAction(AccessibilityNodeInfo.ACTION_CLICK)||clicked;
+                if(!clicked)Thread.sleep(100);
+            }
+            check(clicked,"Finish delivery must show a clickable native confirmation: "+visible+"; JS result="+confirmation.get());
+            check(confirmed.await(3,TimeUnit.SECONDS)&&"true".equals(confirmation.get()),"Confirm must return the rider's confirmation to JavaScript: "+confirmation.get());
             status(0,"finishConfirmationUsesAWorkingNativeDialog",11,".");
             Bundle result = new Bundle(); result.putString("stream", "\nOK (11 tests)\n");
             finish(Activity.RESULT_OK, result);
