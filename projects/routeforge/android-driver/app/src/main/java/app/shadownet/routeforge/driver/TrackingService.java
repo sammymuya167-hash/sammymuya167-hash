@@ -26,7 +26,7 @@ public final class TrackingService extends Service implements LocationListener {
  static volatile boolean running=false;
  private LocationManager locations;private ConnectivityManager connectivity;private String trip;private boolean started=false;
  private ScheduledExecutorService sync,offers,commands;
- private final ConnectivityManager.NetworkCallback networkCallback=new ConnectivityManager.NetworkCallback(){@Override public void onAvailable(Network network){if(sync!=null&&!sync.isShutdown())sync.execute(()->Api.sync(getApplicationContext()));if(commands!=null&&!commands.isShutdown())commands.execute(()->DriverApi.flush(getApplicationContext()));}};
+ private final ConnectivityManager.NetworkCallback networkCallback=new ConnectivityManager.NetworkCallback(){@Override public void onAvailable(Network network){if(sync!=null&&!sync.isShutdown())sync.execute(()->Api.sync(getApplicationContext()));if(commands!=null&&!commands.isShutdown())commands.execute(()->DriverApi.flush(getApplicationContext()));if(offers!=null&&!offers.isShutdown())offers.execute(()->DriverApi.poll(getApplicationContext()));}};
  public IBinder onBind(Intent intent){return null;}
  @Override public int onStartCommand(Intent intent,int flags,int startId) {
   if(intent!=null&&"PAUSE".equals(intent.getAction())){Session.prefs(this).edit().putBoolean("duty",false).apply();try{DriverApi.enqueue(this,new JSONObject().put("action","pause"));}catch(Exception ignored){}stopSelf();return START_NOT_STICKY;}

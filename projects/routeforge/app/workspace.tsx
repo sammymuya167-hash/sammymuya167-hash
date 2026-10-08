@@ -92,15 +92,21 @@ export default function DispatchWorkspace({
   userName,
   signedIn,
   signInPath,
+  embedded = false,
+  onOffice,
+  initialPlan = null,
 }: {
   initialScenario: Scenario;
   initialResult: OptimizationResult | null;
   userName: string;
   signedIn: boolean;
   signInPath: string;
+  embedded?: boolean;
+  onOffice?: () => void;
+  initialPlan?: SavedPlan | null;
 }) {
-  const [scenario, setScenario] = useState(initialScenario),
-    [result, setResult] = useState<OptimizationResult | null>(initialResult);
+  const [scenario, setScenario] = useState(initialPlan?.scenario ?? initialScenario),
+    [result, setResult] = useState<OptimizationResult | null>(initialPlan?.result ?? initialResult);
   const [view, setView] = useState<View>("dispatch"),
     [selected, setSelected] = useState<string | null>(null),
     [routeDetail, setRouteDetail] = useState<string | null>(null);
@@ -109,7 +115,7 @@ export default function DispatchWorkspace({
     [message, setMessage] = useState("");
   const [plans, setPlans] = useState<SavedPlan[]>([]),
     [runs, setRuns] = useState<Run[]>([]),
-    [planId, setPlanId] = useState<string | null>(null),
+    [planId, setPlanId] = useState<string | null>(initialPlan?.id ?? null),
     [savedLoading, setSavedLoading] = useState(false),
     [showArchived, setShowArchived] = useState(false);
   const [search, setSearch] = useState(""),
@@ -253,9 +259,10 @@ export default function DispatchWorkspace({
       .toLowerCase()
       .includes(search.toLowerCase()),
   );
+  const WorkspaceMain=embedded?"section":"main";
   return (
-    <div className="app-shell planning-workspace">
-      <aside className="sidebar">
+    <div className={`app-shell planning-workspace ${embedded ? "planner-embedded" : ""}`}>
+      {!embedded && <aside className="sidebar">
         <Link className="brand" href="/" aria-label="RouteForge home">
           <span className="brand-mark">
             <RouteIcon size={23} strokeWidth={2.5} />
@@ -327,9 +334,9 @@ export default function DispatchWorkspace({
           </div>
           <small className="version">RouteForge 1.0 · by SHADOWNET</small>
         </div>
-      </aside>
-      <main className="main">
-        <header className="topbar">
+      </aside>}
+      <WorkspaceMain className="main">
+        {!embedded && <header className="topbar">
           <div>
             <span className="breadcrumb">Workspace</span>
             <span className="breadcrumb-separator">/</span>
@@ -350,7 +357,8 @@ export default function DispatchWorkspace({
               </a>
             )}
           </div>
-        </header>
+        </header>}
+        {embedded && <nav className="planner-section-nav" aria-label="Planning controls">{nav.map(n=><button key={n.id} className={view===n.id?"active":""} aria-current={view===n.id?"page":undefined} onClick={()=>setView(n.id)}><n.icon size={16}/>{n.id==="dispatch"?"Routes & costs":n.id==="deliveries"?"Planning stops":n.id==="fleet"?"Capacity & rates":"Saved scenarios"}</button>)}<button className={view==="guide"?"active":""} onClick={()=>setView("guide")}><HelpCircle size={16}/> Planner guide</button></nav>}
         <div className="page-content">
           <div className="page-heading">
             <div>
@@ -420,7 +428,7 @@ export default function DispatchWorkspace({
                 <FolderOpen size={14} />
                 Save plan
               </button>
-              <a className="text-button" href="/planner" target="_top"><RotateCcw size={14}/> Reload company orders</a>
+              <button className="text-button" disabled={busy} onClick={()=>{if(window.confirm("Replace this planning draft with the current office queue and fleet? Save it first to keep your changes.")){update(initialScenario);setPlanId(null);setStatus("Company queue reloaded");}}}><RotateCcw size={14}/> Reload company orders</button>
             </div>
           </div>
           {view === "dispatch" && (
@@ -461,7 +469,7 @@ export default function DispatchWorkspace({
                   detail="Based on your per-km fleet rates"
                 />
               </div>
-              <section className="planner-office-link"><strong>Live deliveries stay connected to the office.</strong><p>This planner calculates routes, capacity and cost estimates. Its drafts do not assign work to a rider.</p><a className="button secondary small" href="/" target="_top">Open main office & dispatch →</a></section>
+              <section className="planner-office-link"><strong>Live deliveries stay connected to the office.</strong><p>This planner calculates routes, capacity and cost estimates. Its drafts do not assign work to a rider.</p>{embedded?<button className="button secondary small" onClick={onOffice}>Open delivery desk →</button>:<a className="button secondary small" href="/" target="_top">Open main office & dispatch →</a>}</section>
               <div className="dispatch-grid">
                 <div>
                   <div className="section-heading">
@@ -802,7 +810,7 @@ export default function DispatchWorkspace({
           )}
           {view === "fleet" && (
             <>
-              <section className="planner-office-link"><strong>Live deliveries stay connected to the office.</strong><p>This planner calculates routes, capacity and cost estimates. Its drafts do not assign work to a rider.</p><a className="button secondary small" href="/" target="_top">Open main office & dispatch →</a></section>
+              <section className="planner-office-link"><strong>Live deliveries stay connected to the office.</strong><p>This planner calculates routes, capacity and cost estimates. Its drafts do not assign work to a rider.</p>{embedded?<button className="button secondary small" onClick={onOffice}>Open delivery desk →</button>:<a className="button secondary small" href="/" target="_top">Open main office & dispatch →</a>}</section>
               <div className="section-heading">
                 <div>
                   <h2>Vehicles & working hours</h2>
@@ -1071,7 +1079,7 @@ export default function DispatchWorkspace({
             </span>
           </footer>
         </div>
-      </main>
+      </WorkspaceMain>
       {editing && (
         <DeliveryDialog
           key={editing.id}

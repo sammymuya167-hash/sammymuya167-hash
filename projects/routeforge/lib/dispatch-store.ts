@@ -19,8 +19,11 @@ export async function reconcileDispatch(deviceId: string) {
   const fresh=await db().prepare("SELECT dispatch_json FROM driver_dispatches WHERE device_id=? AND owner_id=?").bind(deviceId,row.owner_id).first<{dispatch_json:string}>();
   if(fresh)await syncOfficeDispatch(row.owner_id,JSON.parse(fresh.dispatch_json));
 }
-export async function listDispatches(owner: string) {
+export async function listDispatches(owner: string, reconcile = true) {
   const rows = await db().prepare("SELECT * FROM driver_dispatches WHERE owner_id=?").bind(owner).all<Row>();
+  // Offer and rider reads need only the durable reservation. GPS reconciliation
+  // already runs on ingest and office refresh; never put it in the claim path.
+  if (!reconcile) return rows.results.map(r=>JSON.parse(r.dispatch_json) as Dispatch);
   // Retry processing after a transient failure without making a phone re-upload.
   await Promise.all(rows.results.map(r => reconcileDispatch(r.device_id)));
   const latest = await db().prepare("SELECT dispatch_json FROM driver_dispatches WHERE owner_id=?").bind(owner).all<{dispatch_json:string}>();

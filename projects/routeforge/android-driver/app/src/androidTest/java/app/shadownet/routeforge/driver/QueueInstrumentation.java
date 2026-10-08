@@ -1,6 +1,10 @@
 package app.shadownet.routeforge.driver;
 
 import android.app.Activity;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.os.ParcelFileDescriptor;
+import android.view.accessibility.AccessibilityNodeInfo;
 import android.app.Instrumentation;
 import android.content.Intent;
 import android.view.ViewGroup;
@@ -26,7 +30,7 @@ public final class QueueInstrumentation extends Instrumentation {
     }
     private void status(int code, String name, int number, String message) {
         Bundle b = new Bundle(); b.putString("class", getClass().getName());
-        b.putString("test", name); b.putInt("numtests", 7); b.putInt("current", number);
+        b.putString("test", name); b.putInt("numtests", 11); b.putInt("current", number);
         b.putString("stream", message); sendStatus(code, b);
     }
     private JSONObject inspectUi(Activity activity) throws Exception {
@@ -100,7 +104,40 @@ public final class QueueInstrumentation extends Instrumentation {
             check(screen.optBoolean("pairing") && !screen.optBoolean("paired") && !TrackingService.running, "Opening an unpaired phone must show pairing without starting GPS");
             check(queue.count()==0 && queue.commandCount()==0, "Opening the dashboard must not record or submit a trip");
             status(0, "packagedUiLoadsOfflineWithNativeBridge", 7, ".");
-            Bundle result = new Bundle(); result.putString("stream", "\nOK (7 tests)\n");
+            status(1,"deliveryChannelsHaveSoundAndHeadsUp",8,"");
+            NotificationManager manager=getTargetContext().getSystemService(NotificationManager.class);
+            manager.createNotificationChannel(new NotificationChannel("delivery-offers","Old fixture channel",NotificationManager.IMPORTANCE_DEFAULT));
+            DriverAlerts.channels(getTargetContext());
+            for(String channel:new String[]{DriverAlerts.OFFERS,DriverAlerts.ASSIGNMENTS}){NotificationChannel configured=manager.getNotificationChannel(channel);check(configured.getImportance()==NotificationManager.IMPORTANCE_HIGH&&configured.getSound()!=null&&configured.shouldVibrate(),"Offers and assigned rides need high importance, sound and vibration");}
+            check(manager.getNotificationChannel("delivery-offers").getImportance()==NotificationManager.IMPORTANCE_DEFAULT,"Upgrade must use a new channel rather than trying to rewrite an immutable old channel");
+            status(0,"deliveryChannelsHaveSoundAndHeadsUp",8,".");
+            status(1,"assignedDeliveryAlertsOnceAndCancelsOnCompletion",9,"");
+            if(android.os.Build.VERSION.SDK_INT>=33)try(java.io.InputStream stream=new ParcelFileDescriptor.AutoCloseInputStream(getUiAutomation().executeShellCommand("pm grant "+getTargetContext().getPackageName()+" android.permission.POST_NOTIFICATIONS"))){while(stream.read()!=-1){}}
+            check(manager.areNotificationsEnabled(),"Fixture notification permission must be granted");
+            String assignedId=UUID.randomUUID().toString();JSONArray stops=new JSONArray().put(new JSONObject().put("id","one").put("name","Pickup").put("deliveredAt",JSONObject.NULL)).put(new JSONObject().put("id","two").put("name","Destination").put("deliveredAt",JSONObject.NULL));
+            JSONObject assignment=new JSONObject().put("id",assignedId).put("name","Synthetic assigned delivery").put("stops",stops),snapshot=new JSONObject().put("serverTime",System.currentTimeMillis()).put("offers",new JSONArray()).put("assignment",assignment);
+            DriverAlerts.sync(getTargetContext(),snapshot);
+            check(manager.getActiveNotifications().length==1&&Session.prefs(getTargetContext()).getString("notified_assignment","").equals(assignedId),"Automatic assignment must create an alert independently of an offer");
+            manager.cancel("assignment:"+assignedId,assignedId.hashCode());DriverAlerts.sync(getTargetContext(),snapshot);
+            check(manager.getActiveNotifications().length==0,"Dismissing a ride cannot make every poll sound again");
+            String nextId=UUID.randomUUID().toString();assignment.put("id",nextId);DriverAlerts.sync(getTargetContext(),snapshot);check(manager.getActiveNotifications().length==1,"A different assigned ride must alert again");
+            for(int i=0;i<stops.length();i++)stops.getJSONObject(i).put("deliveredAt",System.currentTimeMillis());DriverAlerts.sync(getTargetContext(),snapshot);check(manager.getActiveNotifications().length==0,"Completed deliveries cannot leave an active assignment alert behind");
+            status(0,"assignedDeliveryAlertsOnceAndCancelsOnCompletion",9,".");
+            status(1,"everyLegacyStopMustFinishBeforeLocalEndDuty",10,"");
+            queue.clearCommands();for(int i=0;i<stops.length();i++)stops.getJSONObject(i).put("deliveredAt",JSONObject.NULL);
+            Session.prefs(getTargetContext()).edit().putString("rider_state",snapshot.toString()).commit();
+            JSONObject firstStop=new JSONObject().put("operationId",UUID.randomUUID().toString()).put("action","delivered").put("dispatchId",nextId).put("stopId","one");queue.addCommand(device,firstStop);
+            check(!DriverApi.canStop(getTargetContext()),"Completing only the first legacy stop cannot end duty");
+            JSONObject lastStop=new JSONObject().put("operationId",UUID.randomUUID().toString()).put("action","delivered").put("dispatchId",nextId).put("stopId","two");queue.addCommand(device,lastStop);check(DriverApi.canStop(getTargetContext()),"Every queued legacy completion should permit local end duty");
+            queue.commandError(lastStop.getString("operationId"),"Rejected fixture");check(!DriverApi.canStop(getTargetContext()),"A rejected final stop cannot release duty");queue.clearCommands();Session.clear(getTargetContext());
+            status(0,"everyLegacyStopMustFinishBeforeLocalEndDuty",10,".");
+            status(1,"finishConfirmationUsesAWorkingNativeDialog",11,"");
+            CountDownLatch confirmed=new CountDownLatch(1);AtomicReference<String> confirmation=new AtomicReference<>();
+            runOnMainSync(()->{WebView web=(WebView)((ViewGroup)ui[0].findViewById(android.R.id.content)).getChildAt(0);web.evaluateJavascript("confirm('Synthetic delivery confirmation fixture')",value->{confirmation.set(value);confirmed.countDown();});});
+            boolean clicked=false;for(int attempt=0;attempt<30&&!clicked;attempt++){AccessibilityNodeInfo root=getUiAutomation().getRootInActiveWindow();if(root!=null)for(AccessibilityNodeInfo node:root.findAccessibilityNodeInfosByText("Confirm"))if("Confirm".contentEquals(node.getText()==null?"":node.getText()))clicked=node.performAction(AccessibilityNodeInfo.ACTION_CLICK)||clicked;if(!clicked)Thread.sleep(100);}
+            check(clicked&&confirmed.await(3,TimeUnit.SECONDS)&&"true".equals(confirmation.get()),"Finish delivery must show a native dialog and return the rider's confirmation to JavaScript");
+            status(0,"finishConfirmationUsesAWorkingNativeDialog",11,".");
+            Bundle result = new Bundle(); result.putString("stream", "\nOK (11 tests)\n");
             finish(Activity.RESULT_OK, result);
         } catch (Throwable error) {
             Bundle result = new Bundle(); result.putString("stream", "Queue test failed: " + error);

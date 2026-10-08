@@ -30,6 +30,7 @@ final class EventQueue extends SQLiteOpenHelper {
  synchronized void commandError(String id,String error){ContentValues value=new ContentValues();value.put("last_error",error);getWritableDatabase().update("commands",value,"id=?",new String[]{id});}
  synchronized int commandCount(){try(Cursor c=getReadableDatabase().rawQuery("SELECT COUNT(*) FROM commands",null)){c.moveToFirst();return c.getInt(0);}}
  synchronized boolean completedLocally(String dispatchId){try(Cursor c=getReadableDatabase().rawQuery("SELECT payload FROM commands WHERE last_error=''",null)){while(c.moveToNext())try{JSONObject p=new JSONObject(c.getString(0));if(p.optString("action").equals("delivered")&&p.optString("dispatchId").equals(dispatchId))return true;}catch(Exception ignored){}return false;}}
+ synchronized boolean completedStopLocally(String dispatchId,String stopId){try(Cursor c=getReadableDatabase().rawQuery("SELECT payload FROM commands WHERE last_error=''",null)){while(c.moveToNext())try{JSONObject p=new JSONObject(c.getString(0));if(p.optString("action").equals("delivered")&&p.optString("dispatchId").equals(dispatchId)&&p.optString("stopId").equals(stopId))return true;}catch(Exception ignored){}return false;}}
 
  synchronized void clearCommands(){getWritableDatabase().delete("commands",null,null);}
  synchronized void clear(){getWritableDatabase().delete("events",null,null);}
