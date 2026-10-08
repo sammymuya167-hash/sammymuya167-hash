@@ -4,7 +4,7 @@
 
 [Open the deployed app](https://routeforge-shadownet.sammymuya167.chatgpt.site) · [Architecture](docs/ARCHITECTURE.md) · [Build roadmap](docs/ROADMAP.md) · [MIT licence](LICENSE)
 
-The live demo and source are public. ChatGPT sign-in is required to optimize and save; saved plans and run history remain private to each account. Project 92 from the supplied *Full Stack Projects* PDF inspired the product direction.
+The deployment is currently private to its owner and requires ChatGPT sign-in. The source is public. Project 92 from the supplied *Full Stack Projects* PDF inspired the product direction.
 
 ## What works
 
@@ -18,7 +18,7 @@ The live demo and source are public. ChatGPT sign-in is required to optimize and
 
 ## Try it
 
-1. Open the public preview, sign in for optimization/saving, and use **Load sample** for 16 synthetic Nairobi deliveries.
+1. Open the app and use **Load sample** for 16 synthetic Nairobi deliveries.
 2. Choose **Optimize routes**, then inspect a route card for its driver manifest.
 3. Change a delivery window or vehicle capacity, optimize again and inspect unassigned stops.
 4. Use **Save plan** and revisit it from **Saved plans**. Export CSV for the ordered stop list.
@@ -75,3 +75,7 @@ Run `pnpm test`, `pnpm run typecheck`, and `pnpm run lint`. After a build, `pnpm
 Reference: [VROOM-Project/vroom](https://github.com/VROOM-Project/vroom), copyright Julien Coupey, BSD-2-Clause. Its licence is retained in [docs/VROOM-LICENSE.txt](docs/VROOM-LICENSE.txt). RouteForge's TypeScript algorithm and interface are original AI-assisted implementation; the VROOM C++ engine is not embedded or called. VROOM's upstream contributors are not credited as authors of RouteForge, and this project does not claim VROOM's benchmarks or optimality.
 
 The hosting and authentication scaffold comes from the Sites Vinext starter. Third-party dependencies and retained scaffold files keep their respective licences. Original RouteForge code is MIT licensed.
+
+## Driver tracking pilot
+
+[Open the tracking portal](https://routeforge-shadownet.sammymuya167.chatgpt.site/tracking) to pair a consenting Android driver, follow live GPS, inspect journeys and unlink devices. An offline SQLite queue on the phone uploads acknowledged, idempotent events after reconnection. The APK, native source and [operating guide](docs/TRACKING.md) are included. This is a pilot: screen-off GPS and offline recovery need a real driver phone field test before operational reliance.

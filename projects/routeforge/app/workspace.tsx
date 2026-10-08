@@ -285,6 +285,7 @@ export default function DispatchWorkspace({
               )}
             </button>
           ))}
+          <Link href="/tracking" className="nav-item"><MapPin size={18}/>Live tracking</Link>
         </nav>
         <div className="sidebar-card">
           <span className="tiny-label">BUILT FOR THE LAST MILE</span>
