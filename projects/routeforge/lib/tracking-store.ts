@@ -117,7 +117,9 @@ export async function changeDevice(owner: string, payload: unknown) {
         409,
         "Unlink this device before deleting its history.",
       );
+    const removedAt=Date.now();
     await db().batch([
+      db().prepare("UPDATE office_orders SET status='cancelled',payload_json=json_set(payload_json,'$.status','cancelled','$.updatedAt',?,'$.version',version+1),version=version+1,updated_at=? WHERE device_id=? AND owner_id=? AND status NOT IN ('delivered','cancelled') AND EXISTS(SELECT 1 FROM tracking_devices WHERE id=? AND owner_id=? AND revoked_at IS NOT NULL)").bind(removedAt,removedAt,id,owner,id,owner),
       db().prepare("DELETE FROM driver_dispatches WHERE device_id=? AND owner_id=?").bind(id,owner),
       db()
         .prepare(

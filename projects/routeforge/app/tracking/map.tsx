@@ -4,15 +4,16 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { CarFront, Footprints, LocateFixed, Maximize, Smartphone, Target } from "lucide-react";
 import type { Device } from "../../lib/tracking";
 import { motionOf, type GPSPoint, type DispatchStop } from "../../lib/dispatch";
-import { fitView, panView, projectLocation, zoomView, type MapView } from "../../lib/map-view";
+import { fitView, panView, projectLocation, unprojectLocation, zoomView, type MapView } from "../../lib/map-view";
 
-export default function JourneyMap({ points, latest, drivers = [], selectedId, onSelect, destinations = [] }: {
+export default function JourneyMap({ points, latest, drivers = [], selectedId, onSelect, destinations = [], focusPlace, onPick, fitLabel="Fit journey" }: {
   points: GPSPoint[]; latest: GPSPoint | null; drivers?: Device[]; selectedId?: string;
   onSelect?: (id: string) => void; destinations?: DispatchStop[];
+  focusPlace?: {lat:number;lng:number};onPick?: (place:{lat:number;lng:number})=>void;fitLabel?:string;
 }) {
   const el = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState({ w: 760, h: 440 });
-  const [manualView, setView] = useState<MapView>(() => ({ ...projectLocation(latest?.lat ?? -1.2864, latest?.lng ?? 36.8172), zoom: 17 }));
+  const [manualView, setView] = useState<MapView>(() => ({ ...projectLocation(latest?.lat ?? focusPlace?.lat ?? -1.2864, latest?.lng ?? focusPlace?.lng ?? 36.8172), zoom: latest||focusPlace?17:12 }));
   const [following, setFollowing] = useState(true);
   const live = latest ?? points.at(-1) ?? null;
   const view = useMemo(() => following && live ? { ...manualView, ...projectLocation(live.lat, live.lng) } : manualView, [following, live, manualView]);
@@ -79,9 +80,10 @@ export default function JourneyMap({ points, latest, drivers = [], selectedId, o
     {destinations.map((stop,index)=><span key={stop.id} className={`destination-pin ${stop.arrivedAt?"arrived":""}`} style={position(stop)} title={`${index+1}. ${stop.name}${stop.arrivedAt?" · Arrived":""}`}><Target size={18}/><b>{index+1}</b></span>)}
     {markers.map(d=>{const p=d.latestPoint!;const motion=motionOf(p);const Icon=motion==="vehicle"?CarFront:motion==="walking"?Footprints:Smartphone;return <button key={d.id} className={`driver-map-pin ${d.id===selectedId?"selected":""} ${d.status!=="live"?"delayed":""}`} style={position(p)} aria-label={`Follow ${d.driverName}`} onClick={()=>{setFollowing(true);updateView({...projectLocation(p.lat,p.lng),zoom:view.zoom});onSelect?.(d.id);}}><Icon size={22}/><span>{d.driverName}</span>{p.heading!=null&&motion==="vehicle"&&<i style={{transform:`rotate(${p.heading}deg)`}}>▲</i>}</button>;})}
     {!selectedDriver&&live&&<span className="driver-map-pin selected" style={position(live)}><Smartphone size={22}/></span>}
-    <div className="map-controls"><div className="map-zoom"><button aria-label="Zoom in" disabled={z>=19} onClick={()=>zoomBy(1)}>+</button><button aria-label="Zoom out" disabled={z<=2} onClick={()=>zoomBy(-1)}>−</button></div><button className={following?"active":""} onClick={follow} disabled={!live}><LocateFixed size={15}/>{following?"Following":"Follow driver"}</button><button onClick={()=>{setFollowing(false);updateView(fitView([...projected,...markers.map(d=>projectLocation(d.latestPoint!.lat,d.latestPoint!.lng)),...destinations.map(s=>projectLocation(s.lat,s.lng))],size));}}>Fit journey</button><button aria-label="Fullscreen map" onClick={()=>{if(document.fullscreenElement)void document.exitFullscreen();else void el.current?.requestFullscreen().catch(()=>{});}}><Maximize size={15}/></button></div>
+    <div className="map-controls"><div className="map-zoom"><button type="button" aria-label="Zoom in" disabled={z>=19} onClick={()=>zoomBy(1)}>+</button><button type="button" aria-label="Zoom out" disabled={z<=2} onClick={()=>zoomBy(-1)}>−</button></div>{!onPick&&<button type="button" className={following?"active":""} onClick={follow} disabled={!live}><LocateFixed size={15}/>{following?"Following":"Follow driver"}</button>}<button type="button" onClick={()=>{setFollowing(false);updateView(fitView([...projected,...markers.map(d=>projectLocation(d.latestPoint!.lat,d.latestPoint!.lng)),...destinations.map(s=>projectLocation(s.lat,s.lng))],size));}}>{fitLabel}</button><button type="button" aria-label="Fullscreen map" onClick={()=>{if(document.fullscreenElement)void document.exitFullscreen();else void el.current?.requestFullscreen().catch(()=>{});}}><Maximize size={15}/></button></div>
+    {onPick&&<><span className="map-crosshair" aria-hidden="true"><Target size={34}/></span><button type="button" className="map-pick-button" onClick={()=>onPick(unprojectLocation(view))}>Use this map location</button></>}
     <span className="map-help">Drag to explore · scroll / pinch to zoom · z{z}</span>
-    {!route.length&&!markers.length&&<div className="map-empty">The first GPS fix will appear here.</div>}
+    {!route.length&&!markers.length&&!onPick&&!destinations.length&&<div className="map-empty">The first GPS fix will appear here.</div>}
     <a className="osm-credit" href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">© OpenStreetMap contributors</a>
   </div>;
 }

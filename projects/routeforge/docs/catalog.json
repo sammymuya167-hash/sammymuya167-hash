@@ -489,7 +489,12 @@
       "state": "built",
       "reference_url": "https://github.com/VROOM-Project/vroom",
       "license_checked": true,
-      "access": "public demo; saved plans require sign-in and remain account-private"
+      "access": "public shell; company orders, partners, driver details, GPS and saved plans are account-private",
+      "project": "RouteForge",
+      "source_path": "projects/routeforge",
+      "live_url": "https://routeforge-shadownet.sammymuya167.chatgpt.site",
+      "last_updated": "2026-10-08",
+      "implementation": "Original AI-assisted TypeScript/React implementation; VROOM is a conceptual reference, and Photon is an external geocoding API. No upstream engine or Photon code copied."
     },
     {
       "pdf_id": 93,

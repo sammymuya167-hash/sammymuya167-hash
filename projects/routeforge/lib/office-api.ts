@@ -1,0 +1,6 @@
+import { checkOrigin, currentOwner } from "./api";
+import { trackingPayload, trackingResponse, trackingFailure, TrackingError } from "./tracking";
+export async function officeMutation(request:Request,action:(owner:string,payload:unknown)=>Promise<unknown>,status=200){
+  const origin=checkOrigin(request);if(origin)return origin;
+  try{const owner=await currentOwner();if(!owner)throw new TrackingError(401,"Sign in to manage your office.");return trackingResponse(await action(owner,await trackingPayload(request)),status);}catch(error){return trackingFailure(error);}
+}

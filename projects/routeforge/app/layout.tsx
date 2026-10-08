@@ -2,12 +2,9 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "RouteForge — Make every mile count",
+  title: "RouteForge — Main office & live dispatch",
   description:
-    "Plan smarter delivery routes with vehicle capacity, delivery windows, fleet management, and saved optimization runs. Built by SHADOWNET.",
-  other: {
-    "codex-preview": "development",
-  },
+    "Manage company drivers, partner locations, collections, deliveries and live GPS from one private office workspace. Built by SHADOWNET.",
   icons: {
     icon: "/favicon.svg",
     shortcut: "/favicon.svg",

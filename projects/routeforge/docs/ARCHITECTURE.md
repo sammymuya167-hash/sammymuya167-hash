@@ -2,7 +2,7 @@
 
 ## Request and storage boundary
 
-The browser submits a scenario to `POST /api/optimize`. Sites injects the authenticated identity; the handler requires it, checks same-origin browser requests, validates a bounded JSON payload with Zod, computes the plan and persists an immutable run. A failed database write fails the request rather than pretending the run was saved.
+The main browser workspace loads real company operations from `/api/office` and `/api/tracking/devices`. The retained planning API accepts scenarios at `POST /api/optimize`. Sites injects the authenticated identity; the handler requires it, checks same-origin browser requests, validates a bounded JSON payload with Zod, computes the plan and persists an immutable run. A failed database write fails the request rather than pretending the run was saved.
 
 `GET /api/plans` returns only the current owner's saved plans and latest 15 runs. `POST /api/plans` creates a saved scenario or updates an existing record with both its ID and owner in the predicate. `PATCH /api/plans` archives or restores with the same ownership predicate. No client-supplied owner ID is accepted. Responses containing private data use `Cache-Control: private, no-store`.
 
@@ -21,7 +21,7 @@ Input objects remain unchanged. The distance baseline uses the same assigned sto
 
 ## Product integrity
 
-The first view is an explicitly labelled preview computed from synthetic data. Clicking Optimize makes a real authenticated server request and stores its snapshot. Editing an input clears the old result so stale metrics cannot be mistaken for a new plan. CSV imports validate all rows before replacing the draft. CSV manifests neutralize spreadsheet formulas in text fields.
+The first view reads private stored records and actual paired phone GPS. Empty company records stay empty. No sample driver, vehicle, order, shop or office coordinate is inserted on load. Previous scenarios/runs remain an archive and do not become operational orders. CSV manifests and order exports neutralize spreadsheet formulas in text fields.
 
 ## Driver operations
 
@@ -34,7 +34,19 @@ The web map uses Mercator projection, viewport-only OSM tiles, pointer capture f
 ## Next engineering milestones
 
 - Add a road travel-time matrix provider and draw road-following geometry.
-- Add persistent fleet profiles and shareable, read-only driver manifests.
+- Add authenticated driver-side assignment retrieval and road navigation in a separately signed native update.
 - Add distance/cost objectives and regret insertion to improve difficult cases.
 - Extend the Worker/D1 HTTP integration suite with browser accessibility tests in a supported QA environment.
-- Add an operational import queue and audit log before handling live commerce orders.
+- Add explicit commerce import integrations, fine-grained staff roles, pagination and a full event audit before scaling beyond one account office.
+
+## Persistent office operations
+
+Migration `0003` adds owner-scoped orders, partners, driver profiles, office settings, private geocoder caches and a global provider gate. Orders hold immutable location and rate snapshots plus current progress. Device IDs are validated against paired, non-revoked records; caller-supplied driver names and owner IDs are rejected. Profiles update contact/vehicle labels without touching device credentials.
+
+`POST /api/office/orders` uses a client UUID and normalized input snapshot for retry idempotency. Partner selections are resolved again under the owner and active-state predicate; submitted coordinates cannot silently move a registered partner. A transaction reserves the one-per-device dispatch slot and changes the queued order only when both row version and reservation match. Concurrent attempts cannot double-book a phone or place one order on two phones. Server predicates independently check duty, contact freshness and GPS freshness.
+
+The office assignment contains pickup and drop-off. Immutable GPS reconciliation detects arrival; confirmation changes the next stage only after that arrival. `office-sync.ts` derives order state from the authoritative dispatch using version plus exact-dispatch comparisons, preventing stale reconciliation from regressing a newer stage. Office reads retry derived state without requiring another upload. Canceling through either portal removes the active reservation and retains the cancelled order. Closed orders keep history when a later assignment replaces the dispatch slot.
+
+Mileage sums stored fixes from assignment through destination arrival. Trip boundaries, gaps over two minutes, accuracy worse than 50 m, impossible speeds and stationary jitter are excluded. Processing is capped at the latest 5,000 points and flags truncation as an excluded segment. Rate is snapshotted on assignment. Suggested pay is a reviewable estimate, never a payment instruction or transfer.
+
+`/api/office/places` proxies a fixed HTTPS Photon endpoint, validates bounded queries/GeoJSON, restricts country to Kenya and caches under the owner's identity. A D1 reservation enforces the provider throttle across isolates. Failure leaves saved partners and map pin/coordinate selection usable. Place queries disclose the typed address to the external provider; only the account's API can read its cached query results. The source contains no real company names, phone contacts, journey points or tokens.

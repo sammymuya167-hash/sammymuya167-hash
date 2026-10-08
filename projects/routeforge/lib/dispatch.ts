@@ -20,7 +20,7 @@ export function distanceMeters(a: { lat: number; lng: number }, b: { lat: number
 const stopInput = z.object({ id: z.string().min(1).max(64), name: z.string().trim().min(1).max(100), address: z.string().max(180), lat: z.number().finite().min(-85).max(85), lng: z.number().finite().min(-180).max(180) }).strict();
 export const dispatchInput = z.object({ deviceId: z.string().uuid(), name: z.string().trim().min(1).max(100), vehicleId: z.string().min(1).max(64), vehicleName: z.string().min(1).max(80), stops: z.array(stopInput).min(1).max(60), radius: z.number().int().min(50).max(300).default(100) }).strict().refine(input => new Set(input.stops.map(s => s.id)).size === input.stops.length, "Stop IDs must be unique.");
 export type DispatchStop = z.infer<typeof stopInput> & { arrivedAt: number | null; deliveredAt: number | null };
-export type Dispatch = { id: string; deviceId: string; name: string; vehicleId: string; vehicleName: string; stops: DispatchStop[]; radius: number; assignedAt: number; updatedAt: number; revision: number; checkedAt: number };
+export type Dispatch = { id: string; deviceId: string; name: string; vehicleId: string; vehicleName: string; stops: DispatchStop[]; radius: number; assignedAt: number; updatedAt: number; revision: number; checkedAt: number; orderId?: string };
 // GPS arrival is deliberately different from a confirmed delivery.
 // Require two precise fixes, at least 15 seconds apart, in one trip inside
 // the arrival radius. Duplicates, old pre-dispatch fixes and wide uncertainty do not count.

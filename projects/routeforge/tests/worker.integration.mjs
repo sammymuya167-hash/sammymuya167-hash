@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { createRequire } from "node:module";
 import { readFileSync, readdirSync } from "node:fs";
 import path from "node:path";
+import { verifyOffice } from "./office.integration.mjs";
 
 // Run the built production Worker against a disposable D1 database. Fixture
 // identity headers emulate the trusted hosting gateway only inside this test.
@@ -18,6 +19,7 @@ function moduleFiles(directory) {
   );
 }
 const main = path.join(serverRoot, "index.js");
+const geocoderCalls=[];
 const mf = new Miniflare({
   modules: [
     main,
@@ -28,6 +30,14 @@ const mf = new Miniflare({
   compatibilityDate: "2026-05-15",
   compatibilityFlags: ["nodejs_compat"],
   d1Databases: ["DB"],
+  outboundService: async request => {
+    const url=new URL(request.url);
+    if(url.origin!=="https://photon.komoot.io")return new Response("Unexpected outbound request",{status:503});
+    geocoderCalls.push(url);
+    if(url.searchParams.get("q")==="Unavailable fixture")return new Response("Fixture unavailable",{status:503});
+    if(url.searchParams.get("q")==="Redirect fixture")return new Response(null,{status:302,headers:{Location:"https://foreign.test/private"}});
+    return Response.json({features:[{geometry:{type:"Point",coordinates:[36.82,-1.28]},properties:{name:"Synthetic shop",city:"Fixture city",country:"Kenya"}}]});
+  },
   assets: {
     directory: path.resolve("dist/client"),
     binding: "ASSETS",
@@ -107,8 +117,10 @@ try {
   }
   const home = await request("/");
   assert.equal(home.status, 200);
-  assert.match(await home.text(), /Make every mile count/);
-  passed("built Worker renders the dispatch workspace");
+  const homeHtml=await home.text();
+  assert.match(homeHtml, /Your office, in motion/);
+  assert.doesNotMatch(homeHtml,/Make every mile count|17 deliveries|Bike 01/);
+  passed("built Worker renders the real office shell without sample fleet data");
   assert.equal(
     (await request("/api/plans", "GET", undefined, null)).status,
     401,
@@ -525,13 +537,16 @@ try {
   passed("explicit removal of an unlinked device deletes its GPS history");
   const trackingPage = await request("/tracking");
   assert.equal(trackingPage.status, 200);
-  assert.match(await trackingPage.text(), /Every journey, in view/);
+  const trackingHtml=await trackingPage.text();
+  assert.match(trackingHtml, /Every journey, in view/);
+  assert.match(trackingHtml, /href="\/" target="_top" class="tracking-back"/);
   passed("built Worker renders the live tracking portal");
   const download = await request("/downloads/routeforge-driver.apk");
   assert.equal(download.status, 200);
   const { createHash } = await import("node:crypto");
   assert.equal(createHash("sha256").update(new Uint8Array(await download.arrayBuffer())).digest("hex"), "8d9b3a0d84e7c32bbb1c10fba1c52fd052fac24d187b18b1b94223975aedbf29");
   passed("the Worker serves the exact verified Android installer");
+  await verifyOffice({mf,db,request,passed,geocoderCalls});
 
 
   console.log(`${checked} Worker/D1 integration checks passed.`);

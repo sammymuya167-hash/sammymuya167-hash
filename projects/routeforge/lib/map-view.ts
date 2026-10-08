@@ -6,6 +6,9 @@ export function projectLocation(lat: number, lng: number): MapCenter {
   const phi = Math.max(-85.0511, Math.min(85.0511, lat)) * Math.PI / 180;
   return { x: (lng + 180) / 360, y: (1 - Math.log(Math.tan(phi) + 1 / Math.cos(phi)) / Math.PI) / 2 };
 }
+export function unprojectLocation(center:MapCenter){
+  return {lat:Math.atan(Math.sinh(Math.PI*(1-2*center.y)))*180/Math.PI,lng:((center.x*360-180+180)%360+360)%360-180};
+}
 export function panView(view: MapView, dx: number, dy: number): MapView {
   const world = 256 * 2 ** view.zoom;
   return { ...view, x: view.x - dx / world, y: Math.max(0, Math.min(1, view.y - dy / world)) };

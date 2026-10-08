@@ -15,9 +15,10 @@ import {
 import type { Device, TrackingEvent } from "../../lib/tracking";
 import JourneyMap from "./map";
 import { useFleet } from "./use-fleet";
-import { DispatchComposer, DispatchProgress, DriverTelemetry, FleetAlerts, type RouteChoice } from "./operations";
+import { DispatchProgress, DriverTelemetry, FleetAlerts } from "./operations";
 import { motionOf, motionLabels } from "../../lib/dispatch";
-import type { SavedPlan } from "../../lib/model";
+import { useOffice } from "../office/use-office";
+import { NewOrderForm, DriverDetails } from "../office/forms";
 type Trip = {
   id: string;
   startedAt: number;
@@ -72,8 +73,9 @@ export default function TrackingPortal({
   userName: string;
 }) {
   const fleet = useFleet(signedIn);
+  const office = useOffice(signedIn);
   const { devices, dispatches, loading, refreshed, refresh } = fleet;
-  const [routeChoices,setRouteChoices] = useState<RouteChoice[]>([]);
+  const [newOrderOpen,setNewOrderOpen] = useState(false),[detailsOpen,setDetailsOpen] = useState(false);
   const [selected, setSelected] = useState(""),
     [tripId, setTripId] = useState(""),
     [trips, setTrips] = useState<Trip[]>([]),
@@ -96,12 +98,6 @@ export default function TrackingPortal({
   useEffect(() => {
     setSelected(current=>devices.some(d=>d.id===current)?current:devices[0]?.id??"");
   },[devices]);
-  useEffect(()=>{
-    if(!signedIn)return;
-    const controller=new AbortController();
-    api<{plans:SavedPlan[]}>("/api/plans","GET",undefined,controller.signal).then(data=>setRouteChoices(data.plans.filter(p=>!p.archivedAt).flatMap(p=>p.result.routes.map(route=>({key:`${p.id}-${route.vehicle.id}`,name:p.name,route}))))).catch(e=>{if(!controller.signal.aborted)setError(e.message);});
-    return()=>controller.abort();
-  },[signedIn]);
   useEffect(() => {
     if (!signedIn || !selected) return;
     const controller = new AbortController();
@@ -266,6 +262,7 @@ export default function TrackingPortal({
     (e): e is Extract<Event, { kind: "point" }> => e.kind === "point",
   );
   const apk = "/downloads/routeforge-driver.apk";
+  async function refreshOffice(){await Promise.all([refresh(),office.refresh()]);}
   return (
     <main className="tracking-shell">
       <header className="tracking-header">
@@ -275,9 +272,11 @@ export default function TrackingPortal({
           </span>
           RouteForge<span className="brand-period">.</span>
         </Link>
-        <Link href="/" className="tracking-back">
+        {/* A full document navigation also works in the embedded office frame. */}
+        {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
+        <a href="/" target="_top" className="tracking-back">
           <ArrowLeft size={16} /> Dispatch
-        </Link>
+        </a>
         <span className="tracking-user">{userName}</span>
       </header>
       <div className="tracking-heading">
@@ -457,7 +456,10 @@ export default function TrackingPortal({
                       when its connection returns.
                     </p>
                   )}
-                  {selectedDevice.pairedAt && !selectedDevice.revokedAt && (assignment ? <DispatchProgress key={assignment.id} dispatch={assignment} device={selectedDevice} onChanged={refresh}/> : <DispatchComposer key={selectedDevice.id} device={selectedDevice} routes={routeChoices} onChanged={refresh}/>)}
+                  {/* Keep the office return link as a full document navigation. */}
+                  {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
+                  {selectedDevice.pairedAt && !selectedDevice.revokedAt && <section className="dispatch-composer"><h3>Office dispatch</h3><p>Choose registered partner locations and assign work to this company driver.</p>{office.error&&<p className="dispatch-error" role="alert">{office.error}</p>}<button className="tracking-primary" disabled={!office.data} onClick={()=>setNewOrderOpen(true)}>New collection / delivery</button><a href="/" target="_top" className="office-tracker-link">Open main office →</a></section>}
+                  {assignment&&<DispatchProgress key={assignment.id} dispatch={assignment} device={selectedDevice} onChanged={refreshOffice}/>}
                   <div className="device-actions">
                     <span>
                       <Smartphone size={16} />
@@ -466,6 +468,7 @@ export default function TrackingPortal({
                         ? " · " + selectedDevice.phoneLabel
                         : ""}
                     </span>
+                    {selectedDevice.pairedAt&&!selectedDevice.revokedAt&&<button onClick={()=>setDetailsOpen(true)}>Driver details / call</button>}
                     {["pending", "expired"].includes(selectedDevice.status) && (
                       <button
                         disabled={busy}
@@ -593,6 +596,8 @@ export default function TrackingPortal({
           </p>
         </div>
       </section>
+      {newOrderOpen&&selectedDevice&&office.data&&<NewOrderForm data={office.data} devices={devices} dispatches={dispatches} initialDriver={selectedDevice.id} onChanged={refreshOffice} onClose={()=>setNewOrderOpen(false)}/>}
+      {detailsOpen&&selectedDevice&&<DriverDetails device={selectedDevice} profile={office.data?.profiles.find(p=>p.deviceId===selectedDevice.id)} dispatches={dispatches} onChanged={refreshOffice} onClose={()=>setDetailsOpen(false)}/>}
       {adding && (
         <div className="tracking-modal-wrap">
           <form

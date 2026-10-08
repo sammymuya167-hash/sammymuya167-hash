@@ -2,6 +2,7 @@ import { env } from "cloudflare:workers";
 import { z } from "zod";
 import { dispatchInput, evaluateArrival, type Dispatch, type GPSPoint } from "./dispatch";
 import { TrackingError } from "./tracking";
+import { syncOfficeDispatch } from "./office-sync";
 type Row = { device_id: string; owner_id: string; dispatch_json: string; revision: number; updated_at: number };
 const db = () => env.DB as D1Database;
 export async function reconcileDispatch(deviceId: string) {
@@ -15,6 +16,8 @@ export async function reconcileDispatch(deviceId: string) {
   const rows = await db().prepare("SELECT payload_json FROM (SELECT payload_json,recorded_at FROM tracking_events WHERE device_id=? AND kind='point' AND recorded_at>=? ORDER BY recorded_at DESC LIMIT 5000) ORDER BY recorded_at ASC").bind(deviceId, after).all<{payload_json:string}>();
   const next = evaluateArrival(current, rows.results.map(r => JSON.parse(r.payload_json) as GPSPoint));
   await db().prepare("UPDATE driver_dispatches SET dispatch_json=?,revision=revision+1,updated_at=? WHERE device_id=? AND revision=? AND dispatch_json=?").bind(JSON.stringify({...next, checkedAt:device.last_seen_at, updatedAt:Date.now(), revision:row.revision+1}),Date.now(),deviceId,row.revision,row.dispatch_json).run();
+  const fresh=await db().prepare("SELECT dispatch_json FROM driver_dispatches WHERE device_id=? AND owner_id=?").bind(deviceId,row.owner_id).first<{dispatch_json:string}>();
+  if(fresh)await syncOfficeDispatch(row.owner_id,JSON.parse(fresh.dispatch_json));
 }
 export async function listDispatches(owner: string) {
   const rows = await db().prepare("SELECT * FROM driver_dispatches WHERE owner_id=?").bind(owner).all<Row>();
@@ -47,8 +50,13 @@ export async function changeDispatch(owner:string,payload:unknown){
   const current=JSON.parse(row.dispatch_json) as Dispatch;
   if(current.id!==id)throw new TrackingError(409,"This dispatch has changed. Refresh before continuing.");
   if(action==="cancel"){
-    const changed=await db().prepare("DELETE FROM driver_dispatches WHERE device_id=? AND owner_id=? AND revision=? AND dispatch_json=? RETURNING device_id").bind(deviceId,owner,row.revision,row.dispatch_json).first();
-    if(!changed)throw new TrackingError(409,"The dispatch updated at the same time. Please retry.");
+    const now=Date.now();
+    const result=await db().batch([
+      db().prepare("DELETE FROM driver_dispatches WHERE device_id=? AND owner_id=? AND revision=? AND dispatch_json=? RETURNING device_id").bind(deviceId,owner,row.revision,row.dispatch_json),
+      db().prepare("UPDATE office_orders SET status='cancelled',payload_json=json_set(payload_json,'$.status','cancelled','$.updatedAt',?,'$.version',version+1),version=version+1,updated_at=? WHERE dispatch_id=? AND owner_id=? AND status NOT IN ('delivered','cancelled') AND NOT EXISTS(SELECT 1 FROM driver_dispatches WHERE device_id=? AND json_extract(dispatch_json,'$.id')=?)").bind(now,now,id,owner,deviceId,id),
+      db().prepare("UPDATE office_driver_profiles SET profile_json=json_set(profile_json,'$.lastReleasedAt',?),updated_at=? WHERE device_id=? AND owner_id=? AND EXISTS(SELECT 1 FROM office_orders WHERE dispatch_id=? AND owner_id=? AND status='cancelled')").bind(now,now,deviceId,owner,id,owner),
+    ]);
+    if(!result[0].results.length)throw new TrackingError(409,"The dispatch updated at the same time. Please retry.");
     return {ok:true};
   }
   const next=current.stops.find(s=>!s.deliveredAt);
@@ -57,5 +65,6 @@ export async function changeDispatch(owner:string,payload:unknown){
   const updated={...current,stops:current.stops.map(s=>s.id===stopId?{...s,deliveredAt:now}:s),checkedAt:0,updatedAt:now,revision:row.revision+1};
   const changed=await db().prepare("UPDATE driver_dispatches SET dispatch_json=?,revision=revision+1,updated_at=? WHERE device_id=? AND owner_id=? AND revision=? AND dispatch_json=? RETURNING device_id").bind(JSON.stringify(updated),now,deviceId,owner,row.revision,row.dispatch_json).first();
   if(!changed)throw new TrackingError(409,"The driver updated at the same time. Please retry.");
+  try { await syncOfficeDispatch(owner,updated); } catch { console.error("Office progress will retry on refresh"); }
   return {ok:true};
 }
