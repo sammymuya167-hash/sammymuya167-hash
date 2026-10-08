@@ -7,8 +7,11 @@ export async function verifyBootstrap({createWorker,resetWorker,passed}){
   const worker=createWorker(seed);
   try{let db=await worker.getD1Database("DB");for(const file of readdirSync("drizzle").filter(f=>f.endsWith(".sql")).sort())for(const sql of readFileSync("drizzle/"+file,"utf8").split("--> statement-breakpoint"))if(sql.trim())await db.prepare(sql).run();
     await db.prepare("INSERT INTO tracking_devices(id,owner_id,driver_name,vehicle_label,phone_label,created_at) VALUES(?,?,?,'Fixture bike',?,?)").bind(deviceId,owner,"Existing bootstrap rider","+254700000099",Date.now()).run();
+    await db.prepare("INSERT INTO driver_runtime(device_id,owner_id,app_version,on_duty,gps_enabled,heartbeat_at) VALUES(?,?,3,1,1,?)").bind(deviceId,owner,Date.now()).run();
+    await db.prepare("INSERT INTO office_driver_profiles(device_id,owner_id,profile_json,updated_at) VALUES(?,?,?,?)").bind(deviceId,owner,JSON.stringify({deviceId,onDuty:true}),Date.now()).run();
     const guest=await worker.dispatchFetch("https://routeforge.test/");assert.equal(guest.status,200);assert.match(await guest.text(),/OFFICE ACCESS/);
     assert.equal((await db.prepare("SELECT COUNT(*) n FROM company_accounts").first()).n,2);
+    assert.equal((await db.prepare("SELECT on_duty FROM driver_runtime WHERE device_id=?").bind(deviceId).first()).on_duty,0);assert.equal(JSON.parse((await db.prepare("SELECT profile_json FROM office_driver_profiles WHERE device_id=?").bind(deviceId).first()).profile_json).onDuty,false);
     for(const user of [owner,"other-hosted-user"]){assert.equal((await worker.dispatchFetch("https://routeforge.test/api/office",{headers:{"oai-authenticated-user-id":user,"oai-authenticated-user-email":user+"@example.test"}})).status,401);}
     const logged=await worker.dispatchFetch("https://routeforge.test/api/auth/login",{method:"POST",headers:{"Content-Type":"application/json",Origin:"https://routeforge.test"},body:JSON.stringify({username:"BootstrapOffice",password:"Synthetic-bootstrap-password-42"})});assert.equal(logged.status,200);
     const cookie=logged.headers.get("set-cookie").split(";")[0];const accounts=await (await worker.dispatchFetch("https://routeforge.test/api/office/driver-accounts",{headers:{Cookie:cookie}})).json();assert.equal(accounts.accounts[0].deviceId,deviceId);

@@ -1,53 +1,41 @@
-# RouteForge Rider 1.1 release record
+# RouteForge Rider 1.2 release record
 
-Status on 2026-10-08: **completed and published**, Sites version 7.
+Status on 2026-10-08: **completed and published**, Sites version 8.
 
 - Dashboard: https://routeforge-shadownet.sammymuya167.chatgpt.site
-- Rider APK: https://routeforge-shadownet.sammymuya167.chatgpt.site/downloads/routeforge-rider.apk?v=3
-- Installer metadata: https://routeforge-shadownet.sammymuya167.chatgpt.site/downloads/routeforge-rider-release.json
-- Sites source commit: `dc9924223b80342ae8b94e3b5bc0e0ec1efc17b3`
-- Saved version: `appgprj_6ac6a091041481919cdfd5d22ab08ff2~appgver_a252229dd00c819197d8f5dd97a6b49a`
-- Deployment: `appgdep_6ac7e7743be88191a0eea2e71aac72c2`, terminal status `succeeded`.
-
-This updates the existing RouteForge project and catalogue idea #92; it does not create another catalogue completion. The original pilot installer, driver records, uploaded GPS history, payment receipts and saved planning scenarios are preserved.
+- Rider APK: https://routeforge-shadownet.sammymuya167.chatgpt.site/downloads/routeforge-rider.apk?v=4
+- Sites source commit: `5b8d092a3c8515d8ff3286d306f298b9fed1d848`
+- Saved version: `appgprj_6ac6a091041481919cdfd5d22ab08ff2~appgver_85645da4c7388191b8b7b850537d0443`
+- Deployment: `appgdep_6ac7fcc57434819189b05b640b8ed7dc`, terminal status `succeeded`, runtime environment revision 1.
 
 ## Delivered behaviour
 
-Rider 1.1 fixes a three-second state timeout that silently hid assignments when the server took longer. The state endpoint now uses a device-scoped database batch, returns the current order independently of recent-history limits, and defers offer fallback work. The app permits longer reads, reports delivery-connection failures separately from GPS upload status, and retains cached assignments during an outage.
+Office and rider login screens use role-scoped server authentication. Existing rider accounts point to the same driver records, preserving history, assignment and payment data. Initial credentials are configured privately as salted bcrypt cost 12 hashes. The office uses a Secure, HttpOnly, SameSite=Strict session cookie; the Android app keeps its token encrypted in Android Keystore. Public source contains no production passwords, password hashes, owner identifiers or phone records.
 
-Eligible free riders receive high-importance offer notifications with sound and vibration, an in-app banner on every tab, and a left-to-right five-second claim timer. Direct and automatic assignments have their own notification and persistent active-ride card. Native, interface and database checks prevent a busy, off-duty, GPS-disabled or stale Rider phone from claiming another delivery. Unclaimed offers select a currently free eligible rider at random, or return to the queue.
+**Drivers & fleet → Driver logins** creates a driver account with a required phone number, optional custom username and generated password shown once. The office can generate a replacement password. Reset ends previous phone sessions and duty while preserving unfinished work. Office unlink disables access; the office can restore it with a replacement password. Native sign-out syncs reports, ends duty and revokes the session. Saved reports cannot move to another rider account.
 
-Working native confirmations let riders finish deliveries; every stop on a legacy route must finish before normal End duty. Privacy pause remains available. Cash and company-till reports retain durable operation IDs, exact amounts, replay protection and office verification. All-time totals include older records.
+New offers remain open for **30 seconds**. The first valid claim wins; after expiry the server chooses a currently free, on-duty eligible rider randomly, or returns the order to the queue. Busy riders cannot claim or receive another assignment. The office and app display the deadline-driven progress line. Existing notification, navigation, delivery completion, cash/till reporting, sales totals, planning, mapping, CSV and history features remain available after login.
 
-Routes & planning shares the office navigation and retains route maps, costs, shifts, capacities, windows, weights, CSV import/export, manifests, optimization, settings and saved scenarios. Planning drafts survive navigation, and saved plans reopen for editing. Planning estimates remain distinct from actual customer collections.
+## Verification
 
-See [the requirement-by-requirement update guide](RIDER_UPDATE.md).
+- 56 Node tests, 74 actual Worker/D1 checks, TypeScript, ESLint and the final packaged Worker build passed.
+- [Actions run 37838156201](https://github.com/sammymuya167-hash/sammymuya167-hash/actions/runs/37838156201) passed Android debug/release compilation, lint and all 12 API 35 emulator checks, including the rendered offline login, native bridge, encrypted session and queue ownership.
+- Native source commit: `78bbaf698fb83673426383db5ba4e1bcfbb10386`; build checkout: `90559115b7f486580fa9e1418672c6339068c599`.
+- Artifact ID: `11575464938`; ZIP SHA-256: `bc598865f652d76ea829e32df147b6715f5d9508fb25bf6af1871970bb172cae`.
+- All 15 main-source/build checksums match the released source.
+- Rider package/version: `app.shadownet.routeforge.rider / 4 / 1.2-rider`; minimum/target API: `26 / 35`.
+- Signed APK: 53,815 bytes; SHA-256 `6da02d5a7929174b43eb026580d190cf657466d039e8d13ee622953f2165e10b`.
+- Owner certificate SHA-256: `e0c3213d4cbb6cc15c5792d8f7ffecaa6758b963d6998b9afc9511c6c45dc72c`; APK signature schemes v2/v3 verify.
+- Original pilot SHA-256 remains `8d9b3a0d84e7c32bbb1c10fba1c52fd052fac24d187b18b1b94223975aedbf29`.
+- Production account records were inspected through the hosting connection and all three requested passwords were verified against their stored hashes. The public login page was retrieved successfully.
+- Browser gesture QA and a real-phone speaker/background check are not claimed; Android emulator and actual Worker checks provide the recorded test evidence.
 
-## Verified release
+## Install
 
-- 51 Node unit cases, 61 actual Worker/D1 flows, TypeScript checks, ESLint and the production Worker build passed.
-- [Actions run 37827113523](https://github.com/sammymuya167-hash/sammymuya167-hash/actions/runs/37827113523) passed debug/release compilation, lint and all 11 API 35 emulator instrumentation checks. These include independent assignment alerts, sound/popup channel configuration, complete legacy-stop gating and a real WebView native confirmation.
-- Native source commit: `2305a6da905ed7052caac8227843e9e54d32e829`; CI merge checkout: `a7e442b166dbcea07094f26bab05351beac6265a`.
-- Artifact ID: `11572441423`; all 15 main-source/build manifest checksums match the released source.
-- Application ID: `app.shadownet.routeforge.rider`; version code/name: `3 / 1.1-rider`; minimum/target API: `26 / 35`.
-- Signed APK SHA-256: `03692fbf6822d7d0759af43d86e979b4913aab5213a021152acc9a5a86c6330d`.
-- Owner signer certificate SHA-256: `e0c3213d4cbb6cc15c5792d8f7ffecaa6758b963d6998b9afc9511c6c45dc72c`; APK signature schemes v2 and v3 verify.
-- Original unchanged pilot SHA-256: `8d9b3a0d84e7c32bbb1c10fba1c52fd052fac24d187b18b1b94223975aedbf29`.
+Install Rider 1.2 over an existing Rider installation without uninstalling or clearing storage. Sign in with the office-issued rider username and password, then choose **Start duty**. In Account, play the delivery alert test and check both notification channels. For a pilot-only phone, sync and stop the pilot, install Rider alongside it and sign in to the account attached to the existing driver record.
 
-Private signing material remains outside public source and hosting. Future Rider upgrades must use this same owner key.
+## Backup
 
-## Install and field check
+The working Rider 1.1 release, including project source and its signed APK, is retained at `backup/routeforge-rider-1.1-2026-10-08` under `projects/routeforge`. It points to repository commit `09aaa7372d51e6cf380a6cd2bbd20910b9c67edd`. Operational records remain in the private hosted database.
 
-Install Rider 1.1 over an existing RouteForge Rider installation; keep its link and queue. Do not unlink or clear storage. In Account, use **Play delivery alert test** and inspect both offer and assigned-delivery settings. Start duty with GPS enabled and a fresh fix, then verify an offered delivery, automatic assignment, completion and cash/till report on the actual phone.
-
-An original pilot installation still requires the one-time existing-driver upgrade code, with the pilot synced and stopped first. Rider installs alongside that older package, and pairing rotates the phone token while retaining the driver and uploaded history.
-
-## Practical limits
-
-The five-second deadline is enforced by the server. A working connection and active duty service are required for prompt offers. Android permission, volume, channel settings, Do Not Disturb, scheduling and cooldown govern sound and popups. There is no claim of a hardware speaker test or broad real-device background verification. Managed-environment browser gestures were unavailable; verified evidence is the Worker and Android emulator checks.
-
-Till reports need office receipt verification. No bank transfer, refund or automated payment reconciliation is implemented. Maps, mileage and planning costs remain estimates.
-
-## Previous release
-
-Rider 1.0 / code 2 was published in Sites version 6 from source `3a84ed3fad0ff708dd44b148c282bb379dc9eefc`. Its APK SHA-256 was `552ea88f006d2d12d590e675b8fbdd96090d2e274750cce05575abcc5f738efd`. This release uses the same Rider package and certificate for an install-over upgrade.
+See [ACCOUNT_LOGINS.md](ACCOUNT_LOGINS.md), [RIDER_UPDATE.md](RIDER_UPDATE.md) and [TRACKING.md](TRACKING.md).

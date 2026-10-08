@@ -30,7 +30,12 @@ export async function ensureAccounts(){
         if(!device)throw new Error("Bootstrap rider record is unavailable");
       }
     }
-    try{await db().batch(seed.accounts.map(a=>db().prepare("INSERT INTO company_accounts(id,owner_id,username,username_key,password_hash,role,device_id,phone,enabled,version,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,1,1,?,?)").bind(a.id,seed.ownerId,a.username,a.username.toLowerCase(),a.passwordHash,a.role,a.deviceId??null,a.phone??"",now,now)));}
+    const statements=seed.accounts.map(a=>db().prepare("INSERT INTO company_accounts(id,owner_id,username,username_key,password_hash,role,device_id,phone,enabled,version,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,1,1,?,?)").bind(a.id,seed.ownerId,a.username,a.username.toLowerCase(),a.passwordHash,a.role,a.deviceId??null,a.phone??"",now,now));
+    for(const a of seed.accounts.filter(a=>a.role==="rider"))statements.push(
+      db().prepare("UPDATE driver_runtime SET on_duty=0,gps_enabled=0,heartbeat_at=? WHERE device_id=? AND owner_id=?").bind(now,a.deviceId,seed.ownerId),
+      db().prepare("UPDATE office_driver_profiles SET profile_json=json_set(profile_json,'$.onDuty',json('false')),updated_at=? WHERE device_id=? AND owner_id=?").bind(now,a.deviceId,seed.ownerId),
+    );
+    try{await db().batch(statements);}
     catch(e){if(!await db().prepare("SELECT id FROM company_accounts WHERE id=? AND owner_id=? AND role='office'").bind(office.id,seed.ownerId).first())throw e;}
   })().catch(e=>{seeded=undefined;throw e;});
   await seeded;
@@ -102,7 +107,10 @@ export async function createDriverAccount(owner:string,payload:unknown){
   const statements=[db().prepare("INSERT INTO company_accounts(id,owner_id,username,username_key,password_hash,role,device_id,phone,enabled,version,created_at,updated_at) SELECT ?,?,?,?,?,'rider',?,?,1,1,?,? WHERE (SELECT COUNT(*) FROM tracking_devices WHERE owner_id=?)<50 OR ?=1 RETURNING id").bind(id,owner,username,username.toLowerCase(),passwordHash,deviceId,input.phone,now,now,owner,Number(!!input.deviceId))];
   if(!input.deviceId)statements.push(db().prepare("INSERT INTO tracking_devices(id,owner_id,driver_name,vehicle_label,phone_label,created_at) SELECT ?,?,?,?,?,? WHERE EXISTS(SELECT 1 FROM company_accounts WHERE id=? AND owner_id=?)").bind(deviceId,owner,input.driverName,input.vehicleLabel,input.phone,now,id,owner));
   else statements.push(db().prepare("UPDATE tracking_devices SET phone_label=? WHERE id=? AND owner_id=? AND EXISTS(SELECT 1 FROM company_accounts WHERE id=? AND owner_id=?)").bind(input.phone,deviceId,owner,id,owner));
-  if(input.deviceId)statements.push(db().prepare("UPDATE office_driver_profiles SET profile_json=json_set(profile_json,'$.phone',?),updated_at=? WHERE device_id=? AND owner_id=? AND EXISTS(SELECT 1 FROM company_accounts WHERE id=? AND owner_id=?)").bind(input.phone,now,deviceId,owner,id,owner));
+  if(input.deviceId)statements.push(
+    db().prepare("UPDATE office_driver_profiles SET profile_json=json_set(profile_json,'$.phone',?,'$.onDuty',json('false')),updated_at=? WHERE device_id=? AND owner_id=? AND EXISTS(SELECT 1 FROM company_accounts WHERE id=? AND owner_id=?)").bind(input.phone,now,deviceId,owner,id,owner),
+    db().prepare("UPDATE driver_runtime SET on_duty=0,gps_enabled=0,heartbeat_at=? WHERE device_id=? AND owner_id=? AND EXISTS(SELECT 1 FROM company_accounts WHERE id=? AND owner_id=?)").bind(now,deviceId,owner,id,owner),
+  );
   let rows;try{rows=await db().batch(statements);}catch(e){if(e instanceof Error&&/UNIQUE constraint/.test(e.message))throw new TrackingError(409,"That username or driver already has an account.");throw e;}
   if(!rows[0].results.length)throw new TrackingError(409,"The fleet limit is 50 drivers.");
   return {deviceId,driverName:input.driverName,username,password};

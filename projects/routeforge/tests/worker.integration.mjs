@@ -553,10 +553,11 @@ try {
   passed("the Worker serves the exact verified Android installer");
   const riderDownload = await request("/downloads/routeforge-rider.apk", "GET", undefined, null);
   assert.equal(riderDownload.status, 200);
-  assert.equal(createHash("sha256").update(new Uint8Array(await riderDownload.arrayBuffer())).digest("hex"), "03692fbf6822d7d0759af43d86e979b4913aab5213a021152acc9a5a86c6330d");
+  assert.equal(createHash("sha256").update(new Uint8Array(await riderDownload.arrayBuffer())).digest("hex"), "6da02d5a7929174b43eb026580d190cf657466d039e8d13ee622953f2165e10b");
   const riderMetadata = await (await request("/downloads/routeforge-rider-release.json", "GET", undefined, null)).json();
   assert.equal(riderMetadata.applicationId, "app.shadownet.routeforge.rider");
-  assert.equal(riderMetadata.apkSha256, "03692fbf6822d7d0759af43d86e979b4913aab5213a021152acc9a5a86c6330d");
+  assert.equal(riderMetadata.versionCode,4);assert.equal(riderMetadata.offerWindowSeconds,30);assert.equal(riderMetadata.accountLoginRequired,true);
+  assert.equal(riderMetadata.apkSha256, "6da02d5a7929174b43eb026580d190cf657466d039e8d13ee622953f2165e10b");
   assert.equal(riderMetadata.certificateSha256, "e0c3213d4cbb6cc15c5792d8f7ffecaa6758b963d6998b9afc9511c6c45dc72c");
   passed("the built Worker publicly serves the signed Rider APK and matching release metadata while preserving the pilot");
   await verifyDriver({mf,db,request,passed});
