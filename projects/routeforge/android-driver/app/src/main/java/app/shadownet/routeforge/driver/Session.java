@@ -31,7 +31,7 @@ final class Session {
  }
  static JSONObject get(Context c){return read(c,"session");}
  static boolean loggedIn(Context c){JSONObject s=get(c);return s!=null&&s.optBoolean("loggedIn",false);}
- static String queueOwner(Context c){String id=prefs(c).getString("device_id",prefs(c).getString("queue_device_id",""));if(id.isEmpty()){JSONObject row=EventQueue.get(c).command();if(row!=null)id=row.optString("deviceId");}return id;}
+ static String queueOwner(Context c){String id=prefs(c).getString("device_id",prefs(c).getString("queue_device_id",""));if(id.isEmpty())try{JSONObject row=EventQueue.get(c).command();if(row!=null)id=row.optString("deviceId");}catch(Exception ignored){error(c,"Could not read the saved rider reports. Review the queue with your office.");}return id;}
  static JSONObject pendingUnlink(Context c){return read(c,"pending_unlink");}
  static void saveUnlink(Context c,JSONObject data)throws Exception{store(c,"pending_unlink",data);}
  private static synchronized JSONObject read(Context c,String field) {
