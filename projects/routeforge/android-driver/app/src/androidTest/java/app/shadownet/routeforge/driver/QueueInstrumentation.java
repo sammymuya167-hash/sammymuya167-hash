@@ -53,7 +53,7 @@ public final class QueueInstrumentation extends Instrumentation {
         AtomicReference<String> value = new AtomicReference<>();
         runOnMainSync(() -> {
             WebView web = (WebView) ((ViewGroup) activity.findViewById(android.R.id.content)).getChildAt(0);
-            web.evaluateJavascript("(function(){if(typeof applyState!=='function'||typeof go!=='function'||typeof Rider==='undefined')return {ready:false};go('trips');var text=document.getElementById('tripcontent').textContent;go('account');return {ready:true,paired:!!state.paired,bridge:typeof Rider.action==='function'&&typeof Rider.login==='function'&&typeof Rider.logout==='function'&&typeof Rider.settings==='function',credentials:typeof Rider.token!=='undefined'||typeof Rider.session!=='undefined',totals:text.indexOf('REPORTED COLLECTIONS')>=0&&text.indexOf('VERIFIED BY OFFICE')>=0,login:document.getElementById('loginscreen').style.display!=='none'&&document.getElementById('loginpassword').type==='password'&&document.getElementById('ridernav').style.display==='none',pages:['home','offers','route','trips','account'].every(function(id){return !!document.getElementById(id);})};})()", result -> { value.set(result); done.countDown(); });
+            web.evaluateJavascript("(function(){if(typeof applyState!=='function'||typeof go!=='function'||typeof Rider==='undefined')return {ready:false};go('trips');var text=document.getElementById('tripcontent').textContent;go('account');return {ready:true,paired:!!state.paired,bridge:typeof Rider.action==='function'&&typeof Rider.login==='function'&&typeof Rider.logout==='function'&&typeof Rider.settings==='function',credentials:typeof Rider.token!=='undefined'||typeof Rider.session!=='undefined',totals:text.indexOf('REPORTED COLLECTIONS')>=0&&text.indexOf('VERIFIED BY OFFICE')>=0,login:document.getElementById('loginscreen').style.display!=='none'&&document.getElementById('loginpassword').type==='password'&&getComputedStyle(document.getElementById('ridernav')).display==='none',pages:['home','offers','route','trips','account'].every(function(id){return !!document.getElementById(id);})};})()", result -> { value.set(result); done.countDown(); });
         });
         check(done.await(5, TimeUnit.SECONDS), "Packaged UI evaluation must respond");
         return new JSONObject(value.get());
@@ -116,7 +116,7 @@ public final class QueueInstrumentation extends Instrumentation {
             check(screen.optBoolean("ready"), "Offline rider interface must load without a server page");
             check(screen.optBoolean("bridge") && !screen.optBoolean("credentials"), "Packaged interface must have native controls without exposing credentials");
             check(screen.optBoolean("pages") && screen.optBoolean("totals"), "Map, offers, trip totals and account controls must remain available");
-            check(screen.optBoolean("login") && !screen.optBoolean("paired") && !TrackingService.running, "Opening an unsigned phone must show a login without starting GPS");
+            check(screen.optBoolean("login") && !screen.optBoolean("paired") && !TrackingService.running, "Opening an unsigned phone must show a login without starting GPS: "+screen);
             check(queue.count()==0 && queue.commandCount()==0, "Opening the dashboard must not record or submit a trip");
             status(0, "packagedUiLoadsOfflineWithNativeBridge", 7, ".");
             status(1,"deliveryChannelsHaveSoundAndHeadsUp",8,"");
