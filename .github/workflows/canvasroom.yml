@@ -1,0 +1,26 @@
+name: CanvasRoom checks
+on:
+  push:
+    paths:
+      - "projects/canvasroom/**"
+      - ".github/workflows/canvasroom.yml"
+  pull_request:
+    paths:
+      - "projects/canvasroom/**"
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: projects/canvasroom
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.25.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: pnpm install --no-frozen-lockfile
+      - run: pnpm verify
+      - run: pnpm build

@@ -402,9 +402,16 @@
     {
       "pdf_id": 77,
       "title": "Design Collaboration Tool (Figma Clone)",
-      "state": "unbuilt",
+      "state": "built",
       "reference_url": "https://github.com/tldraw/tldraw",
-      "license_checked": false
+      "license_checked": true,
+      "project": "CanvasRoom",
+      "source_path": "projects/canvasroom",
+      "live_url": "https://canvasroom-shadownet.sammymuya167.chatgpt.site",
+      "released_at": "2026-10-08",
+      "reference_license": "Custom tldraw licence; production use restricted without separate agreement",
+      "implementation": "Original AI-assisted implementation; reference reviewed conceptually and no tldraw source, package, assets, or UI code reused.",
+      "release_timezone": "Africa/Nairobi"
     },
     {
       "pdf_id": 78,
