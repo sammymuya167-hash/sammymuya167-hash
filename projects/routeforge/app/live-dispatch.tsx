@@ -1,0 +1,15 @@
+"use client";
+import Link from "next/link";
+import { useState } from "react";
+import { ArrowUpRight, MapPin, Radio, Smartphone } from "lucide-react";
+import type { Scenario, OptimizationResult } from "../lib/model";
+import { statusLabels, motionLabels, motionOf } from "../lib/dispatch";
+import JourneyMap from "./tracking/map";
+import { useFleet } from "./tracking/use-fleet";
+import { DispatchComposer, DispatchProgress, DriverTelemetry, FleetAlerts } from "./tracking/operations";
+export default function LiveDispatch({scenario,result,signedIn}:{scenario:Scenario;result:OptimizationResult|null;signedIn:boolean}){
+  const fleet=useFleet(signedIn),[selectedId,setSelectedId]=useState("");
+  const devices=fleet.devices.filter(d=>d.pairedAt&&!d.revokedAt),selected=devices.find(d=>d.id===selectedId)??devices[0];
+  const dispatch=fleet.dispatches.find(a=>a.deviceId===selected?.id);
+  return <section className="live-dispatch" id="active-drivers"><div className="section-heading"><div><h2><Radio size={20}/> Active drivers & dispatch <span className="count-pill">{devices.length}</span></h2><p>Real linked phones, destination progress, and live fleet updates in one view.</p></div><Link className="button small secondary" href="/tracking"><MapPin size={15}/>Full tracker <ArrowUpRight size={14}/></Link></div>{fleet.error&&<p className="tracking-error" role="alert">{fleet.error}</p>}{!signedIn?<p className="tracking-empty">Sign in to see your private drivers and dispatch routes.</p>:!devices.length?<div className="live-dispatch-empty"><Smartphone size={26}/><p>{fleet.loading?"Loading your linked drivers…":"Pair a phone to bring a real driver into this dispatch workspace."}</p><Link className="tracking-primary" href="/tracking">Link a driver</Link></div>:<><div className="live-dispatch-grid"><aside>{devices.map(d=><button key={d.id} className={`driver-card ${d.id===selected?.id?"selected":""}`} onClick={()=>setSelectedId(d.id)}><div><strong>{d.driverName}</strong><span className={`tracking-status status-${d.status}`}>{statusLabels[d.status]}</span></div><p>{d.vehicleLabel||d.deviceName}</p><small>{d.status==="live"?motionLabels[motionOf(d.latestPoint)]:"Last known position"}{d.latestPoint?.battery!=null?` · ${d.latestPoint.battery}% battery`:""}</small></button>)}</aside><div>{selected&&<JourneyMap key={selected.id} points={[]} latest={selected.latestPoint} drivers={devices} selectedId={selected.id} onSelect={setSelectedId} destinations={dispatch?.stops??[]}/>}</div></div>{selected&&<><DriverTelemetry device={selected}/><div className="dispatch-monitor-row">{dispatch?<DispatchProgress key={dispatch.id} dispatch={dispatch} device={selected} onChanged={fleet.refresh}/>:<DispatchComposer key={selected.id} device={selected} routes={(result?.routes??[]).map(route=>({key:route.vehicle.id,name:scenario.name,route}))} onChanged={fleet.refresh}/>}<FleetAlerts alerts={fleet.alerts} notifications={fleet.notifications} onNotifications={()=>void fleet.toggleNotifications()}/></div></>}</>}</section>;
+}

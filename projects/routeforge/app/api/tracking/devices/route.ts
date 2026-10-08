@@ -10,13 +10,18 @@ import {
   createDevice,
   changeDevice,
 } from "../../../../lib/tracking-store";
+import { listDispatches } from "../../../../lib/dispatch-store";
+import { fleetAlerts } from "../../../../lib/dispatch";
 export async function GET() {
   try {
     const owner = await currentOwner();
     if (!owner)
       throw new TrackingError(401, "Sign in to manage driver devices.");
+    const [devices,dispatches] = await Promise.all([listDevices(owner),listDispatches(owner)]);
     return trackingResponse({
-      devices: await listDevices(owner),
+      devices,
+      dispatches,
+      alerts: fleetAlerts(devices,dispatches),
       serverTime: Date.now(),
     });
   } catch (e) {

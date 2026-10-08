@@ -1,5 +1,6 @@
 import { env } from "cloudflare:workers";
 import { z } from "zod";
+import { reconcileDispatch } from "./dispatch-store";
 import {
   type Device,
   type TrackingEvent,
@@ -117,6 +118,7 @@ export async function changeDevice(owner: string, payload: unknown) {
         "Unlink this device before deleting its history.",
       );
     await db().batch([
+      db().prepare("DELETE FROM driver_dispatches WHERE device_id=? AND owner_id=?").bind(id,owner),
       db()
         .prepare(
           "DELETE FROM tracking_events WHERE device_id IN (SELECT id FROM tracking_devices WHERE id=? AND owner_id=? AND revoked_at IS NOT NULL)",
@@ -260,6 +262,7 @@ export async function ingestEvents(
       401,
       "The device was unlinked. Uploads have stopped.",
     );
+  try { await reconcileDispatch(device.id); } catch { console.error("Dispatch progress will retry on portal refresh"); }
   return { acknowledged: ordered.map((e) => e.eventId), serverTime: now };
 }
 export async function history(owner: string, url: URL) {

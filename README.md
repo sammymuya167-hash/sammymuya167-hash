@@ -12,7 +12,7 @@ My work focuses on useful workflows, clear interfaces, tested server behavior, a
 
 | Project | What it demonstrates | Explore |
 |---|---|---|
-| **RouteForge** | Delivery planning with capacity constraints, arrival windows, an original TypeScript optimizer, private D1 storage, and CSV manifests | [Source & setup](projects/routeforge) · [Live demo](https://routeforge-shadownet.sammymuya167.chatgpt.site) |
+| **RouteForge** | Constrained delivery planning, offline-capable Android GPS tracking, interactive maps, private dispatch assignments and arrival alerts | [Source & setup](projects/routeforge) · [Live demo](https://routeforge-shadownet.sammymuya167.chatgpt.site) |
 | **SprintForge** | Sprint planning with Kanban, dependency graphs, burndown, comments, private D1 autosave and revision conflict protection | [Source & setup](projects/sprintforge) · [Live demo](https://sprintforge-shadownet.sammymuya167.chatgpt.site) |
 | **RequestLab** | Real HTTP requests, collections, environments, declarative assertions, a live mock API and private saved run summaries | [Source & setup](projects/requestlab) · [Live demo](https://requestlab-shadownet.sammymuya167.chatgpt.site) |
 | **CanvasRoom** | Original SVG design canvas with draggable shapes, connectors, review comments, private saves and restorable snapshots | [Source & setup](projects/canvasroom) · [Live demo](https://canvasroom-shadownet.sammymuya167.chatgpt.site) |
@@ -23,7 +23,7 @@ My work focuses on useful workflows, clear interfaces, tested server behavior, a
 
 Four projects from the supplied *Full Stack Projects* catalogue are now built, publicly deployed, and documented.
 
-- **RouteForge (#92):** optimize constrained delivery routes and export driver manifests.
+- **RouteForge (#92):** plan routes, follow linked drivers, dispatch destinations and confirm GPS arrivals.
 - **SprintForge (#33):** plan sprints, enforce dependencies, track progress and retain project activity.
 - **RequestLab (#98):** inspect real HTTP responses and run repeatable API contract tests.
 - **CanvasRoom (#77):** map product flows, connect ideas, review comments and restore private snapshots.

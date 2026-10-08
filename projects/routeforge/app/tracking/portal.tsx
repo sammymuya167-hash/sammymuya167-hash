@@ -14,6 +14,10 @@ import {
 } from "lucide-react";
 import type { Device, TrackingEvent } from "../../lib/tracking";
 import JourneyMap from "./map";
+import { useFleet } from "./use-fleet";
+import { DispatchComposer, DispatchProgress, DriverTelemetry, FleetAlerts, type RouteChoice } from "./operations";
+import { motionOf, motionLabels } from "../../lib/dispatch";
+import type { SavedPlan } from "../../lib/model";
 type Trip = {
   id: string;
   startedAt: number;
@@ -67,8 +71,10 @@ export default function TrackingPortal({
   signInPath: string;
   userName: string;
 }) {
-  const [devices, setDevices] = useState<Device[]>([]),
-    [selected, setSelected] = useState(""),
+  const fleet = useFleet(signedIn);
+  const { devices, dispatches, loading, refreshed, refresh } = fleet;
+  const [routeChoices,setRouteChoices] = useState<RouteChoice[]>([]);
+  const [selected, setSelected] = useState(""),
     [tripId, setTripId] = useState(""),
     [trips, setTrips] = useState<Trip[]>([]),
     [events, setEvents] = useState<Event[]>([]);
@@ -76,8 +82,6 @@ export default function TrackingPortal({
     [adding, setAdding] = useState(false),
     [busy, setBusy] = useState(false),
     [error, setError] = useState(""),
-    [refreshed, setRefreshed] = useState<number | null>(null),
-    [loading, setLoading] = useState(false),
     [historyBusy, setHistoryBusy] = useState(false),
     [cursor, setCursor] = useState<string | null>(null);
   const [historyRevision, setHistoryRevision] = useState(0);
@@ -88,53 +92,16 @@ export default function TrackingPortal({
     historyInFlight = useRef(false),
     loadedMore = useRef(false);
   const selectedDevice = devices.find((d) => d.id === selected) ?? null;
-  async function refresh(signal?: AbortSignal) {
-    const data = await api<{ devices: Device[]; serverTime: number }>(
-      "/api/tracking/devices",
-      "GET",
-      undefined,
-      signal,
-    );
-    setDevices(data.devices);
-    setRefreshed(data.serverTime);
-    setSelected((current) =>
-      data.devices.some((d) => d.id === current)
-        ? current
-        : (data.devices[0]?.id ?? ""),
-    );
-  }
+  const assignment = dispatches.find(a=>a.deviceId===selected);
   useEffect(() => {
-    if (!signedIn) return;
-    const controller = new AbortController();
-    let active = true;
-    let running = false;
-    const tick = async () => {
-      if (running || document.hidden) return;
-      running = true;
-      try {
-        await refresh(controller.signal);
-        if (active) setError("");
-      } catch (e) {
-        if (active)
-          setError(
-            e instanceof Error ? e.message : "Could not update locations.",
-          );
-      } finally {
-        running = false;
-        if (active) setLoading(false);
-      }
-    };
-    setLoading(true);
-    void tick();
-    const timer = setInterval(() => void tick(), 10000);
-    document.addEventListener("visibilitychange", tick);
-    return () => {
-      active = false;
-      clearInterval(timer);
-      controller.abort();
-      document.removeEventListener("visibilitychange", tick);
-    };
-  }, [signedIn]);
+    setSelected(current=>devices.some(d=>d.id===current)?current:devices[0]?.id??"");
+  },[devices]);
+  useEffect(()=>{
+    if(!signedIn)return;
+    const controller=new AbortController();
+    api<{plans:SavedPlan[]}>("/api/plans","GET",undefined,controller.signal).then(data=>setRouteChoices(data.plans.filter(p=>!p.archivedAt).flatMap(p=>p.result.routes.map(route=>({key:`${p.id}-${route.vehicle.id}`,name:p.name,route}))))).catch(e=>{if(!controller.signal.aborted)setError(e.message);});
+    return()=>controller.abort();
+  },[signedIn]);
   useEffect(() => {
     if (!signedIn || !selected) return;
     const controller = new AbortController();
@@ -342,9 +309,9 @@ export default function TrackingPortal({
         </section>
       ) : (
         <>
-          {error && (
+          {(error || fleet.error) && (
             <div className="tracking-error" role="alert">
-              {error}
+              {error || fleet.error}
             </div>
           )}
           <div className="tracking-stats">
@@ -421,6 +388,7 @@ export default function TrackingPortal({
                     {d.vehicleLabel || "No vehicle label"}
                   </p>
                   <small>
+                    {d.status === "live" ? motionLabels[motionOf(d.latestPoint)] + " · " : ""}
                     {d.latestPoint
                       ? "GPS " + when(d.latestPoint.recordedAt)
                       : d.deviceName || "Not paired yet"}
@@ -456,9 +424,14 @@ export default function TrackingPortal({
                 key={selected + tripId}
                 points={points}
                 latest={tripId ? null : (selectedDevice?.latestPoint ?? null)}
+                drivers={tripId ? [] : devices}
+                selectedId={selected}
+                onSelect={id=>{setSelected(id);setTripId("");}}
+                destinations={tripId ? [] : (assignment?.stops ?? [])}
               />
               {selectedDevice && (
                 <>
+                  <DriverTelemetry device={selectedDevice}/>
                   <div className="tracking-fix">
                     <div>
                       <MapPin size={18} />
@@ -484,6 +457,7 @@ export default function TrackingPortal({
                       when its connection returns.
                     </p>
                   )}
+                  {selectedDevice.pairedAt && !selectedDevice.revokedAt && (assignment ? <DispatchProgress key={assignment.id} dispatch={assignment} device={selectedDevice} onChanged={refresh}/> : <DispatchComposer key={selectedDevice.id} device={selectedDevice} routes={routeChoices} onChanged={refresh}/>)}
                   <div className="device-actions">
                     <span>
                       <Smartphone size={16} />
@@ -516,8 +490,10 @@ export default function TrackingPortal({
                       </button>
                     )}
                   </div>
+                  {selectedDevice.latestPoint && <a className="street-view-link" href={`https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${selectedDevice.latestPoint.lat},${selectedDevice.latestPoint.lng}`} target="_blank" rel="noreferrer">Explore Street View imagery ↗ <small>Where available · historical images, not a live camera</small></a>}
                 </>
               )}
+              <FleetAlerts alerts={fleet.alerts} notifications={fleet.notifications} onNotifications={()=>void fleet.toggleNotifications()}/>
               <div className="tracking-section-title">
                 <h3>Journey timeline</h3>
                 <button

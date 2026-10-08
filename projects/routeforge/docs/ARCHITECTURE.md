@@ -23,6 +23,14 @@ Input objects remain unchanged. The distance baseline uses the same assigned sto
 
 The first view is an explicitly labelled preview computed from synthetic data. Clicking Optimize makes a real authenticated server request and stores its snapshot. Editing an input clears the old result so stale metrics cannot be mistaken for a new plan. CSV imports validate all rows before replacing the draft. CSV manifests neutralize spreadsheet formulas in text fields.
 
+## Driver operations
+
+`GET /api/tracking/devices` returns owner-scoped devices, current assignments and derived fleet alerts with private, no-store headers. `POST/PATCH /api/tracking/dispatch` require dispatcher identity and same-origin requests. Assignment creation verifies ownership of a paired, non-revoked device; mutations include the assignment ID so stale controls cannot cancel or confirm a replacement assignment. The `driver_dispatches` table has one row per device and an owner index.
+
+The existing phone upload protocol and APK are unchanged. Immutable events and a durable batch acknowledgement remain the source of truth. Arrival reconciliation reads stored capture-time points after assignment/previous delivery, bounds inspection to the latest 5,000 eligible fixes, and uses revision plus exact-row compare-and-swap to avoid overwriting concurrent actions. A reconciliation failure does not invalidate acknowledged GPS; portal refresh retries processing. Dispatch state never automatically confirms delivery. Removing an already unlinked device explicitly removes its dispatch and GPS history together.
+
+The web map uses Mercator projection, viewport-only OSM tiles, pointer capture for drag/pinch, cursor-anchor zoom and a selectable follow mode. Panning stores an independent viewport so polling does not snap it back to the route centre. Trip changes or gaps over five minutes break the drawn path. GPS speed supplies explicitly estimated activity; optional notifications run only in the open web dashboard. No new native permissions or remote binary updater are implemented.
+
 ## Next engineering milestones
 
 - Add a road travel-time matrix provider and draw road-following geometry.

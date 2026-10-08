@@ -2037,6 +2037,9 @@ tr:hover td {
   background: #eef1e8;
   border-top: 1px solid var(--line);
   border-bottom: 1px solid var(--line);
+  touch-action: none;
+  cursor: grab;
+  user-select: none;
 }
 .journey-overlay {
   position: absolute;
@@ -2327,3 +2330,71 @@ tr:hover td {
     overflow: auto;
   }
 }
+
+/* Live dispatch combines the planned fleet with paired driver phones. */
+.live-dispatch { margin: 0 0 30px; scroll-margin-top: 24px; }
+.live-dispatch .section-heading h2, .dispatch-composer h3, .dispatch-progress h3, .fleet-alerts h3 { display: flex; align-items: center; gap: 8px; }
+.live-dispatch-grid { display: grid; grid-template-columns: 245px minmax(0,1fr); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; background: white; }
+.live-dispatch-grid > aside { padding: 12px 0; max-height: 440px; overflow: auto; border-right: 1px solid var(--line); }
+.live-dispatch-grid .journey-map { border: 0; }
+.live-dispatch-empty { padding: 24px; display: flex; align-items: center; gap: 16px; background: white; border: 1px solid var(--line); border-radius: 12px; }
+.live-dispatch-empty p { flex: 1; color: var(--muted); }
+.driver-telemetry { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); padding: 18px; gap: 16px; background: white; border-bottom: 1px solid var(--line); }
+.live-dispatch > .driver-telemetry { margin-top: 12px; border: 1px solid var(--line); border-radius: 12px; }
+.driver-telemetry > div { display: grid; grid-template-columns: auto 1fr; gap: 6px; align-items: center; }
+.driver-telemetry strong { font-size: 13px; line-height: 1.4; }
+.driver-telemetry small { grid-column: 1 / -1; color: var(--muted); font-size: 10px; line-height: 1.6; }
+.driver-telemetry .battery-low { color: #a26012; }
+.dispatch-monitor-row { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 18px; margin-top: 18px; }
+.dispatch-composer, .dispatch-progress { padding: 20px; background: #fff; border: 1px solid var(--line); border-radius: 12px; }
+.tracking-detail > .dispatch-composer, .tracking-detail > .dispatch-progress { margin: 18px; }
+.dispatch-composer h3 { font-size: 17px; margin-bottom: 8px; }
+.dispatch-composer p, .dispatch-progress > p { font-size: 12px; color: var(--muted); line-height: 1.6; margin-bottom: 12px; }
+.dispatch-composer label { display: block; font-size: 11px; font-weight: 600; margin: 12px 0; }
+.dispatch-composer input, .dispatch-composer select { display: block; width: 100%; border: 1px solid var(--line); border-radius: 7px; padding: 10px; background: white; margin-top: 6px; color: var(--ink); }
+.destination-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.dispatch-composer > small { display: block; color: var(--muted); font-size: 10px; line-height: 1.6; margin: 8px 0; }
+.dispatch-composer > .tracking-primary { margin-top: 10px; }
+.dispatch-error { color: #a13232 !important; background: #fff0ea; padding: 10px; border-radius: 8px; }
+.dispatch-progress .tracking-section-title { padding: 0; margin-bottom: 10px; }
+.dispatch-progress .tracking-section-title span { font-size: 10px; color: var(--muted); }
+.dispatch-progress ol { max-height: 290px; overflow: auto; padding: 0; margin: 12px 0; list-style: none; }
+.dispatch-progress li { display: flex; align-items: center; gap: 10px; border-top: 1px solid var(--line); padding: 12px 0; }
+.dispatch-progress li > span { width: 26px; height: 26px; display: grid; place-items: center; background: #eef1e9; border-radius: 50%; font-size: 11px; }
+.dispatch-progress li.arrived > span, .dispatch-progress li.delivered > span { background: #dcf1d1; color: #276744; }
+.dispatch-progress li > div { flex: 1; min-width: 0; }
+.dispatch-progress li strong { display: block; font-size: 12px; }
+.dispatch-progress li small { display: block; font-size: 10px; color: var(--muted); margin-top: 4px; }
+.dispatch-progress li button { background: #276744; color: white; padding: 8px; border-radius: 6px; font-size: 10px; }
+.fleet-alerts { background: white; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+.tracking-detail > .fleet-alerts { margin: 18px; }
+.fleet-alerts .tracking-section-title { padding: 15px; flex-wrap: wrap; }
+.fleet-alerts .tracking-secondary { padding: 7px 9px; font-size: 10px; }
+.fleet-alerts .tracking-note { margin: 0 15px 10px; font-size: 10px; background: #f3f6ee; color: var(--muted); }
+.fleet-alert { display: flex; align-items: flex-start; gap: 10px; padding: 14px; border-top: 1px solid var(--line); }
+.fleet-alert > span { color: var(--green); margin-top: 2px; }
+.fleet-alert.battery > span { color: #a26012; }
+.fleet-alert > div { flex: 1; }
+.fleet-alert strong { display: block; font-size: 12px; }
+.fleet-alert small { display: block; font-size: 10px; color: var(--muted); margin-top: 4px; line-height: 1.5; }
+.fleet-alert time { font-size: 9px; color: var(--muted); white-space: nowrap; }
+.street-view-link { display: block; padding: 12px 20px; font-weight: 600; color: #276744; font-size: 12px; }
+.street-view-link small { display: block; margin-top: 5px; font-weight: 400; color: var(--muted); font-size: 10px; }
+.journey-map:active { cursor: grabbing; }
+.journey-map:fullscreen { width: 100vw; height: 100vh; }
+.journey-map > img { pointer-events: none; }
+.map-controls { position: absolute; right: 12px; top: 12px; display: flex; flex-direction: column; align-items: stretch; gap: 6px; z-index: 4; }
+.map-controls .map-zoom { position: static; flex-direction: row; }
+.map-controls .map-zoom button { border: 0; padding: 8px 18px; font-size: 18px; }
+.map-controls > button { display: flex; justify-content: center; align-items: center; gap: 6px; padding: 9px; font-size: 10px; background: white; border-radius: 8px; box-shadow: 0 2px 9px #0002; }
+.map-controls > button.active { background: #276744; color: white; }
+.map-help { position: absolute; left: 8px; bottom: 8px; font-size: 9px; padding: 5px; background: #ffffffdc; border-radius: 5px; pointer-events: none; }
+.driver-map-pin { position: absolute; transform: translate(-50%,-50%); width: 38px; height: 38px; border: 3px solid white; border-radius: 12px; background: #416d51; color: white; display: grid; place-items: center; box-shadow: 0 2px 10px #0004; z-index: 2; }
+.driver-map-pin.selected { background: #1f5435; outline: 3px solid #c5ec95; z-index: 3; }
+.driver-map-pin.delayed { background: #876f47; }
+.driver-map-pin span { position: absolute; left: 50%; top: 40px; transform: translateX(-50%); white-space: nowrap; color: #1a392b; font-size: 10px; background: white; border-radius: 5px; padding: 4px 7px; box-shadow: 0 2px 8px #0002; pointer-events: none; }
+.driver-map-pin i { position: absolute; left: 9px; top: -21px; transform-origin: center 35px; color: #276744; font-style: normal; font-size: 16px; pointer-events: none; }
+.destination-pin { position: absolute; transform: translate(-50%,-50%); display: flex; align-items: center; gap: 3px; padding: 5px; background: white; color: #d28121; border: 2px solid #d28121; border-radius: 9px; font-size: 10px; pointer-events: none; }
+.destination-pin.arrived { border-color: #276744; color: #276744; }
+@media (max-width: 1000px) { .driver-telemetry { grid-template-columns: repeat(2,minmax(0,1fr)); } .dispatch-monitor-row { grid-template-columns: 1fr; } .live-dispatch-grid { grid-template-columns: 200px minmax(0,1fr); } }
+@media (max-width: 650px) { .live-dispatch-grid { grid-template-columns: 1fr; } .live-dispatch-grid > aside { max-height: 190px; border-right: 0; } .live-dispatch-empty { flex-wrap: wrap; } .map-controls .map-zoom button { padding: 7px 14px; } .map-help { max-width: 45%; } .dispatch-progress li { flex-wrap: wrap; } }

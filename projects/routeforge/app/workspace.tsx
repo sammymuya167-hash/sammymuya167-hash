@@ -31,6 +31,7 @@ import {
   Zap,
 } from "lucide-react";
 import RouteMap from "./route-map";
+import LiveDispatch from "./live-dispatch";
 import type {
   Delivery,
   OptimizationResult,
@@ -275,7 +276,10 @@ export default function DispatchWorkspace({
             <button
               key={n.id}
               className={view === n.id ? "nav-item active" : "nav-item"}
-              onClick={() => setView(n.id)}
+              onClick={() => {
+                setView(n.id);
+                if (n.id === "dispatch") requestAnimationFrame(() => document.getElementById("active-drivers")?.scrollIntoView({ behavior: "smooth", block: "start" }));
+              }}
               aria-current={view === n.id ? "page" : undefined}
             >
               <n.icon size={18} />
@@ -442,7 +446,7 @@ export default function DispatchWorkspace({
                   detail={`${result?.assigned ?? 0} assigned to routes`}
                 />
                 <Metric
-                  label="ACTIVE VEHICLES"
+                  label="PLANNED VEHICLES"
                   value={String(
                     scenario.vehicles.filter((v) => v.active).length,
                   )}
@@ -469,6 +473,7 @@ export default function DispatchWorkspace({
                   detail="Based on your per-km fleet rates"
                 />
               </div>
+              <LiveDispatch scenario={scenario} result={result} signedIn={signedIn}/>
               <div className="dispatch-grid">
                 <div>
                   <div className="section-heading">
@@ -809,6 +814,7 @@ export default function DispatchWorkspace({
           )}
           {view === "fleet" && (
             <>
+              <LiveDispatch scenario={scenario} result={result} signedIn={signedIn}/>
               <div className="section-heading">
                 <div>
                   <h2>Vehicles & working hours</h2>

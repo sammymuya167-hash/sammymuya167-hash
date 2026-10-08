@@ -78,3 +78,11 @@ export const trackingEvents = sqliteTable(
     index("tracking_events_trip").on(t.deviceId, t.tripId),
   ],
 );
+
+export const driverDispatches = sqliteTable("driver_dispatches", {
+  deviceId: text("device_id").primaryKey().references(() => trackingDevices.id),
+  ownerId: text("owner_id").notNull(),
+  dispatchJson: text("dispatch_json").notNull(),
+  revision: integer("revision").notNull(),
+  updatedAt: integer("updated_at").notNull(),
+}, t => [index("driver_dispatches_owner").on(t.ownerId)]);

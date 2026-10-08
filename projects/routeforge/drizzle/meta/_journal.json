@@ -15,6 +15,13 @@
       "when": 1791417651025,
       "tag": "0001_long_swarm",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1791454175861,
+      "tag": "0002_fresh_smasher",
+      "breakpoints": true
     }
   ]
 }

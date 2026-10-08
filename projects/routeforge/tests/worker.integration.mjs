@@ -352,6 +352,76 @@ try {
     "stopped",
   );
   passed("retries at an equal timestamp cannot undo a stop event");
+
+  const dispatchInput = {
+    deviceId: invitation.id, name: "Synthetic delivery route", vehicleId: "fixture-van",
+    vehicleName: "Fixture van", radius: 100,
+    stops: [
+      { id: "arrival-one", name: "Synthetic destination", address: "Fixture address", lat: -1.28, lng: 36.82 },
+      { id: "arrival-two", name: "Second destination", address: "Fixture address", lat: -1.29, lng: 36.83 },
+    ],
+  };
+  assert.equal((await request("/api/tracking/dispatch", "POST", dispatchInput, null)).status, 401);
+  assert.equal((await request("/api/tracking/dispatch", "POST", dispatchInput, "test-b")).status, 404);
+  assert.equal((await request("/api/tracking/dispatch", "POST", dispatchInput, "test-a", "https://other.test")).status, 403);
+  assert.equal((await request("/api/tracking/dispatch", "POST", { ...dispatchInput, stops: [dispatchInput.stops[0], dispatchInput.stops[0]] })).status, 422);
+  passed("dispatch rejects anonymous, cross-account, cross-origin and duplicate-stop requests");
+  const dispatchResponse = await request("/api/tracking/dispatch", "POST", dispatchInput);
+  assert.equal(dispatchResponse.status, 201);
+  const assignment = await dispatchResponse.json();
+  const ownFleetResponse = await request("/api/tracking/devices");
+  assert.equal(ownFleetResponse.headers.get("cache-control"), "private, no-store");
+  const ownFleet = await ownFleetResponse.json();
+  assert.equal(ownFleet.dispatches[0].id, assignment.id);
+  assert.equal(ownFleet.dispatches[0].stops[0].arrivedAt, null);
+  const otherFleet = await (await request("/api/tracking/devices", "GET", undefined, "test-b")).json();
+  assert.deepEqual(otherFleet.dispatches, []);
+  assert.deepEqual(otherFleet.alerts, []);
+  assert.equal((await request("/api/tracking/dispatch", "POST", dispatchInput)).status, 409);
+  passed("assigned routes remain owner-private and cannot overwrite an active dispatch");
+  const mutation = { deviceId: invitation.id, id: assignment.id, action: "deliver", stopId: "arrival-one" };
+  assert.equal((await request("/api/tracking/dispatch", "PATCH", mutation)).status, 409);
+  assert.equal((await request("/api/tracking/dispatch", "PATCH", mutation, "test-b")).status, 404);
+  assert.equal((await ingest([point(assignment.assignedAt - 20000), point(assignment.assignedAt - 4000)])).status, 200);
+  assert.equal((await (await request("/api/tracking/devices")).json()).dispatches[0].stops[0].arrivedAt, null);
+  passed("pre-assignment backlog cannot cause arrival or permit delivery confirmation");
+  const arrivalTrip = crypto.randomUUID();
+  const arrivalFirst = { ...point(assignment.assignedAt + 1000), tripId: arrivalTrip, speed: 14, heading: 85, battery: 12 };
+  const arrivalSecond = { ...arrivalFirst, eventId: crypto.randomUUID(), recordedAt: assignment.assignedAt + 17000 };
+  assert.equal((await ingest([arrivalFirst])).status, 200);
+  assert.equal((await (await request("/api/tracking/devices")).json()).dispatches[0].stops[0].arrivedAt, null);
+  const secondUpload = await ingest([arrivalSecond]);
+  assert.equal(secondUpload.status, 200);
+  assert.deepEqual((await secondUpload.json()).acknowledged, [arrivalSecond.eventId]);
+  assert.equal((await ingest([arrivalSecond])).status, 200);
+  const arrivedFleet = await (await request("/api/tracking/devices")).json();
+  assert.equal(arrivedFleet.dispatches[0].stops[0].arrivedAt, arrivalSecond.recordedAt);
+  assert.equal(arrivedFleet.dispatches[0].stops[0].deliveredAt, null);
+  assert.equal(arrivedFleet.dispatches[0].stops[1].arrivedAt, null);
+  assert.equal(arrivedFleet.devices[0].latestPoint.speed, 14);
+  assert.equal(arrivedFleet.devices[0].latestPoint.heading, 85);
+  assert.equal(arrivedFleet.devices[0].latestPoint.battery, 12);
+  assert.ok(arrivedFleet.alerts.some(a => a.kind === "arrival" && a.at === arrivalSecond.recordedAt));
+  assert.ok(arrivedFleet.alerts.some(a => a.kind === "battery"));
+  passed("unchanged phone upload protocol records telemetry and two-fix arrival with durable acknowledgements");
+  assert.equal((await request("/api/tracking/dispatch", "PATCH", { ...mutation, stopId: "arrival-two" })).status, 409);
+  assert.equal((await request("/api/tracking/dispatch", "PATCH", mutation)).status, 200);
+  const delivered = (await (await request("/api/tracking/devices")).json()).dispatches[0];
+  assert.ok(delivered.stops[0].deliveredAt);
+  assert.equal(delivered.stops[1].deliveredAt, null);
+  passed("dispatcher confirms only the arrived next stop while preserving later destinations");
+  assert.equal((await request("/api/tracking/dispatch", "PATCH", { ...mutation, id: crypto.randomUUID(), action: "cancel" })).status, 409);
+  assert.equal((await request("/api/tracking/dispatch", "PATCH", { ...mutation, action: "cancel" }, "test-b")).status, 404);
+  assert.equal((await request("/api/tracking/dispatch", "PATCH", { ...mutation, action: "cancel" })).status, 200);
+  assert.deepEqual((await (await request("/api/tracking/devices")).json()).dispatches, []);
+  assert.equal((await request(historyPath)).status, 200);
+  const replacementResponse = await request("/api/tracking/dispatch", "POST", dispatchInput);
+  assert.equal(replacementResponse.status, 201);
+  const replacement = await replacementResponse.json();
+  assert.notEqual(replacement.id, assignment.id);
+  assert.equal((await request("/api/tracking/dispatch", "PATCH", { ...mutation, action: "cancel" })).status, 409);
+  assert.equal((await (await request("/api/tracking/devices")).json()).dispatches[0].id, replacement.id);
+  passed("cancellation preserves GPS history and stale actions cannot change a replacement route");
   const olderInvite = await (
     await request("/api/tracking/devices", "POST", {
       driverName: "Expired fixture",
@@ -451,6 +521,7 @@ try {
     0,
   );
   assert.equal((await request(historyPath)).status, 404);
+  assert.equal((await db.prepare("SELECT COUNT(*) AS n FROM driver_dispatches WHERE device_id=?").bind(invitation.id).first()).n, 0);
   passed("explicit removal of an unlinked device deletes its GPS history");
   const trackingPage = await request("/tracking");
   assert.equal(trackingPage.status, 200);
