@@ -1,0 +1,101 @@
+number	project_name	github_repo	upstream_ref	original_source_url	source_status	review_note
+1	Full E-Commerce Platform	basir/amazona	-	https://github.com/basir/amazona	available	license_review_required
+2	Multi-Vendor Marketplace	6pm-tech/multi-vendor-ecommerce	-	https://github.com/6pm-tech/multi-vendor-ecommerce	repository_not_found	replacement_needed
+3	Online Bookstore	DarkSoul26/bookstore-mern	-	https://github.com/DarkSoul26/bookstore-mern	repository_not_found	replacement_needed
+4	Fashion Store with AR Try-On	mithlesh-bit/E-commerce-site	-	https://github.com/mithlesh-bit/E-commerce-site	repository_not_found	replacement_needed
+5	Grocery Delivery App	shakyShane/grocery-app	-	https://github.com/shakyShane/grocery-app	repository_not_found	replacement_needed
+6	Social Media Platform	adrianhajdin/project_mern_memories	-	https://github.com/adrianhajdin/project_mern_memories	available	license_review_required
+7	Instagram Clone	safak/youtube	mern-social-app	https://github.com/safak/youtube/tree/mern-social-app	available	license_review_required
+8	Twitter Clone	ooloth/twitter-clone	-	https://github.com/ooloth/twitter-clone	repository_not_found	replacement_needed
+9	LinkedIn Clone	CleverProgrammers/linkedin-clone	-	https://github.com/CleverProgrammers/linkedin-clone	repository_not_found	replacement_needed
+10	Real-Time Chat Application	adrianhajdin/project_chat_application	-	https://github.com/adrianhajdin/project_chat_application	available	license_review_required
+11	Discord Clone	antonioerdeljac/next13-discord-clone	-	https://github.com/antonioerdeljac/next13-discord-clone	repository_not_found	replacement_needed
+12	WhatsApp Clone	CleverProgrammers/whatsapp-mern	-	https://github.com/CleverProgrammers/whatsapp-mern	repository_not_found	replacement_needed
+13	Slack Clone	pusher/slack-clone-client	-	https://github.com/pusher/slack-clone-client	repository_not_found	replacement_needed
+14	LMS Platform	antonioerdeljac/next13-lms-platform	-	https://github.com/antonioerdeljac/next13-lms-platform	repository_not_found	replacement_needed
+15	Online Course Platform	PacktPublishing/MERN-Stack-Course	-	https://github.com/PacktPublishing/MERN-Stack-Course	repository_not_found	replacement_needed
+16	Student Portal System	mkkhedawat/student-management-system	-	https://github.com/mkkhedawat/student-management-system	repository_not_found	replacement_needed
+17	Quiz Application	safak/youtube	quiz-app	https://github.com/safak/youtube/tree/quiz-app	branch_not_found	source_branch_missing
+18	Code Learning Platform	freeCodeCamp/freeCodeCamp	-	https://github.com/freeCodeCamp/freeCodeCamp	available	license_review_required
+19	Netflix Clone	KarlHadwen/netflix-clone	-	https://github.com/KarlHadwen/netflix-clone	repository_not_found	replacement_needed
+20	YouTube Clone	manikandanraji/youtube-clone	-	https://github.com/manikandanraji/youtube-clone	repository_not_found	replacement_needed
+21	Spotify Clone	JL978/spotify-clone-client	-	https://github.com/JL978/spotify-clone-client	available	license_review_required
+22	Music Streaming App	muhammederdem/mini-player	-	https://github.com/muhammederdem/mini-player	available	license_review_required
+23	Video Conferencing App	CleverProgrammers/zoom-clone	-	https://github.com/CleverProgrammers/zoom-clone	available	license_review_required
+24	Blog Platform	gothinkster/realworld	-	https://github.com/gothinkster/realworld	available	license_review_required
+25	Podcast Platform	johndoe/podcast-app	-	https://github.com/johndoe/podcast-app	repository_not_found	replacement_needed
+26	Hotel Booking System	machadop1407/hotel-management-full-stack	-	https://github.com/machadop1407/hotel-management-full-stack	repository_not_found	replacement_needed
+27	Airbnb Clone	safak/youtube	airbnb-clone	https://github.com/safak/youtube/tree/airbnb-clone	branch_not_found	source_branch_missing
+28	Restaurant Reservation System	mikhael28/restaurant-reservation	-	https://github.com/mikhael28/restaurant-reservation	repository_not_found	replacement_needed
+29	Movie Ticket Booking	isuruAb/online-movie-ticket-booking-system	-	https://github.com/isuruAb/online-movie-ticket-booking-system	repository_not_found	replacement_needed
+30	Flight Booking System	coding-dojo-sndip/flight-booking-system	-	https://github.com/coding-dojo-sndip/flight-booking-system	repository_not_found	replacement_needed
+31	Trello Clone	reedbarger/trello-clone	-	https://github.com/reedbarger/trello-clone	repository_not_found	replacement_needed
+32	Notion Clone	konstantinmuenster/notion-clone	-	https://github.com/konstantinmuenster/notion-clone	available	license_review_required
+33	Jira Clone	oldboyxx/jira_clone	-	https://github.com/oldboyxx/jira_clone	available	license_review_required
+34	Task Management App	CleverProgrammers/mern-todo	-	https://github.com/CleverProgrammers/mern-todo	repository_not_found	replacement_needed
+35	Calendar Scheduling App	calendso/calendso	-	https://github.com/calendso/calendso	available	license_review_required
+36	Kanban Board	rcdexta/react-trello	-	https://github.com/rcdexta/react-trello	available	license_review_required
+37	Note-Taking App	FaisalST32/note-taking-app	-	https://github.com/FaisalST32/note-taking-app	repository_not_found	replacement_needed
+38	Food Delivery App	shakyShane/foodordering-mernstack	-	https://github.com/shakyShane/foodordering-mernstack	repository_not_found	replacement_needed
+39	Recipe Sharing Platform	machadop1407/recipe-site	-	https://github.com/machadop1407/recipe-site	repository_not_found	replacement_needed
+40	Restaurant Menu Management	ipenywis/restaurant-webapp	-	https://github.com/ipenywis/restaurant-webapp	repository_not_found	replacement_needed
+41	Meal Planner App	chingu-voyages/v25-geckos-team-85	-	https://github.com/chingu-voyages/v25-geckos-team-85	repository_not_found	replacement_needed
+42	Banking Application	TannerGabriel/Banking-Application	-	https://github.com/TannerGabriel/Banking-Application	repository_not_found	replacement_needed
+43	Expense Tracker	machadop1407/Expense-Tracker-Fullstack	-	https://github.com/machadop1407/Expense-Tracker-Fullstack	repository_not_found	replacement_needed
+44	Cryptocurrency Dashboard	adrianhajdin/project_cryptoverse	-	https://github.com/adrianhajdin/project_cryptoverse	available	license_review_required
+45	Invoice Management System	invoiceninja/invoiceninja	-	https://github.com/invoiceninja/invoiceninja	available	license_review_required
+46	Budget Planning App	enaqx/awesome-react	-	https://github.com/enaqx/awesome-react#expense-tracker	available	concept_mismatch
+47	Stock Market Portfolio Tracker	prathyvsh/awesome-stock-resources	-	https://github.com/prathyvsh/awesome-stock-resources	repository_not_found	replacement_needed
+48	Hospital Management System	shubhammehra4/Hospital-Management-System	-	https://github.com/shubhammehra4/Hospital-Management-System	repository_not_found	replacement_needed
+49	Doctor Appointment System	CodAffection/Hospital-Management-System	-	https://github.com/CodAffection/Hospital-Management-System	repository_not_found	replacement_needed
+50	Fitness Tracker	machadop1407/Fitness-Tracker-App	-	https://github.com/machadop1407/Fitness-Tracker-App	repository_not_found	replacement_needed
+51	Telemedicine Platform	simple-online-healthcare/telemedicine-platform	-	https://github.com/simple-online-healthcare/telemedicine-platform	repository_not_found	replacement_needed
+52	Pharmacy Management System	shuvcoa787/pharmacy-management-system	-	https://github.com/shuvcoa787/pharmacy-management-system	repository_not_found	replacement_needed
+53	Uber Clone	CleverProgrammers/uber-clone	-	https://github.com/CleverProgrammers/uber-clone	repository_not_found	replacement_needed
+54	Car Rental System	zeeshanhanif/car-rental-system	-	https://github.com/zeeshanhanif/car-rental-system	repository_not_found	replacement_needed
+55	Travel Planner App	adrianhajdin/project_travel_advisor	-	https://github.com/adrianhajdin/project_travel_advisor	available	license_review_required
+56	Ride Sharing App	alex996/uber-clone	-	https://github.com/alex996/uber-clone	repository_not_found	replacement_needed
+57	Real Estate Listing Platform	safak/youtube	real-estate-app	https://github.com/safak/youtube/tree/real-estate-app	branch_not_found	source_branch_missing
+58	Property Management System	property-management-system/pms	-	https://github.com/property-management-system/pms	repository_not_found	replacement_needed
+59	House Rental Platform	machadop1407/real-estate-app	-	https://github.com/machadop1407/real-estate-app	repository_not_found	replacement_needed
+60	Gaming Platform	iptv-org/iptv	-	https://github.com/iptv-org/iptv	available	concept_mismatch
+61	Quiz Game Multiplayer	adrianhajdin/project_corona_tracker	-	https://github.com/adrianhajdin/project_corona_tracker	available	concept_mismatch
+62	Chess Game Online	lichess-org/lila	-	https://github.com/lichess-org/lila	available	license_review_required
+63	Tic-Tac-Toe Multiplayer	coding-garden/tic-tac-toe-multiplayer	-	https://github.com/coding-garden/tic-tac-toe-multiplayer	repository_not_found	replacement_needed
+64	Email Client	CleverProgrammers/gmail-clone	-	https://github.com/CleverProgrammers/gmail-clone	repository_not_found	replacement_needed
+65	Newsletter Platform	TryGhost/Ghost	-	https://github.com/TryGhost/Ghost	available	license_review_required
+66	SMS Marketing Platform	plivo/plivo-examples-node	-	https://github.com/plivo/plivo-examples-node	available	concept_mismatch
+67	Inventory Management System	saadpasta/inventory-management-system	-	https://github.com/saadpasta/inventory-management-system	repository_not_found	replacement_needed
+68	CRM Application	cortezaproject/corteza-server	-	https://github.com/cortezaproject/corteza-server	available	license_review_required
+69	Warehouse Management	warehouse-management-system/wms	-	https://github.com/warehouse-management-system/wms	repository_not_found	replacement_needed
+70	Point of Sale System	loystar/POS-System	-	https://github.com/loystar/POS-System	repository_not_found	replacement_needed
+71	PWA Store	GoogleChromeLabs/pwa-starter-kit	-	https://github.com/GoogleChromeLabs/pwa-starter-kit	repository_not_found	replacement_needed
+72	Weather Application	adrianhajdin/project_weather_app	-	https://github.com/adrianhajdin/project_weather_app	available	license_review_required
+73	News Aggregator	machadop1407/News-App-Full-Stack	-	https://github.com/machadop1407/News-App-Full-Stack	repository_not_found	replacement_needed
+74	Job Board Platform	safak/youtube	job-board	https://github.com/safak/youtube/tree/job-board	branch_not_found	source_branch_missing
+75	Portfolio Builder	cobidev/gatsby-simplefolio	-	https://github.com/cobidev/gatsby-simplefolio	repository_not_found	replacement_needed
+76	Photo Sharing Platform	safak/youtube	instagram-clone	https://github.com/safak/youtube/tree/instagram-clone	branch_not_found	source_branch_missing
+77	Design Collaboration Tool	tldraw/tldraw	-	https://github.com/tldraw/tldraw	available	license_review_required
+78	Meme Generator	R313nt13ss/Meme_Api	-	https://github.com/R313nt13ss/Meme_Api	repository_not_found	replacement_needed
+79	Admin Dashboard	flatlogic/sing-app-react	-	https://github.com/flatlogic/sing-app-react	available	license_review_required
+80	Analytics Platform	keen/keen-js	-	https://github.com/keen/keen-js	available	concept_mismatch
+81	Data Visualization Dashboard	apache/superset	-	https://github.com/apache/superset	available	license_review_required
+82	Business Intelligence Tool	metabase/metabase	-	https://github.com/metabase/metabase	available	license_review_required
+83	OAuth Authentication System	sahat/hackathon-starter	-	https://github.com/sahat/hackathon-starter	available	license_review_required
+84	Password Manager	bitwarden/server	-	https://github.com/bitwarden/server	available	license_review_required
+85	Two-Factor Authentication	google/google-authenticator	-	https://github.com/google/google-authenticator	available	concept_mismatch
+86	Chatbot Platform	botpress/botpress	-	https://github.com/botpress/botpress	available	license_review_required
+87	Image Recognition App	tensorflow/tfjs-examples	-	https://github.com/tensorflow/tfjs-examples	available	concept_mismatch
+88	Recommendation System	NicolasHug/Surprise	-	https://github.com/NicolasHug/Surprise	available	concept_mismatch
+89	Sentiment Analysis Tool	vivekn/sentiment	-	https://github.com/vivekn/sentiment	available	concept_mismatch
+90	Location-Based Service	adrianhajdin/project_travel_companion	-	https://github.com/adrianhajdin/project_travel_companion	repository_not_found	replacement_needed
+91	Map Visualization Tool	uber/kepler.gl	-	https://github.com/uber/kepler.gl	available	license_review_required
+92	Delivery Route Optimizer	VROOM-Project/vroom	-	https://github.com/VROOM-Project/vroom	completed	RouteForge already completed
+93	CMS Platform	strapi/strapi	-	https://github.com/strapi/strapi	available	license_review_required
+94	Wiki System	Requarks/wiki	-	https://github.com/Requarks/wiki	available	license_review_required
+95	Forum Platform	levblanc/reddit-clone-mern-stack	-	https://github.com/levblanc/reddit-clone-mern-stack	repository_not_found	replacement_needed
+96	Documentation Platform	facebook/docusaurus	-	https://github.com/facebook/docusaurus	available	license_review_required
+97	Code Snippet Manager	antonreshetov/massCode	-	https://github.com/antonreshetov/massCode	available	license_review_required
+98	API Testing Tool	hoppscotch/hoppscotch	-	https://github.com/hoppscotch/hoppscotch	available	license_review_required
+99	DevOps Dashboard	grafana/grafana	-	https://github.com/grafana/grafana	available	license_review_required
+100	URL Shortener	thedevs-network/kutt	-	https://github.com/thedevs-network/kutt	available	license_review_required
