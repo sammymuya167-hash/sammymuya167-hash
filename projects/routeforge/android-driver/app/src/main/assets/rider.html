@@ -8,22 +8,226 @@
 <section id="account" class="page"><div class="eyebrow">PHONE & PRIVACY</div><h1>Your connection.</h1><div id="paircard" class="card"><h2>Join your company fleet.</h2><p>For an existing driver, use the office's Rider upgrade code to keep the same assignment and journey history. Sync and stop the old pilot app first.</p><label>One-time pairing / upgrade code<input id="code" maxlength="32" autocomplete="off" placeholder="Enter office code" autocapitalize="characters"></label><label><input id="consent" type="checkbox">I agree to share my location while on duty. A visible recording notification stays on; privacy pause is always available.</label><button class="primary wide" onclick="Rider.pair(document.getElementById('code').value,document.getElementById('consent').checked)">Link rider phone →</button></div><div id="accountcontent"></div><div class="card"><h2>You control your location.</h2><p>Normal End duty follows delivery completion. Privacy pause stops GPS immediately, even during an order. It leaves the delivery open for office follow-up.</p><button class="danger wide" onclick="Rider.privacy()">Pause GPS for privacy</button><button class="secondary wide" onclick="Rider.settings()">Phone location settings</button><button class="secondary wide" onclick="Rider.permissions()">App permissions & notifications</button></div><p class="muted">Rider 1.0 · Offline GPS and delivery reports retry when connected. Force-stop, battery restrictions and powered-off phones can delay updates and offers. Five-second alert delivery is best effort, never guaranteed offline.</p></section>
 </main><nav aria-label="Rider navigation"><button class="active" data-page="home" onclick="go('home')"><b>⌂</b>Home</button><button data-page="offers" onclick="go('offers')"><b>⚡</b>Offers</button><button data-page="route" onclick="go('route')"><b>◈</b>Route</button><button data-page="trips" onclick="go('trips')"><b>▤</b>Trips</button><button data-page="account" onclick="go('account')"><b>◎</b>Account</button></nav>
 <div id="payment" class="sheetback" role="dialog" aria-modal="true" aria-labelledby="paytitle"><form class="sheet" onsubmit="submitPayment(event)"><div class="row"><h2 id="paytitle">Report customer payment</h2><button type="button" class="secondary" onclick="closePay()" aria-label="Close payment form">×</button></div><p id="payorder"></p><label>Payment received by<select id="method"><option value="cash">Cash collected</option><option value="till">Company till</option></select></label><label>Amount actually received (KSh)<input id="amount" type="number" required min="0" max="10000000" step="0.01" inputmode="decimal" placeholder="0.00"></label><label>Till / receipt reference (optional)<input id="reference" maxlength="80" autocomplete="off" placeholder="Transaction or receipt reference"></label><p class="muted">Enter the amount the customer paid. A till report does not verify a bank transaction. The office reviews every report. Submit once; offline retries use the same receipt ID.</p><p id="payerror" style="color:#ffb8bb"></p><button class="primary wide" type="submit">Save payment report →</button></form></div>
-<script>
-'use strict';let state={},page='home',payOrder=null;const $=id=>document.getElementById(id),money=x=>'KSh '+(Number(x||0)/100).toLocaleString('en-KE',{minimumFractionDigits:2,maximumFractionDigits:2});
-function el(tag,text,cls){const e=document.createElement(tag);if(text!=null)e.textContent=text;if(cls)e.className=cls;return e}function button(label,action,cls='primary',disabled=false){const b=el('button',label,cls);b.type='button';b.disabled=disabled||state.busy;b.onclick=action;return b}function empty(root,title,detail,icon='◈'){const e=el('div',null,'empty');e.append(el('b',icon),el('h3',title),el('p',detail));root.append(e)}function reset(id){const r=$(id);r.replaceChildren();return r}function card(root,title,detail){const c=el('div',null,'card');if(title)c.append(el('h2',title));if(detail)c.append(el('p',detail));root.append(c);return c}function metric(root,label,value,note){const d=el('div',null,'metric');d.append(el('small',label),el('strong',value),el('span',note||''));root.append(d)}function go(next){page=next;document.querySelectorAll('.page').forEach(e=>e.classList.toggle('active',e.id===next));document.querySelectorAll('nav button').forEach(e=>e.classList.toggle('active',e.dataset.page===next));window.scrollTo(0,0);render();if(next==='route')drawMap()}
-function serverNow(){const d=state.data||{};return Number(d.serverTime||Date.now())+Math.max(0,Date.now()-Number(d.receivedAt||Date.now()))}function assignment(){return (state.data||{}).assignment||null}function active(){const a=assignment();return a&&a.stops.some(s=>!s.deliveredAt)?a:null}function pending(action,id){return (state.commands||[]).some(c=>c.payload.action===action&&(!id||c.payload.orderId===id)&&!c.error)}function currentOrder(){return (state.data||{}).order||null}function action(kind){const a=assignment();if(!a)return;Rider.action(JSON.stringify({action:kind,dispatchId:a.id,...(a.orderId?{orderId:a.orderId}:{})}))}function path(root,pickup,destination){for(const [p,i] of [[pickup,'◉'],[destination,'◆']]){if(!p)continue;const r=el('div',null,'path'),d=el('div');r.append(el('i',i));d.append(el('strong',p.name),el('small',p.address));r.append(d);root.append(r)}}
-function applyState(next){state=next;$('loading').style.display=state.busy?'block':'none';$('statusbadge').textContent=state.recording?'ON DUTY':'OFF DUTY';$('notice').style.display=state.error?'block':'none';$('notice').textContent=state.error||'';$('paircard').style.display=!state.paired&&!state.unlinkPending?'block':'none';render()}
-function render(){if(page==='home')renderHome();if(page==='offers')renderOffers();if(page==='route')renderRoute();if(page==='trips')renderTrips();if(page==='account')renderAccount()}
-function renderHome(){const r=reset('homecontent');$('greeting').textContent=state.driver?'Hello, '+state.driver.split(' ')[0]+'.':'Ready when you are.';const h=card(r,state.recording?'Your shift is live.':'Your next delivery starts here.',state.recording?(state.gpsEnabled?'GPS is enabled. Your office sees acknowledged journey updates.':'GPS is off. Enable location to recover your fixes.'):'Go on duty to share GPS and receive delivery offers.');h.classList.add('hero');const w=el('div',null,'wave');for(let i=0;i<27;i++){const e=el('i');e.style.height=(7+(i*13)%29)+'px';w.append(e)}h.append(w);h.append(button(state.paired?(state.recording?'End duty':'Start duty'):'Link this phone',()=>state.paired?(state.recording?Rider.stop():Rider.start()):go('account'),'primary wide',state.recording&&!state.canStop));if(state.recording&&!state.canStop)h.append(el('p','Finish delivery to end duty. Privacy pause stays available in Account.','muted'));
-const g=el('div',null,'grid');r.append(g);metric(g,'PHONE LOCATION',state.gpsEnabled?'Enabled':'Disabled',state.lastFix?'Latest fix '+new Date(state.lastFix).toLocaleTimeString():'Waiting for a fresh GPS fix');metric(g,'OFFLINE QUEUE',String((state.events||0)+(state.commands||[]).length),'GPS events + rider reports');const a=active();if(a){const c=card(r,a.name,'One assignment connected to the office.');path(c,a.stops[0],a.stops[a.stops.length-1]);deliveryActions(c,a);c.append(button('Open destination map →',()=>go('route'),'secondary wide'))}else if(pending('delivered'))card(r,'Delivery completion saved.','Waiting for the portal to acknowledge it. You can report payment from Trips.');else empty(r,'Ready for company work',state.recording?'Offers appear here while you are free and GPS is fresh.':'Start duty when you are ready. No location is recorded while off duty.','⚡');const q=el('div',null,'actiongrid');q.append(button('⚡  Delivery offers',()=>go('offers')),button('◈  Navigation',()=>go('route')),button('▤  Payments & trips',()=>go('trips')),button('◎  Sync & privacy',()=>go('account')));r.append(q);const d=state.data||{};r.append(el('p',d.receivedAt?'Office snapshot '+new Date(d.receivedAt).toLocaleTimeString()+' · '+Math.round((Date.now()-d.receivedAt)/1000)+'s ago':'Connect to fetch your own assignments.','muted'))}
-function deliveryActions(root,a){const done=a.stops.filter(s=>s.deliveredAt).length,bars=el('div',null,'stepbar');for(let i=0;i<2;i++)bars.append(el('i',null,done>i?'done':''));root.append(bars);if(pending('delivered',a.orderId)){root.append(el('p','Delivery finished locally · waiting for office receipt','progress-note'));if(a.orderId)root.append(button('Record customer payment',()=>openPay(currentOrder()),'primary wide',pending('payment',a.orderId)));return}if(!a.stops[0].deliveredAt&&a.stops.length>1){root.append(button(pending('collected',a.orderId)?'Collection saved · awaiting receipt':'✓ Confirm product collected',()=>action('collected'),'primary wide',pending('collected',a.orderId)))}else{root.append(button('✓ Finish delivery / ride',()=>{if(confirm('Confirm the product was delivered and this ride is finished?'))action('delivered')},'primary wide'))}}
-function renderOffers(){const r=reset('offercontent'),offers=(state.data||{}).offers||[];const open=offers.filter(o=>o.offerDeadline>serverNow());if(!open.length)empty(r,'Waiting for your next offer',!state.recording?'Go on duty to receive company offers.':active()?'Finish your active delivery before accepting another.':'Keep location enabled. Office offers appear while you are free.','⚡');for(const o of open){const c=card(r,o.title),row=el('div',null,'row'),remaining=Math.max(0,o.offerDeadline-serverNow());c.classList.add('offer');row.append(el('span','ACCEPT WINDOW','eyebrow'),el('span',(remaining/1000).toFixed(1)+'s','countdown'));c.append(row);path(c,o.pickup,o.destination);if(o.notes)c.append(el('p',o.notes));const track=el('div',null,'offertrack'),bar=el('i');bar.style.width=Math.min(100,remaining/50)+'%';track.append(bar);c.append(track);c.append(button('Accept collection →',()=>Rider.action(JSON.stringify({action:'accept',orderId:o.id})),'primary wide',remaining<=0));if(o.amountDue!=null)c.append(el('p','Expected customer payment: '+money(o.amountDue*100),'muted'))}r.append(el('p','Offers use the office clock. Delivery alerts depend on internet access and Android scheduling. Acceptances received after the server deadline are refused.','muted'))}
-function renderRoute(){const r=reset('routesummary'),a=active(),point=state.point;if(a){const s=a.stops.find(s=>!s.deliveredAt);r.append(el('h2',s.name),el('p',s.address));if(point)r.append(el('span',haversine(point,s).toFixed(2)+' km straight-line · not road distance','tag'))}else r.append(el('p','Your assigned collection and destination will appear here.'));const actions=reset('routeactions');if(a)deliveryActions(card(actions,'Delivery controls'),a);drawMap()}
-function renderTrips(){const r=reset('tripcontent'),d=state.data||{},payments=d.payments||[],totals=d.totals||{},g=el('div',null,'grid');r.append(g);metric(g,'REPORTED COLLECTIONS',money(totals.reportedMinor),'All time · pending office review included');metric(g,'VERIFIED BY OFFICE',money(totals.verifiedMinor),'Office confirmed reports');metric(g,'CASH COLLECTED',money(totals.cashMinor),'Customer cash reports');metric(g,'COMPANY TILL',money(totals.tillMinor),'Customer till reports');const orders=d.recentOrders||[];if(!orders.length)empty(r,'Your deliveries will appear here','Only work linked to this rider phone is visible.');for(const o of orders){const p=payments.find(p=>p.orderId===o.id&&p.status!=='void'),localDone=pending('delivered',o.id),c=card(r,o.title);c.append(el('span',localDone?'Finish report queued':o.status.replaceAll('_',' '),'tag'));path(c,o.pickup,o.destination);c.append(el('p',(o.measuredKm||0).toFixed(2)+' recorded km estimate','muted'));if(p){c.append(el('p',(p.method==='cash'?'Cash':'Company till')+' · '+money(p.amountMinor)+' · '+(p.status==='verified'?'office verified':'reported for review'),'paystatus'));if(p.reference)c.append(el('p','Reference: '+p.reference,'muted'))}else if(o.status==='delivered'||localDone){c.append(button(pending('payment',o.id)?'Payment report saved offline':'Report cash / till payment',()=>openPay(o),'primary wide',pending('payment',o.id)));if(o.amountDue!=null)c.append(el('p','Expected: '+money(o.amountDue*100),'muted'))}}r.append(el('p','Showing your latest 10 orders and reports. The office keeps company history and all-time totals. No money is transferred by this app.','muted'))}
-function renderAccount(){const r=reset('accountcontent');if(state.unlinkPending){const c=card(r,'Unlink saved on this phone.','The office will mark this rider unlinked when the request is received. Connect to sync before linking again.');c.append(button('Send unlink request',()=>Rider.sync(),'primary wide'));return}if(state.paired){const c=card(r,state.driver||'Company rider',(state.data||{}).vehicleLabel||'Your office-linked phone');c.append(el('p',(state.recording?'On duty':'Off duty')+' · '+(state.gpsEnabled?'Phone location enabled':'Phone location disabled'),'progress-note'));c.append(el('p','Last GPS '+(state.lastFix?new Date(state.lastFix).toLocaleString():'No fresh fix yet')+'\nLast upload '+(state.lastSync?new Date(state.lastSync).toLocaleString():'None yet'),'muted'));c.append(button('Sync saved journey & reports',()=>Rider.sync(),'secondary wide'));c.append(button(state.recording?'End duty after delivery':'Start duty',()=>state.recording?Rider.stop():Rider.start(),'primary wide',state.recording&&!state.canStop));c.append(button('Unlink phone & clear local queue',()=>Rider.unlink(),'danger wide'))}if(!state.paired&&!state.unlinkPending&&((state.events||0)>0||(state.commands||[]).length>0)){const c=card(r,"Unsent data from an earlier link.","The office revoked that link. These events cannot be uploaded with another driver token. Review with the office before deleting them.");c.append(button("Clear old local queue",()=>Rider.unlink(),"danger wide"))}const commands=state.commands||[];if(commands.length){const c=card(r,'Saved rider reports',commands.length+' reports waiting for acknowledgment.');for(const row of commands){const item=el('div',null,'listrow');item.append(el('strong',row.payload.action.replaceAll('_',' ')),el('p',row.error||'Saved safely · retrying when connected','muted'));if(row.error)item.append(button('Discard rejected report',()=>Rider.discard(row.payload.operationId),'secondary'));c.append(item)}}}
-function openPay(order){if(!order)return;payOrder=order;$('payorder').textContent=order.title;$('amount').value='';$('reference').value='';$('payerror').textContent='';$('payment').classList.add('open');$('amount').focus()}function closePay(){$('payment').classList.remove('open');payOrder=null}function submitPayment(e){e.preventDefault();const n=Number($('amount').value);if(!payOrder||!Number.isFinite(n)||n<0||n>10000000||Math.abs(n*100-Math.round(n*100))>.000001){$('payerror').textContent='Enter an amount with at most two decimal places.';return}Rider.action(JSON.stringify({action:'payment',orderId:payOrder.id,amount:n,method:$('method').value,reference:$('reference').value.trim()}));closePay()}
-function haversine(a,b){const rad=x=>x*Math.PI/180,x=rad(b.lat-a.lat),y=rad(b.lng-a.lng),v=Math.sin(x/2)**2+Math.cos(rad(a.lat))*Math.cos(rad(b.lat))*Math.sin(y/2)**2;return 6371*2*Math.atan2(Math.sqrt(v),Math.sqrt(1-v))}
-let zoom=16,center=null,following=true,pointers=new Map(),pinch=null;function world(p,z=zoom){const size=256*2**z,lat=Math.max(-85,Math.min(85,p.lat))*Math.PI/180;return{x:(p.lng+180)/360*size,y:(1-Math.log(Math.tan(lat)+1/Math.cos(lat))/Math.PI)/2*size}}function fromWorld(p,z=zoom){const size=256*2**z;return{lng:p.x/size*360-180,lat:Math.atan(Math.sinh(Math.PI*(1-2*p.y/size)))*180/Math.PI}}function target(){const a=active();return a?a.stops.find(s=>!s.deliveredAt):null}function followMap(){following=true;center=state.point||target();drawMap()}function zoomAt(next,x,y){if(!center)return;const w=$('map').clientWidth,h=$('map').clientHeight,c=world(center),anchor=fromWorld({x:c.x+x-w/2,y:c.y+y-h/2}),z=Math.max(2,Math.min(19,next)),a=world(anchor,z);zoom=z;center=fromWorld({x:a.x-x+w/2,y:a.y-y+h/2});drawMap()}function mapZoom(delta){zoomAt(Math.round(zoom)+delta,$('map').clientWidth/2,$('map').clientHeight/2)}
-function drawMap(){if(page!=='route')return;const node=$('map'),w=node.clientWidth,h=node.clientHeight,p=state.point,d=target();if(following&&p)center=p;if(!center)center=p||d;if(!center){$('maptiles').replaceChildren();$('mapmarkers').replaceChildren();return}const c=world(center),base=Math.floor(zoom),factor=2**(zoom-base),size=256*factor,count=2**base,left=c.x-w/2,top=c.y-h/2,tiles=reset('maptiles');for(let y=Math.floor(top/size);y<=Math.floor((top+h)/size);y++)for(let x=Math.floor(left/size);x<=Math.floor((left+w)/size);x++){if(y<0||y>=count)continue;const img=el('img');img.alt='';img.draggable=false;img.referrerPolicy='strict-origin-when-cross-origin';img.src='https://tile.openstreetmap.org/'+base+'/'+((x%count+count)%count)+'/'+y+'.png';img.style.cssText='left:'+(x*size-left)+'px;top:'+(y*size-top)+'px;width:'+size+'px;height:'+size+'px';tiles.append(img)}const markers=reset('mapmarkers');function pos(point){const q=world(point);return{x:q.x-left,y:q.y-top}}function marker(point,icon,label,cls){const q=pos(point),m=el('div',icon,'mapmarker '+(cls||''));m.style.left=q.x+'px';m.style.top=q.y+'px';m.append(el('small',label));markers.append(m)}if(p)marker(p,'▰','Rider · ±'+Math.round(p.accuracy||0)+' m');if(d)marker(d,'◆','Next stop','destination');$('mapline').replaceChildren();if(p&&d){const a=pos(p),b=pos(d),line=document.createElementNS('http://www.w3.org/2000/svg','line');for(const[k,v]of Object.entries({x1:a.x,y1:a.y,x2:b.x,y2:b.y,stroke:'#60e2ed','stroke-width':3,'stroke-dasharray':'7 8'}))line.setAttribute(k,v);$('mapline').append(line)}$('follow').textContent=following?'Following rider ◎':'Follow rider ◎'}
-$('map').addEventListener('pointerdown',e=>{if(e.target.closest('button'))return;e.preventDefault();$('map').setPointerCapture(e.pointerId);pointers.set(e.pointerId,{x:e.offsetX,y:e.offsetY,clientX:e.clientX,clientY:e.clientY});following=false;pinch=null});$('map').addEventListener('pointermove',e=>{if(!pointers.has(e.pointerId)||!center)return;e.preventDefault();const prev=pointers.get(e.pointerId),rect=$('map').getBoundingClientRect(),now={x:e.clientX-rect.left,y:e.clientY-rect.top,clientX:e.clientX,clientY:e.clientY};pointers.set(e.pointerId,now);if(pointers.size===2){const[a,b]=[...pointers.values()],distance=Math.hypot(a.clientX-b.clientX,a.clientY-b.clientY);if(pinch&&distance>0)zoomAt(zoom+Math.log2(distance/pinch),(a.x+b.x)/2,(a.y+b.y)/2);pinch=distance}else{const c=world(center);center=fromWorld({x:c.x-(now.clientX-prev.clientX),y:c.y-(now.clientY-prev.clientY)});drawMap()}});for(const type of ['pointerup','pointercancel'])$('map').addEventListener(type,e=>{pointers.delete(e.pointerId);pinch=null});setInterval(()=>{if(page==='offers')renderOffers()},250);render();
+<script>'use strict';
+let state = {}, page = 'home', payOrder = null;
+const $ = id => document.getElementById(id), money = x => 'KSh ' + (Number(x || 0) / 100).toLocaleString('en-KE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+function el(tag, text, cls) { const e = document.createElement(tag); if (text != null)
+    e.textContent = text; if (cls)
+    e.className = cls; return e; }
+function button(label, action, cls = 'primary', disabled = false) { const b = el('button', label, cls); b.type = 'button'; b.disabled = disabled || state.busy; b.onclick = action; return b; }
+function empty(root, title, detail, icon = '◈') { const e = el('div', null, 'empty'); e.append(el('b', icon), el('h3', title), el('p', detail)); root.append(e); }
+function reset(id) { const r = $(id); r.replaceChildren(); return r; }
+function card(root, title, detail) { const c = el('div', null, 'card'); if (title)
+    c.append(el('h2', title)); if (detail)
+    c.append(el('p', detail)); root.append(c); return c; }
+function metric(root, label, value, note) { const d = el('div', null, 'metric'); d.append(el('small', label), el('strong', value), el('span', note || '')); root.append(d); }
+function go(next) { page = next; document.querySelectorAll('.page').forEach(e => e.classList.toggle('active', e.id === next)); document.querySelectorAll('nav button').forEach(e => e.classList.toggle('active', e.dataset.page === next)); window.scrollTo(0, 0); render(); if (next === 'route')
+    drawMap(); }
+function serverNow() { const d = state.data || {}; return Number(d.serverTime || Date.now()) + Math.max(0, Date.now() - Number(d.receivedAt || Date.now())); }
+function assignment() { return (state.data || {}).assignment || null; }
+function active() { const a = assignment(); return a && a.stops.some(s => !s.deliveredAt) ? a : null; }
+function pending(action, id) { return (state.commands || []).some(c => c.payload.action === action && (!id || c.payload.orderId === id) && !c.error); }
+function currentOrder() { return (state.data || {}).order || null; }
+function action(kind) { var _a; const a = assignment(); if (!a)
+    return; Rider.action(JSON.stringify(Object.assign({ action: kind, dispatchId: a.id }, (a.orderId ? { orderId: a.orderId } : { stopId: (_a = a.stops.find(s => !s.deliveredAt)) === null || _a === void 0 ? void 0 : _a.id })))); }
+function path(root, pickup, destination) { for (const [p, i] of [[pickup, '◉'], [destination, '◆']]) {
+    if (!p)
+        continue;
+    const r = el('div', null, 'path'), d = el('div');
+    r.append(el('i', i));
+    d.append(el('strong', p.name), el('small', p.address));
+    r.append(d);
+    root.append(r);
+} }
+function applyState(next) { state = next; $('loading').style.display = state.busy ? 'block' : 'none'; $('statusbadge').textContent = state.recording ? 'ON DUTY' : 'OFF DUTY'; $('notice').style.display = state.error ? 'block' : 'none'; $('notice').textContent = state.error || ''; $('paircard').style.display = !state.paired && !state.unlinkPending ? 'block' : 'none'; render(); }
+function render() { if (page === 'home')
+    renderHome(); if (page === 'offers')
+    renderOffers(); if (page === 'route')
+    renderRoute(); if (page === 'trips')
+    renderTrips(); if (page === 'account')
+    renderAccount(); }
+function renderHome() {
+    const r = reset('homecontent');
+    $('greeting').textContent = state.driver ? 'Hello, ' + state.driver.split(' ')[0] + '.' : 'Ready when you are.';
+    const h = card(r, state.recording ? 'Your shift is live.' : 'Your next delivery starts here.', state.recording ? (state.gpsEnabled ? 'GPS is enabled. Your office sees acknowledged journey updates.' : 'GPS is off. Enable location to recover your fixes.') : 'Go on duty to share GPS and receive delivery offers.');
+    h.classList.add('hero');
+    const w = el('div', null, 'wave');
+    for (let i = 0; i < 27; i++) {
+        const e = el('i');
+        e.style.height = (7 + (i * 13) % 29) + 'px';
+        w.append(e);
+    }
+    h.append(w);
+    h.append(button(state.paired ? (state.recording ? 'End duty' : 'Start duty') : 'Link this phone', () => state.paired ? (state.recording ? Rider.stop() : Rider.start()) : go('account'), 'primary wide', state.recording && !state.canStop));
+    if (state.recording && !state.canStop)
+        h.append(el('p', 'Finish delivery to end duty. Privacy pause stays available in Account.', 'muted'));
+    const g = el('div', null, 'grid');
+    r.append(g);
+    metric(g, 'PHONE LOCATION', state.gpsEnabled ? 'Enabled' : 'Disabled', state.lastFix ? 'Latest fix ' + new Date(state.lastFix).toLocaleTimeString() : 'Waiting for a fresh GPS fix');
+    metric(g, 'OFFLINE QUEUE', String((state.events || 0) + (state.commands || []).length), 'GPS events + rider reports');
+    const a = active();
+    if (a) {
+        const c = card(r, a.name, 'One assignment connected to the office.');
+        path(c, a.stops[0], a.stops[a.stops.length - 1]);
+        deliveryActions(c, a);
+        c.append(button('Open destination map →', () => go('route'), 'secondary wide'));
+    }
+    else if (pending('delivered'))
+        card(r, 'Delivery completion saved.', 'Waiting for the portal to acknowledge it. You can report payment from Trips.');
+    else
+        empty(r, 'Ready for company work', state.recording ? 'Offers appear here while you are free and GPS is fresh.' : 'Start duty when you are ready. No location is recorded while off duty.', '⚡');
+    const q = el('div', null, 'actiongrid');
+    q.append(button('⚡  Delivery offers', () => go('offers')), button('◈  Navigation', () => go('route')), button('▤  Payments & trips', () => go('trips')), button('◎  Sync & privacy', () => go('account')));
+    r.append(q);
+    const d = state.data || {};
+    r.append(el('p', d.receivedAt ? 'Office snapshot ' + new Date(d.receivedAt).toLocaleTimeString() + ' · ' + Math.round((Date.now() - d.receivedAt) / 1000) + 's ago' : 'Connect to fetch your own assignments.', 'muted'));
+}
+function deliveryActions(root, a) { const done = a.stops.filter(s => s.deliveredAt).length, bars = el('div', null, 'stepbar'); for (let i = 0; i < 2; i++)
+    bars.append(el('i', null, done > i ? 'done' : '')); root.append(bars); if (pending('delivered', a.orderId)) {
+    root.append(el('p', 'Delivery finished locally · waiting for office receipt', 'progress-note'));
+    if (a.orderId)
+        root.append(button('Record customer payment', () => openPay(currentOrder()), 'primary wide', pending('payment', a.orderId)));
+    return;
+} if (!a.orderId) {
+    const next = a.stops.find(s => !s.deliveredAt);
+    root.append(button('✓ Confirm ' + next.name, () => { if (confirm('Confirm this destination was completed?'))
+        action('delivered'); }, 'primary wide'));
+    return;
+} if (!a.stops[0].deliveredAt && !pending('collected', a.orderId) && a.stops.length > 1) {
+    root.append(button(pending('collected', a.orderId) ? 'Collection saved · awaiting receipt' : '✓ Confirm product collected', () => action('collected'), 'primary wide', pending('collected', a.orderId)));
+}
+else {
+    if (pending('collected', a.orderId))
+        root.append(el('p', 'Collection recorded offline · finish and payment will sync in order', 'progress-note'));
+    root.append(button('✓ Finish delivery / ride', () => { if (confirm('Confirm the product was delivered and this ride is finished?'))
+        action('delivered'); }, 'primary wide'));
+} }
+function renderOffers() { const r = reset('offercontent'), offers = (state.data || {}).offers || []; const open = offers.filter(o => o.offerDeadline > serverNow()); if (!open.length)
+    empty(r, 'Waiting for your next offer', !state.recording ? 'Go on duty to receive company offers.' : active() ? 'Finish your active delivery before accepting another.' : 'Keep location enabled. Office offers appear while you are free.', '⚡'); for (const o of open) {
+    const c = card(r, o.title), row = el('div', null, 'row'), remaining = Math.max(0, o.offerDeadline - serverNow());
+    c.classList.add('offer');
+    row.append(el('span', 'ACCEPT WINDOW', 'eyebrow'), el('span', (remaining / 1000).toFixed(1) + 's', 'countdown'));
+    c.append(row);
+    path(c, o.pickup, o.destination);
+    if (o.notes)
+        c.append(el('p', o.notes));
+    const track = el('div', null, 'offertrack'), bar = el('i');
+    bar.style.width = Math.min(100, remaining / 50) + '%';
+    track.append(bar);
+    c.append(track);
+    c.append(button('Accept collection →', () => Rider.action(JSON.stringify({ action: 'accept', orderId: o.id })), 'primary wide', remaining <= 0));
+    if (o.amountDue != null)
+        c.append(el('p', 'Expected customer payment: ' + money(o.amountDue * 100), 'muted'));
+} r.append(el('p', 'Offers use the office clock. Delivery alerts depend on internet access and Android scheduling. Acceptances received after the server deadline are refused.', 'muted')); }
+function renderRoute() { const r = reset('routesummary'), a = active(), point = state.point; if (a) {
+    const s = a.stops.find(s => !s.deliveredAt);
+    r.append(el('h2', s.name), el('p', s.address));
+    if (point)
+        r.append(el('span', haversine(point, s).toFixed(2) + ' km straight-line · not road distance', 'tag'));
+}
+else
+    r.append(el('p', 'Your assigned collection and destination will appear here.')); const actions = reset('routeactions'); if (a)
+    deliveryActions(card(actions, 'Delivery controls'), a); drawMap(); }
+function renderTrips() { const r = reset('tripcontent'), d = state.data || {}, payments = d.payments || [], totals = d.totals || {}, g = el('div', null, 'grid'); r.append(g); metric(g, 'REPORTED COLLECTIONS', money(totals.reportedMinor), 'All time · pending office review included'); metric(g, 'VERIFIED BY OFFICE', money(totals.verifiedMinor), 'Office confirmed reports'); metric(g, 'CASH COLLECTED', money(totals.cashMinor), 'Customer cash reports'); metric(g, 'COMPANY TILL', money(totals.tillMinor), 'Customer till reports'); const orders = d.recentOrders || []; if (!orders.length)
+    empty(r, 'Your deliveries will appear here', 'Only work linked to this rider phone is visible.'); for (const o of orders) {
+    const p = payments.find(p => p.orderId === o.id && p.status !== 'void'), localDone = pending('delivered', o.id), c = card(r, o.title);
+    c.append(el('span', localDone ? 'Finish report queued' : o.status.replace(/_/g, ' '), 'tag'));
+    path(c, o.pickup, o.destination);
+    c.append(el('p', (o.measuredKm || 0).toFixed(2) + ' recorded km estimate', 'muted'));
+    if (p) {
+        c.append(el('p', (p.method === 'cash' ? 'Cash' : 'Company till') + ' · ' + money(p.amountMinor) + ' · ' + (p.status === 'verified' ? 'office verified' : 'reported for review'), 'paystatus'));
+        if (p.reference)
+            c.append(el('p', 'Reference: ' + p.reference, 'muted'));
+    }
+    else if (o.status === 'delivered' || localDone) {
+        c.append(button(pending('payment', o.id) ? 'Payment report saved offline' : 'Report cash / till payment', () => openPay(o), 'primary wide', pending('payment', o.id)));
+        if (o.amountDue != null)
+            c.append(el('p', 'Expected: ' + money(o.amountDue * 100), 'muted'));
+    }
+} r.append(el('p', 'Showing your latest 10 orders and reports. The office keeps company history and all-time totals. No money is transferred by this app.', 'muted')); }
+function renderAccount() { const r = reset('accountcontent'); if (state.unlinkPending) {
+    const c = card(r, 'Unlink saved on this phone.', 'The office will mark this rider unlinked when the request is received. Connect to sync before linking again.');
+    c.append(button('Send unlink request', () => Rider.sync(), 'primary wide'));
+    return;
+} if (state.paired) {
+    const c = card(r, state.driver || 'Company rider', (state.data || {}).vehicleLabel || 'Your office-linked phone');
+    c.append(el('p', (state.recording ? 'On duty' : 'Off duty') + ' · ' + (state.gpsEnabled ? 'Phone location enabled' : 'Phone location disabled'), 'progress-note'));
+    c.append(el('p', 'Last GPS ' + (state.lastFix ? new Date(state.lastFix).toLocaleString() : 'No fresh fix yet') + '\nLast upload ' + (state.lastSync ? new Date(state.lastSync).toLocaleString() : 'None yet'), 'muted'));
+    c.append(button('Sync saved journey & reports', () => Rider.sync(), 'secondary wide'));
+    c.append(button(state.recording ? 'End duty after delivery' : 'Start duty', () => state.recording ? Rider.stop() : Rider.start(), 'primary wide', state.recording && !state.canStop));
+    c.append(button('Unlink phone & clear local queue', () => Rider.unlink(), 'danger wide'));
+} if (!state.paired && !state.unlinkPending && ((state.events || 0) > 0 || (state.commands || []).length > 0)) {
+    const c = card(r, "Unsent data from an earlier link.", "The office revoked that link. These events cannot be uploaded with another driver token. Review with the office before deleting them.");
+    c.append(button("Clear old local queue", () => Rider.unlink(), "danger wide"));
+} const commands = state.commands || []; if (commands.length) {
+    const c = card(r, 'Saved rider reports', commands.length + ' reports waiting for acknowledgment.');
+    for (const row of commands) {
+        const item = el('div', null, 'listrow');
+        item.append(el('strong', row.payload.action.replace(/_/g, ' ')), el('p', row.error || 'Saved safely · retrying when connected', 'muted'));
+        if (row.error)
+            item.append(button('Discard rejected report', () => Rider.discard(row.payload.operationId), 'secondary'));
+        c.append(item);
+    }
+} }
+function openPay(order) { if (!order)
+    return; payOrder = order; $('payorder').textContent = order.title; $('amount').value = ''; $('reference').value = ''; $('payerror').textContent = ''; $('payment').classList.add('open'); $('amount').focus(); }
+function closePay() { $('payment').classList.remove('open'); payOrder = null; }
+function submitPayment(e) { e.preventDefault(); const n = Number($('amount').value); if (!payOrder || !Number.isFinite(n) || n < 0 || n > 10000000 || Math.abs(n * 100 - Math.round(n * 100)) > .000001) {
+    $('payerror').textContent = 'Enter an amount with at most two decimal places.';
+    return;
+} Rider.action(JSON.stringify({ action: 'payment', orderId: payOrder.id, amount: n, method: $('method').value, reference: $('reference').value.trim() })); closePay(); }
+function haversine(a, b) { const rad = x => x * Math.PI / 180, x = rad(b.lat - a.lat), y = rad(b.lng - a.lng), v = Math.sin(x / 2) ** 2 + Math.cos(rad(a.lat)) * Math.cos(rad(b.lat)) * Math.sin(y / 2) ** 2; return 6371 * 2 * Math.atan2(Math.sqrt(v), Math.sqrt(1 - v)); }
+let zoom = 16, center = null, following = true, pointers = new Map(), pinch = null;
+function world(p, z = zoom) { const size = 256 * 2 ** z, lat = Math.max(-85, Math.min(85, p.lat)) * Math.PI / 180; return { x: (p.lng + 180) / 360 * size, y: (1 - Math.log(Math.tan(lat) + 1 / Math.cos(lat)) / Math.PI) / 2 * size }; }
+function fromWorld(p, z = zoom) { const size = 256 * 2 ** z; return { lng: p.x / size * 360 - 180, lat: Math.atan(Math.sinh(Math.PI * (1 - 2 * p.y / size))) * 180 / Math.PI }; }
+function target() { const a = active(); return a ? a.stops.find(s => !s.deliveredAt) : null; }
+function followMap() { following = true; center = state.point || target(); drawMap(); }
+function zoomAt(next, x, y) { if (!center)
+    return; const w = $('map').clientWidth, h = $('map').clientHeight, c = world(center), anchor = fromWorld({ x: c.x + x - w / 2, y: c.y + y - h / 2 }), z = Math.max(2, Math.min(19, next)), a = world(anchor, z); zoom = z; center = fromWorld({ x: a.x - x + w / 2, y: a.y - y + h / 2 }); drawMap(); }
+function mapZoom(delta) { zoomAt(Math.round(zoom) + delta, $('map').clientWidth / 2, $('map').clientHeight / 2); }
+function drawMap() { if (page !== 'route')
+    return; const node = $('map'), w = node.clientWidth, h = node.clientHeight, p = state.point, d = target(); if (following && p)
+    center = p; if (!center)
+    center = p || d; if (!center) {
+    $('maptiles').replaceChildren();
+    $('mapmarkers').replaceChildren();
+    return;
+} const c = world(center), base = Math.floor(zoom), factor = 2 ** (zoom - base), size = 256 * factor, count = 2 ** base, left = c.x - w / 2, top = c.y - h / 2, tiles = reset('maptiles'); for (let y = Math.floor(top / size); y <= Math.floor((top + h) / size); y++)
+    for (let x = Math.floor(left / size); x <= Math.floor((left + w) / size); x++) {
+        if (y < 0 || y >= count)
+            continue;
+        const img = el('img');
+        img.alt = '';
+        img.draggable = false;
+        img.referrerPolicy = 'strict-origin-when-cross-origin';
+        img.src = 'https://tile.openstreetmap.org/' + base + '/' + ((x % count + count) % count) + '/' + y + '.png';
+        img.style.cssText = 'left:' + (x * size - left) + 'px;top:' + (y * size - top) + 'px;width:' + size + 'px;height:' + size + 'px';
+        tiles.append(img);
+    } const markers = reset('mapmarkers'); function pos(point) { const q = world(point); return { x: q.x - left, y: q.y - top }; } function marker(point, icon, label, cls) { const q = pos(point), m = el('div', icon, 'mapmarker ' + (cls || '')); m.style.left = q.x + 'px'; m.style.top = q.y + 'px'; m.append(el('small', label)); markers.append(m); } if (p)
+    marker(p, '▰', 'Rider · ±' + Math.round(p.accuracy || 0) + ' m'); if (d)
+    marker(d, '◆', 'Next stop', 'destination'); $('mapline').replaceChildren(); if (p && d) {
+    const a = pos(p), b = pos(d), line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    for (const [k, v] of Object.entries({ x1: a.x, y1: a.y, x2: b.x, y2: b.y, stroke: '#60e2ed', 'stroke-width': 3, 'stroke-dasharray': '7 8' }))
+        line.setAttribute(k, v);
+    $('mapline').append(line);
+} $('follow').textContent = following ? 'Following rider ◎' : 'Follow rider ◎'; }
+$('map').addEventListener('pointerdown', e => { if (e.target.closest('button'))
+    return; e.preventDefault(); $('map').setPointerCapture(e.pointerId); pointers.set(e.pointerId, { x: e.offsetX, y: e.offsetY, clientX: e.clientX, clientY: e.clientY }); following = false; pinch = null; });
+$('map').addEventListener('pointermove', e => { if (!pointers.has(e.pointerId) || !center)
+    return; e.preventDefault(); const prev = pointers.get(e.pointerId), rect = $('map').getBoundingClientRect(), now = { x: e.clientX - rect.left, y: e.clientY - rect.top, clientX: e.clientX, clientY: e.clientY }; pointers.set(e.pointerId, now); if (pointers.size === 2) {
+    const [a, b] = [...pointers.values()], distance = Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY);
+    if (pinch && distance > 0)
+        zoomAt(zoom + Math.log2(distance / pinch), (a.x + b.x) / 2, (a.y + b.y) / 2);
+    pinch = distance;
+}
+else {
+    const c = world(center);
+    center = fromWorld({ x: c.x - (now.clientX - prev.clientX), y: c.y - (now.clientY - prev.clientY) });
+    drawMap();
+} });
+for (const type of ['pointerup', 'pointercancel'])
+    $('map').addEventListener(type, e => { pointers.delete(e.pointerId); pinch = null; });
+setInterval(() => { if (page === 'offers')
+    renderOffers(); }, 250);
+render();
 </script></body></html>
