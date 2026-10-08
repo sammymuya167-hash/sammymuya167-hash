@@ -17,7 +17,7 @@ export async function verifyDriver({mf,db,request,passed}){
   async function progress(phone,order,kind,id){return action(phone,{action:kind,orderId:order.id,dispatchId:order.dispatchId},id);}
   async function finish(phone,order){await ok(await progress(phone,order,"collected"));await ok(await progress(phone,order,"delivered"));}
 
-  assert.equal((await request("/api/office/order-updates")).status,401);
+  assert.equal((await request("/api/office/order-updates","GET",undefined,null)).status,401);
   for(const path of ["state","actions"])assert.equal((await native(null,`/api/driver/${path}`,{})).status,401);
   const a=await enroll("Synthetic rider A"),b=await enroll("Synthetic rider B"),foreign=await enroll("Foreign rider",other);
   const update=await ok(await office("/api/office/order-updates"));assert.equal(update.orders.length,0);assert.equal((await office("/api/office/order-updates")).headers.get("cache-control"),"private, no-store");
