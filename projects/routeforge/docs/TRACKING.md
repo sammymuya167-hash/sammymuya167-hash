@@ -24,6 +24,9 @@ GPS arrival requires two distinct fixes at least 15 seconds apart in the same tr
 The Street View link opens available historical surroundings imagery on Google Maps. It is not a live camera and may have no coverage at the selected location. Opening the link shares that location with Google Maps.
 
 ## Updating an active fleet
+
+**Already using RouteForge Rider 1.0:** install Rider 1.1 over the existing Rider app. The package and owner signing certificate stay the same, so keep the current link and local queue. Do not unlink, clear storage or request a new pairing code just to install this update. In Account, play the delivery alert test and check both offer and assigned-delivery settings.
+
 This release includes a new, owner-signed Rider app, using application ID `app.shadownet.routeforge.rider`. The old pilot's signing key is unavailable, so Rider installs alongside it for the one-time migration. Future Rider releases must use the same retained owner signing key for install-over upgrades.
 
 1. In the old pilot, sync until its local queue is empty, then stop its trip. Keep it stopped so both apps do not record the same journey.
@@ -36,14 +39,14 @@ For a new driver, use **Link a driver** rather than an upgrade code. Clearing a 
 
 ## Rider delivery and payment controls
 
-The packaged app has Home, Offers, Route, Trips and Account views with animated navigation. Offers appear while a linked rider is free and on duty. The server accepts only claims received before its five-second deadline. Polling, internet access and Android scheduling govern notification delivery; a powered-off or offline phone cannot receive an offer promptly.
+Rider 1.1 has Home, Offers, Route, Trips and Account views with animated navigation. New offers appear in a banner on every tab, with a claim button and a left-to-right five-second progress line. Assigned deliveries have their own sound/popup notification and an active-ride banner with navigation and completion controls. Offers appear while a linked rider is free and on duty. The server accepts only claims received before its five-second deadline. Polling, internet access and Android scheduling govern notification delivery; a powered-off or offline phone cannot receive an offer promptly.
 
 The rider confirms product collection, then taps **Finish delivery / ride** to close the same order shown in the office. Legacy multi-stop assignments confirm the next stop by its identity, so retrying one confirmation cannot complete a later stop. **End duty** is blocked during an unfinished assignment. **Privacy pause** always stops GPS immediately and keeps unfinished work flagged for office follow-up.
 
 After finishing, the rider reports the actual amount received as cash or company till, with an optional receipt/reference. The app saves completion and payment reports offline and uploads them in order with durable operation IDs. It shows server acknowledgment separately from locally queued reports. Reports appear in the office's sales totals for review; **Office verified** means the office checked the cash/receipt. RouteForge does not transfer money or automatically verify a till transaction.
 
 ## Recording and offline operation
-The Android app runs a location foreground service started with driver consent. Its ongoing recording notification is visible and silent, with a **Privacy pause** action. Delivery offers use a separate notification channel controlled by Android notification settings. **End duty** controls appear in the app. No boot receiver restarts GPS recording, and no background-location permission is requested.
+The Android app runs a location foreground service started with driver consent. Its ongoing recording notification is visible and silent, with a **Privacy pause** action. Delivery offers and assigned rides each use a high-importance sound/vibration notification channel controlled by Android. Account shows the actual sound and popup settings, links to both channel settings and offers a delivery alert test. Muted volume, disabled notifications, Do Not Disturb and OS scheduling remain visible operating constraints. **End duty** controls appear in the app. No boot receiver restarts GPS recording, and no background-location permission is requested.
 
 Rider requests GPS/network fixes every ten seconds with no minimum displacement, so stationary phones can refresh their position. It also requests a current fix when duty starts or a location provider becomes enabled. Uploads are attempted about every ten seconds; rider offers/state are polled approximately every second while the service is running. The first fix can take longer. Android controls actual sampling and scheduling. A foreground connectivity callback attempts upload when network access returns. GPS capture continues without internet while the running service has location permission and a usable GPS signal.
 
@@ -72,4 +75,4 @@ Read the published Android build workflow for reproducible CI. The SQLite instru
 
 Current unchanged pilot APK SHA-256: `8d9b3a0d84e7c32bbb1c10fba1c52fd052fac24d187b18b1b94223975aedbf29`.
 
-Signed Rider APK SHA-256: `552ea88f006d2d12d590e675b8fbdd96090d2e274750cce05575abcc5f738efd`.
+Current signed Rider APK SHA-256 is recorded in `/downloads/routeforge-rider-release.json` and verified against the publicly served installer.
