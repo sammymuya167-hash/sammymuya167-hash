@@ -240,7 +240,7 @@ export async function authenticateDevice(request: Request) {
       401,
       "This device link was revoked. Contact your dispatcher.",
     );
-  return { id: row.id, hash };
+  return { id: row.id, hash, owner: row.owner_id };
 }
 export async function ingestEvents(
   device: { id: string; hash: string },

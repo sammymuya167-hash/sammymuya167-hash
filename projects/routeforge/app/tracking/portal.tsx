@@ -261,7 +261,7 @@ export default function TrackingPortal({
   const points = events.filter(
     (e): e is Extract<Event, { kind: "point" }> => e.kind === "point",
   );
-  const apk = "/downloads/routeforge-rider.apk";
+  const apk = "/downloads/routeforge-rider.apk?v=3";
   async function refreshOffice(){await Promise.all([refresh(),office.refresh()]);}
   return (
     <main className="tracking-shell">
@@ -565,10 +565,10 @@ export default function TrackingPortal({
           <Smartphone size={25} />
           <h2>Set up the driver phone</h2>
           <p>
-            Android 8 or newer. Install RouteForge Rider, enter the pairing code and allow precise location and notifications. For an existing driver, choose Rider app upgrade code above; sync and stop the old pilot app first. The new app keeps the same driver record and assignment.
+            Android 8 or newer. Already using RouteForge Rider? Install version 1.1 over it to keep your link and saved queue; no new pairing code is needed. In Account, play the delivery alert test. For a first-time pilot upgrade, sync and stop the old pilot, then use its Rider app upgrade code to keep the same driver record and assignment.
           </p>
           <a className="tracking-primary" href={apk}>
-            Download RouteForge Rider APK
+            Download RouteForge Rider 1.1 APK
           </a>
           <a
             className="tracking-docs"
@@ -690,7 +690,7 @@ export default function TrackingPortal({
               Copy code
             </button>
             <a className="tracking-primary" href={apk}>
-              Download RouteForge Rider APK
+              Download RouteForge Rider 1.1 APK
             </a>
             <button
               className="tracking-secondary"

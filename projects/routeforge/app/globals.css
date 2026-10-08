@@ -2700,3 +2700,19 @@ tr:hover td {
 .planning-workspace .button.secondary,.planning-workspace .plan-bar,.planning-workspace .map-top,.planning-workspace .map-bottom { background:#1a3050; border-color:#35577d; color:#c9dffa; }
 .planning-workspace .main { background:#0b172c; }
 .planning-workspace .page-heading h1 { color:#eaf2ff; }
+
+/* Original planning tools share the office navigation and preserve their draft. */
+.planning-workspace.planner-embedded { min-height:0; border:1px solid #2c456b; border-radius:22px; overflow:hidden; }
+.planning-workspace.planner-embedded .main { margin:0; min-width:0; width:100%; }
+.planning-workspace.planner-embedded .page-content { padding:22px; max-width:none; }
+.planner-section-nav { display:flex; flex-wrap:wrap; gap:7px; padding:15px 20px; border-bottom:1px solid #2c456b; background:#0f1e34; }
+.planner-section-nav button { display:flex; align-items:center; gap:8px; border:1px solid transparent; border-radius:10px; padding:10px 13px; color:#a8bbda; font-size:12px; }
+.planner-section-nav button.active { background:#243e65; color:#8ee4ef; border-color:#375981; }
+.office-planner-panel[hidden] { display:none; }
+.bwm-office .office-offer-state { display:block; padding:15px; background:#132e4a; border:1px solid #3e6592; border-radius:13px; }
+.office-offer-state > div:first-child { display:flex; align-items:center; gap:8px; font-size:12px; }
+.office-offer-state span { margin-left:auto; color:#a6c8e5; font-size:11px; }
+.office-offer-track { height:6px; margin:13px 0; border-radius:10px; background:#29425f; overflow:hidden; }
+.office-offer-track i { display:block; height:100%; background:linear-gradient(90deg,#5c88ff,#6de8df); transition:width .1s linear; }
+.office-offer-state small { color:#a3bddd; font-size:11px; }
+@media(max-width:850px) { .planning-workspace.planner-embedded .main { margin:0; } .planning-workspace.planner-embedded .page-content { padding:17px 12px; } .planner-section-nav { padding:12px; gap:5px; } .planner-section-nav button { padding:9px; font-size:11px; } }

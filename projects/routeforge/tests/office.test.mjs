@@ -76,3 +76,11 @@ test("map crosshair converts accurately back to latitude and longitude at differ
     assert.ok(Math.abs(recovered.lat-lat)<1e-10);assert.ok(Math.abs(recovered.lng-lng)<1e-10);
   }
 });
+
+test('live GPS alone cannot make a rider available when phone GPS is off or the app heartbeat is stale',()=>{
+  const rider={onDuty:true,gpsEnabled:true,appVersion:3,heartbeatAt:time};
+  const choices=driverChoices([device('ready',{rider}),device('gps-off',{rider:{...rider,gpsEnabled:false}}),device('disconnected',{rider:{...rider,heartbeatAt:time-91000}})],[],[]);
+  assert.deepEqual(choices.filter(c=>c.available).map(c=>c.device.id),['ready']);
+  assert.equal(choices.find(c=>c.device.id==='gps-off').reason,'Phone GPS is off');
+  assert.equal(choices.find(c=>c.device.id==='disconnected').reason,'Rider app disconnected');
+});

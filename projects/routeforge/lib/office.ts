@@ -47,7 +47,7 @@ export type OfficeOrder = z.infer<typeof orderInput> & {
   deliveredAt: number | null; updatedAt: number; version: number;
   estimatedKm: number | null; measuredKm: number; excludedSegments: number;
   ratePerKm: number | null; distanceCheckedAt: number;
-  offerDeadline?: number | null; completionSource?: "office"|"driver"; driverIssue?: string | null;
+  offerDeadline?: number | null; offerStartedAt?: number; offerRiders?: number; completionSource?: "office"|"driver"; driverIssue?: string | null;
 };
 export type Payment = {orderId:string;deviceId:string;driverName:string;method:"cash"|"till";amountMinor:number;reference:string;reportedAt:number;status:"reported"|"verified"|"void";verifiedAt:number|null;version:number};
 export type SalesSummary = {reportedMinor:number;verifiedMinor:number;cashMinor:number;tillMinor:number;expectedMinor:number;pendingReview:number;unpaidDelivered:number;delivered:number;todayMinor:number;measuredKm:number;estimatedDriverCostMinor:number};
@@ -67,7 +67,7 @@ export function driverChoices(devices: Device[], profiles: DriverProfile[], disp
   return devices.filter(d => d.pairedAt && !d.revokedAt).map(device => {
     const profile = profiles.find(p => p.deviceId === device.id);
     const busy = dispatches.some(d => d.deviceId === device.id && d.stops.some(s => !s.deliveredAt));
-    const reason = profile?.onDuty === false || device.rider?.onDuty===false ? "Off duty" : busy ? "On an active order" : device.status !== "live" ? "Waiting for live GPS" : "Available";
+    const reason = busy ? "On an active order" : profile?.onDuty === false || device.rider?.onDuty===false ? "Off duty" : device.rider?.gpsEnabled===false ? "Phone GPS is off" : device.rider && Date.now()-device.rider.heartbeatAt>90000 ? "Rider app disconnected" : device.status !== "live" ? "Waiting for live GPS" : "Available";
     return {
       device, profile, available: reason === "Available", reason,
       lastAssignedAt: Math.max(profile?.lastAssignedAt ?? 0, profile?.lastReleasedAt ?? 0),

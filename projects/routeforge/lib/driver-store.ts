@@ -2,36 +2,40 @@ import { env } from "cloudflare:workers";
 import { z } from "zod";
 import { authenticateDevice, unlinkDevice } from "./tracking-store";
 import { TrackingError } from "./tracking";
-import { listDispatches } from "./dispatch-store";
 import type { Dispatch } from "./dispatch";
 import { syncOfficeDispatch } from "./office-sync";
 import { claimOffer, reconcileOffers } from "./offer-store";
+import { deferOffice } from "./office-context";
 import { amountMinor, type OfficeOrder, type Payment } from "./office";
 const db=()=>env.DB as D1Database;
 export type DriverIdentity={id:string;hash:string;owner:string};
 export async function driverIdentity(request:Request):Promise<DriverIdentity>{
-  const device=await authenticateDevice(request);
-  const row=await db().prepare("SELECT owner_id FROM tracking_devices WHERE id=? AND token_hash=? AND revoked_at IS NULL").bind(device.id,device.hash).first<{owner_id:string}>();
-  if(!row)throw new TrackingError(401,"This device link is no longer active.");
-  return {...device,owner:row.owner_id};
+  return authenticateDevice(request);
 }
 export async function driverState(device:DriverIdentity,payload:unknown){
   const parsed=z.object({appVersion:z.number().int().min(2).max(10000),onDuty:z.boolean(),gpsEnabled:z.boolean()}).strict().safeParse(payload);
   if(!parsed.success)throw new TrackingError(422,"Send the rider app's duty and location state.");
   const now=Date.now(),input=parsed.data;
-  await db().prepare("INSERT INTO driver_runtime(device_id,owner_id,app_version,on_duty,gps_enabled,heartbeat_at) SELECT id,?,?,?,?,? FROM tracking_devices WHERE id=? AND owner_id=? AND token_hash=? AND revoked_at IS NULL ON CONFLICT(device_id) DO UPDATE SET app_version=excluded.app_version,on_duty=excluded.on_duty,gps_enabled=excluded.gps_enabled,heartbeat_at=excluded.heartbeat_at WHERE driver_runtime.heartbeat_at<? OR driver_runtime.on_duty<>excluded.on_duty OR driver_runtime.gps_enabled<>excluded.gps_enabled OR driver_runtime.app_version<>excluded.app_version").bind(device.owner,input.appVersion,Number(input.onDuty),Number(input.gpsEnabled),now,device.id,device.owner,device.hash,now-10000).run();
-  await reconcileOffers(device.owner);
-  const dispatches=await listDispatches(device.owner),assignment=dispatches.find(d=>d.deviceId===device.id)??null;
-  if(assignment)await syncOfficeDispatch(device.owner,assignment);
-  const [deviceRow,orders,payment,offers]=await Promise.all([
-    db().prepare("SELECT driver_name,vehicle_label,phone_label,last_event_kind,latest_point_json FROM tracking_devices WHERE id=? AND owner_id=?").bind(device.id,device.owner).first<{driver_name:string;vehicle_label:string;phone_label:string;last_event_kind:string;latest_point_json:string|null}>(),
-    db().prepare("SELECT payload_json FROM office_orders WHERE owner_id=? AND device_id=? ORDER BY updated_at DESC LIMIT 10").bind(device.owner,device.id).all<{payload_json:string}>(),
-    db().prepare("SELECT payload_json FROM office_payments WHERE owner_id=? AND device_id=? ORDER BY updated_at DESC LIMIT 10").bind(device.owner,device.id).all<{payload_json:string}>(),
-    db().prepare("SELECT o.payload_json FROM office_orders o JOIN order_offers f ON f.order_id=o.id WHERE f.owner_id=? AND o.status='offered' AND f.expires_at>? AND EXISTS(SELECT 1 FROM json_each(f.eligible_json) WHERE value=?) ORDER BY f.expires_at LIMIT 5").bind(device.owner,now,device.id).all<{payload_json:string}>(),
+  // One device-scoped database round trip. Do not reconcile every company route
+  // or mileage record before the phone can receive its five-second offer.
+  const rows=await db().batch<Record<string,unknown>>([
+    db().prepare("INSERT INTO driver_runtime(device_id,owner_id,app_version,on_duty,gps_enabled,heartbeat_at) SELECT id,?,?,?,?,? FROM tracking_devices WHERE id=? AND owner_id=? AND token_hash=? AND revoked_at IS NULL ON CONFLICT(device_id) DO UPDATE SET app_version=excluded.app_version,on_duty=excluded.on_duty,gps_enabled=excluded.gps_enabled,heartbeat_at=excluded.heartbeat_at WHERE driver_runtime.heartbeat_at<? OR driver_runtime.on_duty<>excluded.on_duty OR driver_runtime.gps_enabled<>excluded.gps_enabled OR driver_runtime.app_version<>excluded.app_version").bind(device.owner,input.appVersion,Number(input.onDuty),Number(input.gpsEnabled),now,device.id,device.owner,device.hash,now-10000),
+    db().prepare("SELECT driver_name,vehicle_label,phone_label FROM tracking_devices WHERE id=? AND owner_id=? AND token_hash=? AND revoked_at IS NULL").bind(device.id,device.owner,device.hash),
+    db().prepare("SELECT dispatch_json FROM driver_dispatches WHERE device_id=? AND owner_id=?").bind(device.id,device.owner),
+    db().prepare("SELECT o.payload_json FROM office_orders o JOIN driver_dispatches d ON o.dispatch_id=json_extract(d.dispatch_json,'$.id') WHERE o.owner_id=? AND o.device_id=? AND d.owner_id=? AND d.device_id=? LIMIT 1").bind(device.owner,device.id,device.owner,device.id),
+    db().prepare("SELECT payload_json FROM office_orders WHERE owner_id=? AND device_id=? ORDER BY updated_at DESC LIMIT 10").bind(device.owner,device.id),
+    db().prepare("SELECT payload_json FROM office_payments WHERE owner_id=? AND device_id=? ORDER BY updated_at DESC LIMIT 10").bind(device.owner,device.id),
+    db().prepare("SELECT o.payload_json FROM office_orders o JOIN order_offers f ON f.order_id=o.id WHERE f.owner_id=? AND o.status='offered' AND f.expires_at>? AND EXISTS(SELECT 1 FROM json_each(f.eligible_json) WHERE value=?) ORDER BY f.expires_at LIMIT 5").bind(device.owner,now,device.id),
+    db().prepare("SELECT COALESCE(SUM(CASE WHEN status<>'void' THEN amount_minor ELSE 0 END),0) AS reportedMinor,COALESCE(SUM(CASE WHEN status='verified' THEN amount_minor ELSE 0 END),0) AS verifiedMinor,COALESCE(SUM(CASE WHEN status<>'void' AND json_extract(payload_json,'$.method')='cash' THEN amount_minor ELSE 0 END),0) AS cashMinor,COALESCE(SUM(CASE WHEN status<>'void' AND json_extract(payload_json,'$.method')='till' THEN amount_minor ELSE 0 END),0) AS tillMinor FROM office_payments WHERE owner_id=? AND device_id=?").bind(device.owner,device.id),
   ]);
-  const totals=await db().prepare("SELECT COALESCE(SUM(CASE WHEN status<>'void' THEN amount_minor ELSE 0 END),0) AS reportedMinor,COALESCE(SUM(CASE WHEN status='verified' THEN amount_minor ELSE 0 END),0) AS verifiedMinor,COALESCE(SUM(CASE WHEN status<>'void' AND json_extract(payload_json,'$.method')='cash' THEN amount_minor ELSE 0 END),0) AS cashMinor,COALESCE(SUM(CASE WHEN status<>'void' AND json_extract(payload_json,'$.method')='till' THEN amount_minor ELSE 0 END),0) AS tillMinor FROM office_payments WHERE owner_id=? AND device_id=?").bind(device.owner,device.id).first();
-  const assignedOrders=orders.results.map(r=>JSON.parse(r.payload_json) as OfficeOrder),pending=assignment?.stops.some(s=>!s.deliveredAt);
-  return {totals,deviceId:device.id,driverName:deviceRow?.driver_name,vehicleLabel:deviceRow?.vehicle_label,phone:deviceRow?.phone_label,assignment,order:assignedOrders.find(o=>o.dispatchId===assignment?.id)??null,recentOrders:assignedOrders,payments:payment.results.map(r=>JSON.parse(r.payload_json) as Payment),offers:pending||!input.onDuty?[]:offers.results.map(r=>JSON.parse(r.payload_json) as OfficeOrder),canStop:!pending,serverTime:Date.now()};
+  const deviceRow=rows[1].results[0] as {driver_name:string;vehicle_label:string;phone_label:string}|undefined;
+  if(!deviceRow)throw new TrackingError(401,"This device link is no longer active.");
+  const fromJson=<T>(index:number,key="payload_json"):T[]=>rows[index].results.map(r=>JSON.parse(r[key] as string) as T);
+  const assignment=fromJson<Dispatch>(2,"dispatch_json")[0]??null,pending=assignment?.stops.some(s=>!s.deliveredAt);
+  // The durable deadline also has an office wakeup. This retry runs after the
+  // snapshot, so fallback work cannot hold the rider's next update hostage.
+  deferOffice(()=>reconcileOffers(device.owner));
+  return {totals:rows[7].results[0],deviceId:device.id,driverName:deviceRow.driver_name,vehicleLabel:deviceRow.vehicle_label,phone:deviceRow.phone_label,assignment,order:fromJson<OfficeOrder>(3)[0]??null,recentOrders:fromJson<OfficeOrder>(4),payments:fromJson<Payment>(5),offers:pending||!input.onDuty||!input.gpsEnabled?[]:fromJson<OfficeOrder>(6),canStop:!pending,serverTime:Date.now()};
 }
 const actionInput=z.object({operationId:z.string().uuid(),action:z.enum(["start_duty","stop_duty","pause","accept","collected","delivered","payment","unlink"]),orderId:z.string().uuid().optional(),dispatchId:z.string().uuid().optional(),stopId:z.string().trim().min(1).max(80).optional(),method:z.enum(["cash","till"]).optional(),amount:z.number().finite().min(0).max(10000000).refine(v=>Math.abs(v*100-Math.round(v*100))<0.000001).optional(),reference:z.string().trim().max(80).default("")}).strict();
 export async function driverAction(device:DriverIdentity,payload:unknown){
