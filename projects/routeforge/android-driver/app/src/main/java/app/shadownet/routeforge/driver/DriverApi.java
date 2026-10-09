@@ -51,7 +51,7 @@ final class DriverApi {
   try{
    if(Session.pendingUnlink(c)!=null){flush(c);return;}
    JSONObject session=Session.get(c);if(!Session.loggedIn(c))return;
-   JSONObject response=Api.post("/api/driver/state",new JSONObject().put("appVersion",5).put("onDuty",TrackingService.running&&Session.prefs(c).getBoolean("duty",false)).put("gpsEnabled",gpsEnabled(c)),session.getString("token"),12000);
+   JSONObject response=Api.post("/api/driver/state",new JSONObject().put("appVersion",6).put("onDuty",TrackingService.running&&Session.prefs(c).getBoolean("duty",false)).put("gpsEnabled",gpsEnabled(c)),session.getString("token"),12000);
    JSONObject current=Session.get(c);if(current==null||!current.optString("token").equals(session.optString("token")))return;
    response.put("receivedAt",System.currentTimeMillis());Session.cacheState(c,response);Session.prefs(c).edit().putString("state_error","").apply();DriverAlerts.sync(c,response);
   }catch(Api.Rejected e){if(e.status==401){Session.clear(c);c.stopService(new Intent(c,TrackingService.class));}Session.prefs(c).edit().putString("state_error",e.getMessage()).apply();}

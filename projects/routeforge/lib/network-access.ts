@@ -15,4 +15,5 @@ export async function legacyMutationPermission(request:Request){
   const path=new URL(request.url).pathname;
   const a=await networkActor(/\/(settings|drivers|devices|partners|payments|driver-accounts)$/.test(path)?"manage":"dispatch");
   if(a.merchantStatus==="pending"&&/\/(orders|order-updates|dispatch)$/.test(path))throw new TrackingError(403,"Merchant approval is required before delivery operations.");
+  return a;
 }
