@@ -41,7 +41,7 @@ export async function verifyDriver({mf,db,request,passed}){
   const contactChange={id:assigned.id,version:assigned.version,action:"update_customer",customer:{name:"Changed recipient",phone:"0723456789"}};
   assert.equal((await office("/api/office/orders","PATCH",contactChange,other)).status,404);
   assert.equal((await office("/api/office/orders","PATCH",{...contactChange,customer:{name:"Invalid",phone:"123"}})).status,422);
-  const updatedContact=await ok(await office("/api/office/orders","PATCH",contactChange));assert.equal(updatedContact.version,assigned.version+1);
+  const contactRace=await Promise.all([office("/api/office/orders","PATCH",contactChange),office("/api/office/orders","PATCH",contactChange)]);assert.equal(contactRace.filter(r=>r.status===200).length,1);assert.equal(contactRace.filter(r=>r.status===409).length,1);const updatedContact=await ok(contactRace.find(r=>r.status===200));assert.equal(updatedContact.version,assigned.version+1);
   assert.equal((await ok(await state(winner))).order.customer.phone,"+254723456789");
   assert.equal((await office("/api/office/orders","PATCH",contactChange)).status,409);
   const audit=await db.prepare("SELECT actor,action FROM network_audit WHERE subject_id=? AND action='office.delivery.recipient_updated'").bind(assigned.id).all();assert.equal(audit.results.length,1);assert.equal(audit.results[0].actor,owner);

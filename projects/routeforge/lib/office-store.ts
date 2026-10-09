@@ -92,7 +92,7 @@ export async function changeOrder(owner:string,payload:unknown,actor=owner){
   if(action==="update_customer"){
     const now=Date.now(),customer=JSON.stringify(parsed.data.customer),changed=await db().batch([
       db().prepare("UPDATE office_orders SET payload_json=json_set(payload_json,'$.customer',json(?),'$.version',version+1,'$.updatedAt',?),version=version+1,updated_at=? WHERE id=? AND owner_id=? AND version=? AND status NOT IN ('delivered','cancelled') RETURNING payload_json").bind(customer,now,now,id,owner,version),
-      db().prepare("INSERT INTO network_audit(id,merchant_id,actor,action,subject_id,created_at) SELECT ?,?,?,'office.delivery.recipient_updated',?,? WHERE EXISTS(SELECT 1 FROM office_orders WHERE id=? AND owner_id=? AND version=? AND updated_at=? AND json_extract(payload_json,'$.customer') IS json_extract(?,'$'))").bind(crypto.randomUUID(),owner,actor,id,now,id,owner,version+1,now,customer),
+      db().prepare("INSERT INTO network_audit(id,merchant_id,actor,action,subject_id,created_at) SELECT ?,?,?,'office.delivery.recipient_updated',?,? WHERE changes()=1 AND EXISTS(SELECT 1 FROM office_orders WHERE id=? AND owner_id=? AND version=? AND updated_at=? AND json_extract(payload_json,'$.customer') IS json_extract(?,'$'))").bind(crypto.randomUUID(),owner,actor,id,now,id,owner,version+1,now,customer),
     ]);
     const row=changed[0].results[0] as {payload_json:string}|undefined;if(!row)throw new TrackingError(409,"This delivery changed. Refresh before updating its recipient.");return parse<OfficeOrder>(row);
   }

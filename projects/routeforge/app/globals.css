@@ -2743,6 +2743,28 @@ tr:hover td {
 .bwm-office .office-sidebar > * { flex-shrink: 0; }
 .bwm-office .office-sidebar:focus-visible { outline: 2px solid #68deee; outline-offset: -2px; }
 
+/* Pair every tinted surface with a readable foreground in the existing dark theme. */
+.bwm-office .network-tabs button.active { background:#30264d; color:#dec8ff; }
+.bwm-office .network-badge { background:#30264d; color:#dec8ff; border-color:#64537d; }
+.bwm-office .network-badge.active,.bwm-office .network-badge.delivered { background:#153b36; color:#8cf0c8; border-color:#356a5c; }
+.bwm-office .network-badge.pending { background:#3e3320; color:#f6d892; border-color:#806941; }
+.bwm-office .network-badge.suspended,.bwm-office .network-badge.cancelled { background:#402b3a; color:#ffc0cd; border-color:#835165; }
+.bwm-office :is(.network-header,.network-card,.office-section-heading,.office-topbar) :is(h1,h2,h3) { color:#edf4ff; }
+.bwm-office .network-shell .tiny-label,.bwm-office.network-shell .tiny-label { color:#cdb7ee; }
+.bwm-office .office-monitor .driver-telemetry,.bwm-office .office-monitor .office-map-title { background:#132640; color:#edf4ff; }
+.bwm-office .office-empty { background:#112239; color:#bad0ed; border-color:#415d80; }
+.bwm-office .office-empty h3 { color:#edf4ff; }
+.bwm-office .office-tabs button { background:#142640; color:#bad0ed; }
+.bwm-office .office-fleet-cards article > div:first-child,.bwm-office .office-fleet-cards small,.bwm-office .office-partner-grid small,.bwm-office .office-order-actions > span { color:#afcae6; }
+.bwm-office .tracking-primary { background:linear-gradient(110deg,#3158b8,#5843bb); color:#fff; }
+.bwm-office .tracking-primary:hover { filter:none; background:#3a59b3; }
+.planning-workspace :is(h1,h2,h3) { color:#edf4ff; }
+.planning-workspace :is(.guide-step,.guide-card,.plan-summary,.route-summary) { color:#d6e8ff; }
+.planning-workspace :is(.guide-step,.plan-bar,.map-top,.map-bottom) :is(small,p,span) { color:#bdd0ec; }
+.planning-workspace :is(.guide-step,.route-header,.route-stop,.stop-row,.table-wrap th,.settings-section) { background:#142640; color:#d6e8ff; }
+.planning-workspace :is(.pill,.status-pill,.stop-number,.route-number,.fleet-status) { background:#203e56; color:#b9efe5; }
+.login-story h1 { color:#fff; }
+
 /* The network sidebar stays visible independently of the main office drawer. */
 .network-shell > .office-sidebar {
   position: sticky;

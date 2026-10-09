@@ -35,7 +35,7 @@ RouteForge 2.0 adds approval-gated merchant registration, branch/staff managemen
 5. Follow the driver in **Live tracking**. Riders confirm collection and finish delivery in the Rider app; office confirmation after GPS arrival remains available.
 6. Review actual cash/company-till reports in **Sales & totals**. Verify receipts before marking them office verified. Review mileage before paying a rider. The app records reports and estimates; it does not transfer money.
 
-Download [RouteForge Rider 1.3](https://routeforge-shadownet.sammymuya167.chatgpt.site/downloads/routeforge-rider.apk) from the tracking portal. Install it over an existing Rider installation, then sign in with the office-issued username and password. Saved reports remain on the phone and can resume only under the same rider account. In Account, use **Play delivery alert test**. Create new driver logins under **Drivers & fleet** with a required phone number, an optional custom username and a generated password. See [the login guide](docs/ACCOUNT_LOGINS.md) and [the tracking guide](docs/TRACKING.md).
+Download [RouteForge Rider 1.4](https://routeforge-shadownet.sammymuya167.chatgpt.site/downloads/routeforge-rider.apk) from the tracking portal. Install it over an existing Rider installation, then sign in with the office-issued username and password. Saved reports remain on the phone and can resume only under the same rider account. In Account, use **Play delivery alert test**. Create new driver logins under **Drivers & fleet** with a required phone number, an optional custom username and a generated password. See [the login guide](docs/ACCOUNT_LOGINS.md) and [the tracking guide](docs/TRACKING.md).
 
 ## Stack
 

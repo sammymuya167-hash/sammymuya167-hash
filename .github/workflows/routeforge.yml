@@ -58,6 +58,8 @@ jobs:
           mkdir -p app/src/androidTest/assets/roads
           curl --fail --silent --show-error --max-time 180 --retry 2 https://brouter.de/brouter/segments4/E35_S5.rd5 --output app/src/androidTest/assets/roads/E35_S5.rd5
           test "$(wc -c < app/src/androidTest/assets/roads/E35_S5.rd5)" -gt 1024
+      - name: Include actual dashboard CSS for WebView contrast checks
+        run: cp ../app/globals.css app/src/androidTest/assets/dashboard.css
       - run: gradle :app:assembleDebug :app:assembleRelease :app:lintDebug :app:lintRelease :app:assembleDebugAndroidTest
       - name: Package aligned unsigned rider release for owner signing
         run: |
@@ -74,7 +76,7 @@ jobs:
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
-      - name: Verify offline queue, recipient controls and real road routing on Android
+      - name: Verify offline walk recovery, journey privacy, contrast and road routing on Android
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 35

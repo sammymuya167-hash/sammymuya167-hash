@@ -5,6 +5,7 @@ import { CarFront, Footprints, LocateFixed, Maximize, Smartphone, Target } from 
 import type { Device } from "../../lib/tracking";
 import { motionOf, type GPSPoint, type DispatchStop } from "../../lib/dispatch";
 import { fitView, panView, projectLocation, unprojectLocation, zoomView, type MapView } from "../../lib/map-view";
+import { journeySegments } from "../../lib/journey";
 
 export default function JourneyMap({ points, latest, drivers = [], selectedId, onSelect, destinations = [], focusPlace, onPick, fitLabel="Fit journey", connections=[], onDestination, initialView }: {
   points: GPSPoint[]; latest: GPSPoint | null; drivers?: Device[]; selectedId?: string;
@@ -40,15 +41,15 @@ export default function JourneyMap({ points, latest, drivers = [], selectedId, o
     node.addEventListener("wheel", wheel, { passive: false }); return () => node.removeEventListener("wheel", wheel);
   }, []);
   const route = latest && !points.some(p => p.eventId === latest.eventId) ? [...points, latest].sort((a,b) => a.recordedAt - b.recordedAt) : points;
-  const projected = route.map(p => ({ ...projectLocation(p.lat, p.lng), point: p }));
+  const segments = journeySegments(route);
+  const projected = segments.flatMap(segment => segment.map((p,index) => ({ ...projectLocation(p.lat, p.lng), point: p, connected:index>0 })));
   const z = view.zoom, tiles = 2 ** z, world = tiles * 256;
   const left = view.x * world - size.w / 2, top = view.y * world - size.h / 2;
   const tilesToShow = [];
   for (let x = Math.floor(left / 256); x <= Math.floor((left + size.w) / 256); x++) for (let y = Math.floor(top / 256); y <= Math.floor((top + size.h) / 256); y++) {
     if (y >= 0 && y < tiles) tilesToShow.push({ key: `${z}-${x}-${y}`, x, y, url: `https://tile.openstreetmap.org/${z}/${((x % tiles) + tiles) % tiles}/${y}.png` });
   }
-  const path: string[] = []; let previous: GPSPoint | null = null;
-  for (const p of projected) { path.push((previous?.tripId === p.point.tripId && p.point.recordedAt - previous.recordedAt < 300000 ? "L" : "M") + `${(p.x * world - left).toFixed(2)},${(p.y * world - top).toFixed(2)}`); previous = p.point; }
+  const path = projected.map(p => (p.connected ? "L" : "M") + `${(p.x * world - left).toFixed(2)},${(p.y * world - top).toFixed(2)}`);
   const position = (p: { lat: number; lng: number }) => { const center = projectLocation(p.lat,p.lng); return { left: center.x * world - left, top: center.y * world - top }; };
   function updateView(next: MapView) { viewRef.current = next; setView(next); }
   function resetGesture() {

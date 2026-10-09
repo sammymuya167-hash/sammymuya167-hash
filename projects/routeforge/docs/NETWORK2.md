@@ -1,6 +1,6 @@
 # RouteForge 2.0: hybrid delivery network
 
-This release extends the existing RouteForge Sites project and its DB binding. It preserves the main office, saved planner, tracking devices and payment reports, and updates the signed Rider app to 1.3. It creates no replacement app or database. The network is approval-gated; it does not seed fictitious merchants, riders, orders, service areas or prices.
+This release extends the existing RouteForge Sites project and its DB binding. It preserves the main office, saved planner, tracking devices and payment reports, and updates the signed Rider app to 1.4. It creates no replacement app or database. The network is approval-gated; it does not seed fictitious merchants, riders, orders, service areas or prices.
 
 ## Operating the rollout
 
@@ -14,7 +14,7 @@ This release extends the existing RouteForge Sites project and its DB binding. I
 8. Use the web rider portal `/rider` for network deliveries in this release. Keep it open while online. Send the privately supplied customer OTP to finish a network delivery. Customer links are `/track#<token>`; the fragment is not sent as a URL parameter.
 9. Review delivery exceptions, callback failures, provisional earnings and audit records. Configure real rates and pilot with consenting riders before opening merchant approvals broadly.
 
-The signed Android Rider 1.3 application supports merchant-owned and shared-fleet offers, declines, pickup/drop-off navigation, assigned-customer dialing and OTP delivery completion. Collection and completion reports retry durably after connection loss, with encrypted OTP storage and a correction control for rejected proofs. Legacy office deliveries retain their payment reports and multi-stop controls. APK and native Android verification results are recorded in the rider release metadata. Real-phone battery, background GPS and notification behavior still require field verification. Signing in on another client rotates the device token, so avoid switching clients while a phone has unsynchronized reports.
+The signed Android Rider 1.4 application supports merchant-owned and shared-fleet offers, declines, pickup/drop-off navigation, assigned-customer dialing and OTP delivery completion. Collection and completion reports retry durably after connection loss, with encrypted OTP storage and a correction control for rejected proofs. Legacy office deliveries retain their payment reports and multi-stop controls. APK and native Android verification results are recorded in the rider release metadata. Real-phone battery, background GPS and notification behavior still require field verification. Signing in on another client rotates the device token, so avoid switching clients while a phone has unsynchronized reports.
 
 ## Permissions
 

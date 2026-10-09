@@ -1,6 +1,6 @@
 # Main office operations
 
-The office reads the owner's existing paired phones. It seeds no drivers, vehicles, orders, partner shops or office address. Existing devices, GPS history, the pilot APK and saved planning records are preserved. Refresh the office browser after deployment. Phone-side offers, completion and payment reports require the signed Rider app. Existing Rider installations accept Rider 1.3 over the current app, then sign in with the office-issued rider account to retain the same record and assignment.
+The office reads the owner's existing paired phones. It seeds no drivers, vehicles, orders, partner shops or office address. Existing devices, GPS history, the pilot APK and saved planning records are preserved. Refresh the office browser after deployment. Phone-side offers, completion and payment reports require the signed Rider app. Existing Rider installations accept Rider 1.4 over the current app, then sign in with the office-issued rider account to retain the same record and assignment.
 
 ## Shared navigation and original planning tools
 
@@ -19,7 +19,7 @@ The system cannot infer the real office address, shop registry, vehicle registra
 
 ## Create and dispatch
 
-**New delivery** stores a collection point, delivery point, reference and instructions. Selecting a search result or registered partner fills coordinates. Editing search text clears an old selection; a name typed without a selected location cannot create the request. Use **Save to queue** if there is no available driver.
+**New delivery** stores a collection point, delivery point, reference, instructions and an optional recipient name/phone. Enter both recipient fields to enable calling; Kenyan local phone numbers normalize to +254. These are per-parcel details, separate from a business registration contact. **Add recipient phone / Edit recipient** updates a queued or assigned office delivery with version checks and an audit record. The assigned rider receives the new number on their next sync; offers and completed history remove contacts. Merchant deliveries continue using their own delivery form/API customer fields. Selecting a search result or registered partner fills coordinates. Editing search text clears an old selection; a name typed without a selected location cannot create the request. Use **Save to queue** if there is no available driver.
 
 Automatic assignment chooses the free, on-duty, non-revoked paired driver with a GPS fix and phone contact within 90 seconds. Rider phones must also report enabled GPS and a current app heartbeat. Longest idle time means the oldest of the driver's latest office assignment/release cycle; a driver never assigned here comes first. Ties use straight-line pickup proximity, then a stable ID. It does not interpret a stationary phone as proof the driver is available. Manual selection lists only onboarded drivers and applies the same availability rules. If another dispatcher assigns work first, the losing request stays queued.
 
@@ -35,7 +35,7 @@ The pickup and destination are shown on the actual GPS map. GPS arrival needs tw
 
 ## Mileage and rate estimates
 
-Initial distance is straight-line driver-to-pickup plus pickup-to-destination. Recorded mileage sums sampled GPS fixes from assignment through destination arrival, excluding trip boundaries, gaps over 120 seconds, accuracy over 50 m, jumps over 45 m/s and stationary jitter. The server processes at most the latest 5,000 eligible fixes; an excluded segment also flags truncation. Recording can miss real travel, especially offline gaps, OS stops or poor GPS. No road-routing distance, live traffic, certified mileage or payment transfer is provided. Review the GPS estimate and agreed rate before paying.
+Initial distance is straight-line driver-to-pickup plus pickup-to-destination. Recorded mileage sums sampled GPS fixes from assignment through destination arrival, excluding trip boundaries, gaps over 120 seconds, accuracy over 50 m, jumps over 45 m/s and stationary jitter. The server processes at most the latest 5,000 eligible fixes; an excluded segment also flags truncation. Recording can miss real travel, especially offline gaps, OS stops or poor GPS. These accounting estimates do not use the rider's current road route and do not provide certified mileage or payment transfer. Rider 1.4 displays a separate on-device road route and road distance to the next stop, with an estimated time and no live traffic. Review the GPS estimate and agreed rate before paying.
 
 ## Driver app boundary
 
