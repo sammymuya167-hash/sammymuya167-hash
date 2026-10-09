@@ -53,11 +53,14 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: 8.11.1
-      - name: Download real Nairobi road graph for instrumentation only
+      - name: Bundle real Nairobi/Kiambu roads and test the same graph
         run: |
           mkdir -p app/src/androidTest/assets/roads
           curl --fail --silent --show-error --max-time 180 --retry 2 https://brouter.de/brouter/segments4/E35_S5.rd5 --output app/src/androidTest/assets/roads/E35_S5.rd5
-          test "$(wc -c < app/src/androidTest/assets/roads/E35_S5.rd5)" -gt 1024
+          test "$(wc -c < app/src/androidTest/assets/roads/E35_S5.rd5)" -gt 30000000
+          cp app/src/androidTest/assets/roads/E35_S5.rd5 app/src/main/assets/roads/E35_S5.rd5
+      - name: Fetch upstream Mapsforge renderer test map
+        run: curl --fail --silent --show-error --max-time 45 https://raw.githubusercontent.com/mapsforge/mapsforge/0.25.0/mapsforge-map-reader/src/test/resources/with_data/output.map --output app/src/androidTest/assets/fixture.map
       - name: Include actual dashboard CSS for WebView contrast checks
         run: cp ../app/globals.css app/src/androidTest/assets/dashboard.css
       - run: gradle :app:assembleDebug :app:assembleRelease :app:lintDebug :app:lintRelease :app:assembleDebugAndroidTest

@@ -3,8 +3,8 @@ android {
  namespace 'app.shadownet.routeforge.driver'
  compileSdk 35
  buildToolsVersion '35.0.0'
- defaultConfig { applicationId 'app.shadownet.routeforge.rider'; minSdk 26; targetSdk 35; versionCode 7; versionName '1.5-rider'; testInstrumentationRunner 'app.shadownet.routeforge.driver.QueueInstrumentation' }
+ defaultConfig { applicationId 'app.shadownet.routeforge.rider'; minSdk 26; targetSdk 35; versionCode 8; versionName '1.6-rider'; testInstrumentationRunner 'app.shadownet.routeforge.driver.QueueInstrumentation' }
  compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
  lint { abortOnError true }
 }
-dependencies { implementation project(':brouter-engine'); testImplementation 'junit:junit:4.13.2' }
+dependencies { implementation project(':brouter-engine'); implementation 'org.mapsforge:mapsforge-map-android:0.25.0'; implementation 'org.mapsforge:mapsforge-map-reader:0.25.0'; testImplementation 'junit:junit:4.13.2' }

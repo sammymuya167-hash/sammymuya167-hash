@@ -31,6 +31,7 @@ final class OfflineRoads {
  private static void download(Context c,String name,File folder,long expected)throws Exception{
   if(!name.matches("[EW][0-9]{1,3}_[NS][0-9]{1,2}\\.rd5"))throw new IllegalArgumentException("Invalid road region");File target=new File(folder,name);
   // Road files contain no customer data and are reusable across rider accounts.
+  if(target.isFile()&&target.length()>1024&&!Session.prefs(c).getBoolean("roads_download_allowed",false))return;
   if(target.isFile()&&target.length()>1024&&System.currentTimeMillis()-target.lastModified()<30L*86400000)return;
   if(!target.isFile()&&!Session.prefs(c).getBoolean("roads_download_allowed",false))throw new IllegalStateException("Load road directions to download the regional road map once (about 34 MB around Nairobi). Saved road maps work offline.");
   checkGeneration(expected);HttpURLConnection connection=(HttpURLConnection)new URL("https://brouter.de/brouter/segments4/"+name).openConnection();File part=new File(folder,name+".part");
@@ -39,8 +40,12 @@ final class OfflineRoads {
    if(!part.renameTo(target))throw new java.io.IOException("Could not save road data");
   }catch(Exception e){part.delete();if(expected==generation.get()&&target.isFile()&&target.length()>1024){progress="Using saved road data while offline";return;}throw e;}finally{connection.disconnect();}
  }
+ static void installBundle(Context c)throws Exception{
+  File folder=new File(c.getFilesDir(),"roads-v1.7.10");if(!folder.isDirectory()&&!folder.mkdirs())throw new java.io.IOException("Could not prepare roads");File target=new File(folder,"E35_S5.rd5");if(!target.isFile())try{File part=new File(folder,"E35_S5.rd5.bundle");copyAsset(c,"E35_S5.rd5",part);if(part.length()>1024){if(!part.renameTo(target))throw new java.io.IOException("Could not install bundled roads");}else part.delete();}catch(java.io.FileNotFoundException ignored){}
+ }
+ static void downloadCounty(Context c,JSONArray files)throws Exception{installBundle(c);File folder=new File(c.getFilesDir(),"roads-v1.7.10");long expected=generation.get();for(int i=0;i<files.length();i++)download(c,files.getString(i),folder,expected);}
  static JSONObject route(Context c,JSONObject from,JSONObject to,String profile)throws Exception{
-  long expected=generation.get();if(!Session.loggedIn(c)||!TrackingService.running)throw new IllegalStateException("Start duty to load road directions.");File folder=new File(c.getFilesDir(),"roads-v1.7.10");if(!folder.isDirectory()&&!folder.mkdirs())throw new java.io.IOException("Could not prepare road storage");
+  installBundle(c);long expected=generation.get();if(!Session.loggedIn(c)||!TrackingService.running)throw new IllegalStateException("Start duty to load road directions.");File folder=new File(c.getFilesDir(),"roads-v1.7.10");if(!folder.isDirectory()&&!folder.mkdirs())throw new java.io.IOException("Could not prepare road storage");
   for(String name:new String[]{"lookups.dat","car-vario.brf","trekking.brf"})copyAsset(c,name,new File(folder,name));
   for(String name:required(from,to)){checkGeneration(expected);download(c,name,folder,expected);}
   return calculate(folder,from,to,profile,expected);

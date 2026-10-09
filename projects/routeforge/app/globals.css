@@ -2803,3 +2803,14 @@ tr:hover td {
   }
   .network-shell > .office-sidebar .office-sidebar-bottom .office-note { display: none; }
 }
+
+/* The planner insight remains a light card inside the office dark theme. */
+.office-shell .insight { background:#edf4e3; color:#1b3828; }
+.office-shell .insight strong { color:#1b3828; font-size:12px; }
+.office-shell .insight p { color:#3e5645; font-size:11px; }
+.office-shell .insight .icon-button { color:#1b3828; }
+.office-shell .journey-map .map-empty, .office-shell .journey-map .map-help, .office-shell .journey-map .osm-credit { color:#17384a; background:#fff; }
+.office-shell .journey-map .map-empty { font-weight:600; }
+.history-list {display:grid;gap:10px;max-height:65vh;overflow:auto;}
+.history-list button {text-align:left;display:grid;gap:5px;}
+.history-list small {color:#aebdd5;}

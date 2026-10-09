@@ -61,6 +61,17 @@ final class EventQueue extends SQLiteOpenHelper {
   }
   cachedOwner=owner;cachedRevision=revision;cachedJourney=new JSONObject().put("tripId",trip).put("points",points).put("total",total).put("pending",pending).put("synced",total-pending).put("shown",points.length());return new JSONObject(cachedJourney.toString());
  }
+ synchronized JSONArray journeyList(String owner)throws Exception{
+  JSONArray rows=new JSONArray();try(Cursor c=getReadableDatabase().rawQuery("SELECT trip_id,MIN(recorded_at),MAX(recorded_at),COUNT(*) FROM journey_points WHERE device_id=? GROUP BY trip_id ORDER BY MAX(recorded_at) DESC LIMIT 100",new String[]{owner})){while(c.moveToNext())rows.put(new JSONObject().put("id",c.getString(0)).put("startedAt",c.getLong(1)).put("lastAt",c.getLong(2)).put("points",c.getInt(3)));}return rows;
+ }
+ synchronized JSONObject journeyFor(String owner,String kind,String id,JSONObject history)throws Exception{
+  String condition="trip_id=?";java.util.ArrayList<String> args=new java.util.ArrayList<>();args.add(owner);args.add(id);
+  if(kind.equals("order")){JSONArray orders=history.optJSONArray("orders");JSONObject order=null;if(orders!=null)for(int i=0;i<orders.length();i++)if(id.equals(orders.getJSONObject(i).optString("id")))order=orders.getJSONObject(i);if(order==null)throw new IllegalStateException("Refresh delivery history first.");condition="recorded_at>=? AND recorded_at<=?";args.set(1,String.valueOf(order.getLong("assignedAt")));args.add(String.valueOf(order.optLong("deliveredAt",System.currentTimeMillis())));}
+  JSONArray points=new JSONArray();java.util.ArrayList<JSONObject> rows=new java.util.ArrayList<>();try(Cursor c=getReadableDatabase().rawQuery("SELECT id,payload FROM journey_points WHERE device_id=? AND "+condition+" ORDER BY recorded_at DESC,id DESC LIMIT 3000",args.toArray(new String[0]))){while(c.moveToNext())rows.add(Session.unseal(c.getString(1),"rider-journey:"+owner+":"+c.getString(0)));}for(int i=rows.size()-1;i>=0;i--)points.put(rows.get(i));return new JSONObject().put("kind",kind).put("sourceId",id).put("tripId",kind.equals("trip")?id:"").put("points",points).put("shown",points.length()).put("total",points.length()).put("pending",0).put("synced",points.length()).put("historical",true);
+ }
+ synchronized void restoreJourney(String owner,JSONArray events)throws Exception{
+  if(!owner.equals(Session.queueOwner(context)))throw new IllegalStateException("Journey belongs to another rider.");SQLiteDatabase db=getWritableDatabase();db.beginTransaction();try{for(int i=0;i<events.length();i++)retain(db,owner,events.getJSONObject(i));db.setTransactionSuccessful();}finally{db.endTransaction();}revision++;cachedJourney=null;
+ }
  synchronized int count(){try(Cursor c=getReadableDatabase().rawQuery("SELECT COUNT(*) FROM events",null)){c.moveToFirst();return c.getInt(0);}}
  private String encode(String deviceId,JSONObject command)throws Exception{return new JSONObject().put("sealed",Session.seal(command,"rider-command:"+deviceId+":"+command.getString("operationId"))).toString();}
  private JSONObject decode(String id,String device,String raw)throws Exception{JSONObject wrapper=new JSONObject(raw);return wrapper.has("sealed")?Session.unseal(wrapper.getString("sealed"),"rider-command:"+device+":"+id):wrapper;}
