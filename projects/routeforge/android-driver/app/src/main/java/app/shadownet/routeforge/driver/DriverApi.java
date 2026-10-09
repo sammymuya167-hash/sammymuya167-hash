@@ -36,7 +36,7 @@ final class DriverApi {
     if(!row.getString("deviceId").equals(session.getString("deviceId"))){Session.error(c,"A saved action belongs to an earlier link. Review it before pairing another driver.");return false;}
     // A rejected financial/completion report stays visible until explicitly discarded.
     if(!row.optString("error").isEmpty()){Session.error(c,row.optString("error"));return false;}
-    try{Api.post("/api/driver/actions",row.getJSONObject("payload"),session.getString("token"),12000);EventQueue.get(c).commandDone(row.getString("id"));}
+    try{Api.post("/api/driver/actions",row.getJSONObject("payload"),session.getString("token"),12000);EventQueue.get(c).commandDone(row.getString("id"));JSONObject completed=row.getJSONObject("payload");if("delivered".equals(completed.optString("action"))&&completed.optString("orderId").matches("[a-fA-F0-9-]{36}"))try{JourneyApi.requestBackup(c,"order",completed.getString("orderId"));}catch(Exception ignored){}}
     catch(Api.Rejected e){
      if(e.status==401){Session.clear(c);c.stopService(new Intent(c,TrackingService.class));Session.error(c,"Your session ended. Sign in to the same rider account to sync saved reports.");}
      else if(e.status==409||e.status==404||e.status==422)EventQueue.get(c).commandError(row.getString("id"),e.getMessage());

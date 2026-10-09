@@ -73,7 +73,7 @@ public final class TrackingService extends Service implements LocationListener {
   running=false;if(locations!=null)locations.removeUpdates(this);if(connectivity!=null)try{connectivity.unregisterNetworkCallback(networkCallback);}catch(Exception ignored){}
   for(ScheduledExecutorService executor:new ScheduledExecutorService[]{sync,offers,commands})if(executor!=null)executor.shutdownNow();
   boolean ended=!Session.prefs(this).getBoolean("duty",false)||!Session.loggedIn(this);
-  if(ended){if(started)try{record("stop");}catch(Exception ignored){}Session.prefs(this).edit().remove("trip").putBoolean("duty",false).apply();}
+  if(ended){if(started)try{record("stop");if(Session.loggedIn(this)&&trip!=null)JourneyApi.requestBackup(this,"trip",trip);}catch(Exception ignored){}Session.prefs(this).edit().remove("trip").putBoolean("duty",false).apply();}
   else Session.prefs(this).edit().putString("gps_issue","Recording was interrupted. Android will try to resume; opening the app resumes the saved journey.").apply();
   if(Session.loggedIn(this)||Session.pendingUnlink(this)!=null){SyncJob.retry(this);new Thread(()->{DriverApi.flush(getApplicationContext());Api.sync(getApplicationContext());},"routeforge-final-sync").start();}
   stopForeground(STOP_FOREGROUND_REMOVE);super.onDestroy();
