@@ -46,7 +46,7 @@ final class EventQueue extends SQLiteOpenHelper {
  }
  synchronized JSONObject journey(String owner)throws Exception{
   if(owner.isEmpty())return new JSONObject();
-  if(cachedJourney!=null&&cachedRevision==revision&&cachedOwner.equals(owner))return cachedJourney;
+  if(cachedJourney!=null&&cachedRevision==revision&&cachedOwner.equals(owner))return new JSONObject(cachedJourney.toString());
   SQLiteDatabase db=getWritableDatabase();
   // Backfill existing 1.2–1.4 offline points without altering their receipt IDs.
   if(owner.equals(Session.queueOwner(context)))try(Cursor c=db.rawQuery("SELECT e.id,e.payload FROM events e WHERE NOT EXISTS(SELECT 1 FROM journey_points p WHERE p.device_id=? AND p.id=e.id) ORDER BY recorded_at DESC LIMIT 3000",new String[]{owner})){while(c.moveToNext())retain(db,owner,readEvent(c.getString(0),c.getString(1)));}
@@ -59,7 +59,7 @@ final class EventQueue extends SQLiteOpenHelper {
    try(Cursor c=db.rawQuery("SELECT id,payload FROM journey_points WHERE device_id=? AND trip_id=? ORDER BY recorded_at DESC,id DESC LIMIT 3000",new String[]{owner,trip})){while(c.moveToNext())recent.add(Session.unseal(c.getString(1),"rider-journey:"+owner+":"+c.getString(0)));}
    for(int i=recent.size()-1;i>=0;i--)points.put(recent.get(i));
   }
-  cachedOwner=owner;cachedRevision=revision;cachedJourney=new JSONObject().put("tripId",trip).put("points",points).put("total",total).put("pending",pending).put("synced",total-pending).put("shown",points.length());return cachedJourney;
+  cachedOwner=owner;cachedRevision=revision;cachedJourney=new JSONObject().put("tripId",trip).put("points",points).put("total",total).put("pending",pending).put("synced",total-pending).put("shown",points.length());return new JSONObject(cachedJourney.toString());
  }
  synchronized int count(){try(Cursor c=getReadableDatabase().rawQuery("SELECT COUNT(*) FROM events",null)){c.moveToFirst();return c.getInt(0);}}
  private String encode(String deviceId,JSONObject command)throws Exception{return new JSONObject().put("sealed",Session.seal(command,"rider-command:"+deviceId+":"+command.getString("operationId"))).toString();}

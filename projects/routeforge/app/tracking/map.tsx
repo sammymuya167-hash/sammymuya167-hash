@@ -17,7 +17,9 @@ export default function JourneyMap({ points, latest, drivers = [], selectedId, o
   const [size, setSize] = useState({ w: 760, h: 440 });
   const [manualView, setView] = useState<MapView>(() => initialView ?? ({ ...projectLocation(latest?.lat ?? focusPlace?.lat ?? -1.2864, latest?.lng ?? focusPlace?.lng ?? 36.8172), zoom: latest||focusPlace?17:12 }));
   const [following, setFollowing] = useState(true);
-  const live = latest ?? points.at(-1) ?? null;
+  const route = useMemo(() => latest && !points.some(p => p.eventId === latest.eventId) ? [...points, latest] : points, [points,latest]);
+  const segments = useMemo(() => journeySegments(route), [route]);
+  const live = segments.at(-1)?.at(-1) ?? null;
   const view = useMemo(() => following && live ? { ...manualView, ...projectLocation(live.lat, live.lng) } : manualView, [following, live, manualView]);
   const viewRef = useRef(view);
   const pointers = useRef(new Map<number, { x: number; y: number }>());
@@ -40,8 +42,6 @@ export default function JourneyMap({ points, latest, drivers = [], selectedId, o
     };
     node.addEventListener("wheel", wheel, { passive: false }); return () => node.removeEventListener("wheel", wheel);
   }, []);
-  const route = latest && !points.some(p => p.eventId === latest.eventId) ? [...points, latest].sort((a,b) => a.recordedAt - b.recordedAt) : points;
-  const segments = journeySegments(route);
   const projected = segments.flatMap(segment => segment.map((p,index) => ({ ...projectLocation(p.lat, p.lng), point: p, connected:index>0 })));
   const z = view.zoom, tiles = 2 ** z, world = tiles * 256;
   const left = view.x * world - size.w / 2, top = view.y * world - size.h / 2;
