@@ -2,7 +2,7 @@
 
 **Your office, in motion.** A delivery office with real company drivers, registered destinations and live GPS, by SHADOWNET.
 
-[Open the deployed app](https://routeforge-shadownet.sammymuya167.chatgpt.site) · [Office guide](docs/OFFICE.md) · [Architecture](docs/ARCHITECTURE.md) · [Build roadmap](docs/ROADMAP.md) · [MIT licence](LICENSE)
+[Open the deployed app](https://routeforge-shadownet.sammymuya167.chatgpt.site) · [Office guide](docs/OFFICE.md) · [Architecture](docs/ARCHITECTURE.md) · [Hybrid network guide](docs/NETWORK2.md) · [Build roadmap](docs/ROADMAP.md) · [MIT licence](LICENSE)
 
 The public shell is accessible to visitors. Company orders, partner destinations, driver details, office settings, saved plans and GPS journeys remain private to the signed-in account. The source is public. Project 92 from the supplied *Full Stack Projects* PDF inspired the product direction.
 
@@ -22,6 +22,10 @@ The public shell is accessible to visitors. Company orders, partner destinations
 - Pointer-anchored map zoom, drag/pinch, keyboard controls, driver follow, fullscreen, creative movement icons and zoom level 19.
 - Previous saved planning scenarios, runs and manifests remain in the Saved plans archive. The constrained optimizer remains in the source and authenticated API.
 
+## Hybrid delivery network
+
+RouteForge 2.0 adds approval-gated merchant registration, branch/staff management, the universal signed API/webhook hub, owned/shared/hybrid fleet dispatch, OTP completion in the web rider portal, customer tracking, durable status callbacks and a provisional earnings ledger. Open `/merchant`, `/admin/network` or `/integrations` after deploying the current source. The [network operating guide](docs/NETWORK2.md) explains authorization, actual setup, retry limits, rollout controls and the native rider upgrade still required. Live M-Pesa, subscription charging and settlements remain disabled.
+
 ## Use the office
 
 1. Sign in at the [main office](https://routeforge-shadownet.sammymuya167.chatgpt.site). Existing paired phones appear automatically.
@@ -31,7 +35,7 @@ The public shell is accessible to visitors. Company orders, partner destinations
 5. Follow the driver in **Live tracking**. Riders confirm collection and finish delivery in the Rider app; office confirmation after GPS arrival remains available.
 6. Review actual cash/company-till reports in **Sales & totals**. Verify receipts before marking them office verified. Review mileage before paying a rider. The app records reports and estimates; it does not transfer money.
 
-Download [RouteForge Rider 1.2](https://routeforge-shadownet.sammymuya167.chatgpt.site/downloads/routeforge-rider.apk) from the tracking portal. Install it over an existing Rider installation, then sign in with the office-issued username and password. Saved reports remain on the phone and can resume only under the same rider account. In Account, use **Play delivery alert test**. Create new driver logins under **Drivers & fleet** with a required phone number, an optional custom username and a generated password. See [the login guide](docs/ACCOUNT_LOGINS.md) and [the tracking guide](docs/TRACKING.md).
+Download [RouteForge Rider 1.3](https://routeforge-shadownet.sammymuya167.chatgpt.site/downloads/routeforge-rider.apk) from the tracking portal. Install it over an existing Rider installation, then sign in with the office-issued username and password. Saved reports remain on the phone and can resume only under the same rider account. In Account, use **Play delivery alert test**. Create new driver logins under **Drivers & fleet** with a required phone number, an optional custom username and a generated password. See [the login guide](docs/ACCOUNT_LOGINS.md) and [the tracking guide](docs/TRACKING.md).
 
 ## Stack
 

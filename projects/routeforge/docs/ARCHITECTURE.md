@@ -27,14 +27,14 @@ The first view reads private stored records and actual paired phone GPS. Empty c
 
 `GET /api/tracking/devices` returns owner-scoped devices, current assignments and derived fleet alerts with private, no-store headers. `POST/PATCH /api/tracking/dispatch` require dispatcher identity and same-origin requests. Assignment creation verifies ownership of a paired, non-revoked device; mutations include the assignment ID so stale controls cannot cancel or confirm a replacement assignment. The `driver_dispatches` table has one row per device and an owner index.
 
-The original pilot APK and GPS upload protocol remain compatible. The new signed Rider package adds native assignment and action APIs. Immutable events and a durable batch acknowledgement remain the source of truth. Arrival reconciliation reads stored capture-time points after assignment/previous delivery, bounds inspection to the latest 5,000 eligible fixes, and uses revision plus exact-row compare-and-swap to avoid overwriting concurrent actions. A reconciliation failure does not invalidate acknowledged GPS; portal refresh retries processing. Dispatch state never automatically confirms delivery. Removing an already unlinked device explicitly removes its dispatch and GPS history together.
+The existing phone upload protocol and APK are unchanged. Immutable events and a durable batch acknowledgement remain the source of truth. Arrival reconciliation reads stored capture-time points after assignment/previous delivery, bounds inspection to the latest 5,000 eligible fixes, and uses revision plus exact-row compare-and-swap to avoid overwriting concurrent actions. A reconciliation failure does not invalidate acknowledged GPS; portal refresh retries processing. Dispatch state never automatically confirms delivery. Removing an already unlinked device explicitly removes its dispatch and GPS history together.
 
 The web map uses Mercator projection, viewport-only OSM tiles, pointer capture for drag/pinch, cursor-anchor zoom and a selectable follow mode. Panning stores an independent viewport so polling does not snap it back to the route centre. Trip changes or gaps over five minutes break the drawn path. GPS speed supplies explicitly estimated activity; optional notifications run only in the open web dashboard. No new native permissions or remote binary updater are implemented.
 
 ## Next engineering milestones
 
 - Add a road travel-time matrix provider and draw road-following geometry.
-- Add multi-staff authorization, paginated company records and broader real-device validation.
+- Add authenticated driver-side assignment retrieval and road navigation in a separately signed native update.
 - Add distance/cost objectives and regret insertion to improve difficult cases.
 - Extend the Worker/D1 HTTP integration suite with browser accessibility tests in a supported QA environment.
 - Add explicit commerce import integrations, fine-grained staff roles, pagination and a full event audit before scaling beyond one account office.
@@ -50,13 +50,3 @@ The office assignment contains pickup and drop-off. Immutable GPS reconciliation
 Mileage sums stored fixes from assignment through destination arrival. Trip boundaries, gaps over two minutes, accuracy worse than 50 m, impossible speeds and stationary jitter are excluded. Processing is capped at the latest 5,000 points and flags truncation as an excluded segment. Rate is snapshotted on assignment. Suggested pay is a reviewable estimate, never a payment instruction or transfer.
 
 `/api/office/places` proxies a fixed HTTPS Photon endpoint, validates bounded queries/GeoJSON, restricts country to Kenya and caches under the owner's identity. A D1 reservation enforces the provider throttle across isolates. Failure leaves saved partners and map pin/coordinate selection usable. Place queries disclose the typed address to the external provider; only the account's API can read its cached query results. The source contains no real company names, phone contacts, journey points or tokens.
-
-## Rider API and payment release
-
-Migration `0004` adds device runtime/heartbeat state, durable order offers, idempotent command receipts and owner-scoped payment reports. Native `POST /api/driver/state` and `POST /api/driver/actions` use the hashed device bearer token; they never accept a caller-supplied owner. The Worker preserves request execution context so a five-second offer can schedule best-effort expiry reconciliation. Office/rider polls recover persisted expired offers. Atomic device/order reservations choose one winner or a random eligible free fallback without double booking.
-
-Android keeps credentials encrypted in Keystore and exposes only the packaged offline UI through a bounded native bridge. GPS and delivery/payment commands use separate durable SQLite queues. Commands have immutable operation IDs, retry in FIFO order and remain visible if rejected. Legacy stop confirmations include exact stop identity. Phone unlink stores its encrypted pending request before deleting local link/queue state; reconnecting delivers revocation without falsely completing an order.
-
-Rider completion updates the authoritative dispatch and derives the shared office order. Normal duty stop cannot race an unfinished assignment; privacy pause is immediately available and flags unfinished work. Payments use exact minor units and one report per order, with office review/void state separate from collection amounts. SQL aggregates include older stored records beyond the recent UI view. No transaction with a bank or till provider is performed.
-
-The signed Rider binary and checksum/certificate metadata are served from public download assets. The app uses a separate package from the pilot because its signing key is unavailable. Upgrade codes rotate tokens on the same driver record, retaining current work and history. Signing keys are never included in source, CI or the public deployment.

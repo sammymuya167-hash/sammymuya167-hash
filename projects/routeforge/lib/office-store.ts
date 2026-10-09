@@ -84,6 +84,7 @@ export async function changeOrder(owner:string,payload:unknown){
   if(!row)throw new TrackingError(404,"Order not found in your office.");
   if(action==="assign"&&row.version!==version)throw new TrackingError(409,"This order has updated. Refresh before continuing.");
   const current=parse<OfficeOrder>(row);
+  if(await db().prepare("SELECT order_id FROM merchant_deliveries WHERE order_id=? AND merchant_id=?").bind(id,owner).first()){if(action==="cancel"){const {cancelNetworkDelivery}=await import("./network-actions");return cancelNetworkDelivery(owner,id,owner);}throw new TrackingError(409,"Use the merchant delivery desk and rider OTP flow for this request.");}
   if(action==="offer")return offerOrder(owner,id,version);
   if(action==="assign")return assignOrder(owner,row,deviceId??"auto");
   if(current.status==="delivered"||current.status==="cancelled")throw new TrackingError(409,"This order is already closed.");

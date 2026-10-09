@@ -41,6 +41,7 @@ export const orderStatusLabels: Record<OrderStatus, string> = {
   en_route: "On delivery", arrived: "At destination", delivered: "Delivered", cancelled: "Cancelled",
 };
 export type OfficeOrder = z.infer<typeof orderInput> & {
+  network?: boolean;
   status: OrderStatus; deviceId: string | null; dispatchId: string | null;
   driverName: string | null; vehicleLabel: string | null; createdAt: number;
   assignedAt: number | null; pickedUpAt: number | null; arrivedAt: number | null;

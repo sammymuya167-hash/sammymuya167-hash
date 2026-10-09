@@ -1,3 +1,4 @@
+import { verifyNetwork } from "./network.integration.mjs";
 import assert from "node:assert/strict";
 import { createRequire } from "node:module";
 import { readFileSync, readdirSync } from "node:fs";
@@ -22,7 +23,7 @@ function moduleFiles(directory) {
   );
 }
 const main = path.join(serverRoot, "index.js");
-const geocoderCalls=[];
+const geocoderCalls=[],callbackCalls=[];
 const workerOptions = {
   modules: [
     main,
@@ -33,8 +34,10 @@ const workerOptions = {
   compatibilityDate: "2026-05-15",
   compatibilityFlags: ["nodejs_compat"],
   d1Databases: ["DB"],
+  bindings:{ROUTEFORGE_PLATFORM_OWNER:"network-admin",ROUTEFORGE_INTEGRATION_KEY:"42".repeat(32),ROUTEFORGE_NETWORK_ENABLED:"true",ROUTEFORGE_JOB_KEY:"81".repeat(32)},
   outboundService: async request => {
     const url=new URL(request.url);
+    if(url.origin==='https://hooks.merchant.example.org'){callbackCalls.push({body:await request.text(),timestamp:request.headers.get('x-routeforge-timestamp'),signature:request.headers.get('x-routeforge-signature')});return new Response(callbackCalls.fail?'Fixture failure':null,{status:callbackCalls.fail?503:204});}
     if(url.origin!=="https://photon.komoot.io")return new Response("Unexpected outbound request",{status:503});
     geocoderCalls.push(url);
     if(url.searchParams.get("q")==="Unavailable fixture")return new Response("Fixture unavailable",{status:503});
@@ -563,6 +566,7 @@ try {
   await verifyDriver({mf,db,request,passed});
   await verifyOffice({mf,db,request,passed,geocoderCalls});
   await verifyAccounts({mf,db,request,passed});
+  await verifyNetwork({mf,db,request,passed,callbackCalls});
   await verifyBootstrap({createWorker:seed=>new Miniflare({...workerOptions,bindings:{ROUTEFORGE_AUTH_BOOTSTRAP:seed}}),resetWorker:(worker,seed,revision)=>worker.setOptions({...workerOptions,bindings:{ROUTEFORGE_AUTH_BOOTSTRAP:seed,AUTH_TEST_RELOAD:revision}}),passed});
 
 

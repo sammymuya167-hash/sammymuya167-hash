@@ -32,7 +32,7 @@ public final class QueueInstrumentation extends Instrumentation {
     private void status(int code, String name, int number, String message) {
         activeTest=name;activeNumber=number;
         Bundle b = new Bundle(); b.putString("class", getClass().getName());
-        b.putString("test", name); b.putInt("numtests", 12); b.putInt("current", number);
+        b.putString("test", name); b.putInt("numtests", 16); b.putInt("current", number);
         b.putString("stream", message); sendStatus(code, b);
     }
     private boolean notificationCount(NotificationManager manager,int expected) throws Exception {
@@ -170,11 +170,37 @@ public final class QueueInstrumentation extends Instrumentation {
             check(Session.loggedIn(getTargetContext())&&queue.count()==1,"Same-rider login must retain the queue");
             String stored=Session.prefs(getTargetContext()).getString("session","");check(!stored.contains("new-test-token")&&!stored.contains("TestRider"),"Native session must remain encrypted in Android storage");Session.clear(getTargetContext());
             status(0,"loginUpgradePreservesQueueOwnerAndEncryptedSession",12,".");
-            Bundle result = new Bundle(); result.putString("stream", "\nOK (12 tests)\n");
+            status(1,"encryptedProofQueuePreservesReceiptAndRedactsOtp",13,"");
+            queue.clearCommands();String proofReceipt=UUID.randomUUID().toString();
+            JSONObject proofCommand=new JSONObject().put("operationId",proofReceipt).put("action","delivered").put("dispatchId",dispatch).put("orderId",UUID.randomUUID().toString()).put("otp","012345");queue.addCommand(device,proofCommand);queue.close();
+            check(queue.command().getJSONObject("payload").getString("otp").equals("012345"),"Encrypted OTP must survive database reopen for offline retry");
+            try(android.database.Cursor raw=queue.getReadableDatabase().rawQuery("SELECT payload FROM commands WHERE id=?",new String[]{proofReceipt})){check(raw.moveToFirst()&&!raw.getString(0).contains("012345")&&!raw.getString(0).contains("delivered"),"SQLite must never retain plaintext proof reports");}
+            JSONObject visibleProof=queue.commands().getJSONObject(0);check(visibleProof.optBoolean("proofRequired")&&!visibleProof.getJSONObject("payload").has("otp"),"Published queue summaries must not return the OTP to JavaScript");
+            queue.commandError(proofReceipt,"Rejected fixture");boolean foreignProof=false;try{queue.correctOtp(UUID.randomUUID().toString(),proofReceipt,"654321");}catch(IllegalStateException expected){foreignProof=true;}check(foreignProof,"Another rider cannot correct a saved proof");
+            queue.correctOtp(device,proofReceipt,"654321");check(queue.command().getString("id").equals(proofReceipt)&&queue.command().getJSONObject("payload").getString("otp").equals("654321")&&queue.command().getString("error").isEmpty(),"Correcting OTP must keep the receipt and queue position");
+            check(queue.completedLocally(dispatch),"Encrypted accepted-to-retry completion must permit local end duty");queue.clearCommands();
+            status(0,"encryptedProofQueuePreservesReceiptAndRedactsOtp",13,".");
+            status(1,"preUpgradeCommandsRemainReadableAndOrdered",14,"");
+            String oldId=UUID.randomUUID().toString();JSONObject oldCommand=new JSONObject().put("operationId",oldId).put("action","collected").put("dispatchId",dispatch);
+            android.content.ContentValues legacyRow=new android.content.ContentValues();legacyRow.put("id",oldId);legacyRow.put("device_id",device);legacyRow.put("payload",oldCommand.toString());queue.getWritableDatabase().insertOrThrow("commands",null,legacyRow);queue.addCommand(device,proofCommand);
+            check(queue.command().getString("id").equals(oldId)&&queue.pending("collected",dispatch),"Pre-upgrade reports must remain first without migration or deletion");queue.commandDone(oldId);check(queue.command().getString("id").equals(proofReceipt),"Encrypted completion must follow the original collection");queue.clearCommands();
+            status(0,"preUpgradeCommandsRemainReadableAndOrdered",14,".");
+            status(1,"customerSnapshotEncryptedAndClearedOnLogout",15,"");
+            queue.clear();Session.save(getTargetContext(),new JSONObject().put("deviceId",device).put("driverName","Synthetic rider").put("token","test-only-token"));
+            Session.cacheState(getTargetContext(),new JSONObject().put("customer",new JSONObject().put("phone","+254799123456")));
+            check(!Session.prefs(getTargetContext()).getString("rider_state_encrypted","").contains("+254799123456")&&!Session.prefs(getTargetContext()).contains("rider_state"),"Customer snapshot must use device-key encryption");
+            check(DriverApi.cached(getTargetContext()).getJSONObject("customer").getString("phone").equals("+254799123456"),"Customer snapshot must remain available offline");Session.clear(getTargetContext());check(DriverApi.cached(getTargetContext()).length()==0,"Signing out must clear encrypted customer snapshots");
+            status(0,"customerSnapshotEncryptedAndClearedOnLogout",15,".");
+            status(1,"nativeMerchantProofControlsAndOfflineNavigation",16,"");
+            CountDownLatch merchantUi=new CountDownLatch(1);AtomicReference<String> merchantResult=new AtomicReference<>();
+            runOnMainSync(()->{WebView web=(WebView)((ViewGroup)ui[0].findViewById(android.R.id.content)).getChildAt(0);web.evaluateJavascript("(function(){var previous=state;var order={id:'fixture-order',title:'Merchant parcel',network:true,requiresOtp:true,status:'assigned'};var job={id:'fixture-dispatch',orderId:order.id,name:order.title,stops:[{id:'pickup',name:'Pickup',deliveredAt:null},{id:'delivery',name:'Customer',deliveredAt:null}]};applyState({paired:true,recording:false,canStop:false,commands:[{payload:{action:'collected',orderId:order.id,dispatchId:job.id},error:''}],data:{assignment:job,order:order,network:[{order:order,merchantName:'Fixture merchant',fleet:'shared',feeMinor:20000,customer:{name:'Fixture customer'}}],offers:[],recentOrders:[],payments:[]}});go('home');var text=document.getElementById('homecontent').textContent;openProof(active());var input=document.getElementById('deliveryotp');var result={otpControl:text.indexOf('Confirm delivery with OTP')>=0,contact:text.indexOf('Call assigned customer')>=0,cash:text.indexOf('Record customer payment')>=0,next:target().id,input:input.maxLength===6&&input.inputMode==='numeric',dialog:document.getElementById('proof').classList.contains('open'),bridge:typeof Rider.retryOtp==='function'&&typeof Rider.contactCustomer==='function'};input.value='012345';applyState({paired:false,data:{}});result.cleared=input.value==='';applyState(previous);return result;})()",value->{merchantResult.set(value);merchantUi.countDown();});});
+            check(merchantUi.await(5,TimeUnit.SECONDS),"Packaged merchant controls must respond");JSONObject merchantScreen=new JSONObject(merchantResult.get());check(merchantScreen.optBoolean("otpControl")&&merchantScreen.optBoolean("contact")&&!merchantScreen.optBoolean("cash")&&merchantScreen.getString("next").equals("delivery"),"Actual packaged WebView must offer OTP, scoped contact and correct offline navigation: "+merchantScreen);check(merchantScreen.optBoolean("input")&&merchantScreen.optBoolean("dialog")&&merchantScreen.optBoolean("cleared")&&merchantScreen.optBoolean("bridge"),"OTP dialog must be usable, private on logout and backed by native controls: "+merchantScreen);
+            status(0,"nativeMerchantProofControlsAndOfflineNavigation",16,".");
+            Bundle result = new Bundle(); result.putString("stream", "\nOK (16 tests)\n");
             finish(Activity.RESULT_OK, result);
         } catch (Throwable error) {
             android.util.Log.e("RouteForgeTests",activeTest,error);
-            Bundle failure=new Bundle();failure.putString("class",getClass().getName());failure.putString("test",activeTest);failure.putInt("numtests",12);failure.putInt("current",activeNumber);failure.putString("stack",android.util.Log.getStackTraceString(error));failure.putString("stream",error.toString());sendStatus(-2,failure);
+            Bundle failure=new Bundle();failure.putString("class",getClass().getName());failure.putString("test",activeTest);failure.putInt("numtests",16);failure.putInt("current",activeNumber);failure.putString("stack",android.util.Log.getStackTraceString(error));failure.putString("stream",error.toString());sendStatus(-2,failure);
             Bundle result = new Bundle(); result.putString("stream", "Queue test failed: " + error);
             finish(Activity.RESULT_CANCELED, result);
         } finally { if(ui[0]!=null)runOnMainSync(ui[0]::finish);queue.clear();queue.clearCommands();Session.clear(getTargetContext());Session.prefs(getTargetContext()).edit().remove("pending_unlink").commit(); }
