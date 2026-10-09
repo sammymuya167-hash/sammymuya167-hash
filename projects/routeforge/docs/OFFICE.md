@@ -1,6 +1,6 @@
 # Main office operations
 
-The office reads the owner's existing paired phones. It seeds no drivers, vehicles, orders, partner shops or office address. Existing devices, GPS history, the pilot APK and saved planning records are preserved. Refresh the office browser after deployment. Phone-side offers, completion and payment reports require the signed Rider app. Existing Rider installations accept Rider 1.2 over the current app, then sign in with the office-issued rider account to retain the same record and assignment.
+The office reads the owner's existing paired phones. It seeds no drivers, vehicles, orders, partner shops or office address. Existing devices, GPS history, the pilot APK and saved planning records are preserved. Refresh the office browser after deployment. Phone-side offers, completion and payment reports require the signed Rider app. Existing Rider installations accept Rider 1.3 over the current app, then sign in with the office-issued rider account to retain the same record and assignment.
 
 ## Shared navigation and original planning tools
 

@@ -1,4 +1,6 @@
 @import "tailwindcss";
+/* Merchant network screens inherit RouteForge's existing office components. */
+.network-shell{display:flex;min-height:100vh}.network-shell .office-sidebar{position:sticky;top:0;height:100vh;min-width:232px;max-width:232px;display:flex;flex-direction:column}.network-shell .office-sidebar nav a{display:flex;align-items:center;gap:10px;padding:13px 12px;border-radius:10px;margin:3px 0;transition:background .2s,transform .2s}.network-shell .office-sidebar nav a:hover{background:#ffffff12;transform:translateX(3px)}.network-shell .office-sidebar nav a.active{background:#9c78ed22;color:#bc9aff}.network-content{padding:38px 42px;width:calc(100% - 232px);max-width:1600px}.network-header{margin-bottom:28px}.network-header h1{font-size:36px;line-height:1.15;letter-spacing:-1.3px;margin:14px 0}.network-header p{font-size:15px;color:var(--muted)}.network-toolbar{display:flex;gap:12px;align-items:center;justify-content:space-between;margin:18px 0;flex-wrap:wrap}.network-toolbar>div{display:flex;gap:9px;flex-wrap:wrap}.network-tabs{display:flex;gap:6px;margin:22px 0;overflow-x:auto;padding:4px;border:1px solid var(--line);border-radius:14px}.network-tabs button{display:flex;gap:7px;align-items:center;white-space:nowrap;background:transparent;border:0;border-radius:10px;padding:11px 16px;text-transform:capitalize}.network-tabs button.active{background:#8466c51c;color:#8160c8}.network-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:18px}.network-card{background:var(--white);border:1px solid var(--line);border-radius:18px;padding:24px;margin-bottom:18px;min-width:0;box-shadow:0 6px 28px #1d142807;animation:network-enter .3s ease-out}.network-card h1{font-size:29px}.network-card h2{font-size:21px;margin:8px 0 15px}.network-card h3{font-size:17px;margin:10px 0}.network-card p{line-height:1.7}.network-card small{color:var(--muted);overflow-wrap:anywhere}.network-card-heading{display:flex;align-items:center;justify-content:space-between;gap:10px}.network-badge{display:inline-flex;align-items:center;background:#8466c517;border:1px solid #8466c532;border-radius:20px;padding:7px 11px;color:#8466c5;font-size:11px;font-weight:700;letter-spacing:.3px}.network-badge.active,.network-badge.delivered{color:#408764;background:#6da98917;border-color:#6da98940}.network-badge.suspended,.network-badge.cancelled{color:#bf556c;background:#bf556c12;border-color:#bf556c33}.network-badge.pending{color:#a28340;background:#c3a24414}.network-notice{border:1px solid #bd9d3c40;background:#c7a84312;border-radius:12px;padding:12px 16px;line-height:1.6;font-size:13px}.network-form{display:grid;gap:16px;max-width:680px}.network-form label{display:grid;gap:7px;font-weight:600}.network-form input,.network-form select,.network-form textarea{width:100%;padding:11px 13px;border:1px solid var(--line);border-radius:9px;background:var(--canvas);color:var(--ink);font:inherit}.network-form input:focus,.network-form select:focus,.network-form textarea:focus{outline:2px solid #a487db;outline-offset:2px}.network-form-row{display:grid;grid-template-columns:1fr 1fr;gap:15px}.network-form .network-checkbox{display:flex;align-items:center;font-weight:400}.network-checkbox input{width:18px;height:18px}.network-form .tracking-primary{justify-self:start}.network-money{font-size:23px!important}.network-table-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:13px;margin:20px 0}.network-table-wrap table{border-collapse:collapse;width:100%;min-width:550px;text-align:left}.network-table-wrap td,.network-table-wrap th{padding:14px 17px;border-bottom:1px solid var(--line)}.network-table-wrap th{background:var(--canvas);font-size:11px;text-transform:uppercase;letter-spacing:.6px}.network-secret{display:grid;gap:10px;margin:17px 0}.network-secret code,.network-card pre{display:block;background:var(--canvas);border:1px solid var(--line);border-radius:12px;padding:15px;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere;color:var(--ink)}.network-card a:not(.tracking-primary):not(.office-secondary){text-decoration:underline}.network-empty{text-align:center;padding:48px 24px}.network-empty svg{margin:0 auto 12px;color:#9273c6}.rider-portal{max-width:700px;margin:0 auto;min-height:100vh;padding:22px 18px}.rider-portal>header{display:flex;justify-content:space-between;align-items:center;margin:10px 0 26px}.rider-portal .network-card{margin:16px 0}.rider-portal .network-card>.tracking-primary{margin:14px 8px 14px 0}.network-offer{border-color:#a487db;box-shadow:0 0 0 3px #a487db1c}.network-shell .tiny-label{color:#9c82c6}.network-card ol{padding-left:24px;line-height:1.8}.network-shell .office-sidebar .office-note{padding:10px 4px;line-height:1.7}.network-content .network-toolbar h2{margin:0}@keyframes network-enter{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}@media(max-width:1000px){.network-content{padding:26px;width:calc(100% - 200px)}.network-shell .office-sidebar{min-width:200px;max-width:200px}.network-header h1{font-size:30px}}@media(max-width:720px){.network-shell{display:block}.network-shell .office-sidebar{position:relative;height:auto;width:100%;max-width:none;min-width:0;padding:18px}.network-shell .office-sidebar nav{display:flex;overflow:auto;gap:5px;margin-top:10px}.network-shell .office-sidebar nav a{white-space:nowrap;padding:10px}.network-shell .office-sidebar-bottom{display:none}.network-shell .office-sidebar>.tiny-label{display:none}.network-content{width:100%;padding:24px 16px}.network-header h1{font-size:28px}.network-card{padding:20px}.network-form-row{grid-template-columns:1fr}.network-content .office-stats{grid-template-columns:1fr 1fr}.network-tabs button{padding:10px 12px}.network-toolbar{gap:9px}}@media(prefers-reduced-motion:reduce){.network-card{animation:none}.network-shell .office-sidebar nav a{transition:none}}
 :root {
   --ink: #20372d;
   --muted: #7b857f;
@@ -2728,3 +2730,54 @@ tr:hover td {
 .bwm-office .driver-accounts{background:linear-gradient(135deg,#122843,#0e1d32);border-color:#2b4264;color:#dbe8fc}
 .bwm-office .driver-account-list article{border-color:#2b4264}.bwm-office .driver-account-list article>svg,.bwm-office .driver-account-list small{color:#9fb2ce}
 .bwm-office .driver-credentials{background:#182f50;color:#eef6ff}.bwm-office .driver-credentials dt{color:#adbad3}
+
+/* Keep every office control reachable on short displays and in the mobile drawer. */
+.bwm-office .office-sidebar {
+  max-height: 100dvh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior-y: contain;
+  scrollbar-width: thin;
+  scrollbar-color: #425b82 #0c172a;
+}
+.bwm-office .office-sidebar > * { flex-shrink: 0; }
+.bwm-office .office-sidebar:focus-visible { outline: 2px solid #68deee; outline-offset: -2px; }
+
+/* The network sidebar stays visible independently of the main office drawer. */
+.network-shell > .office-sidebar {
+  position: sticky;
+  inset: 0 auto auto 0;
+  align-self: flex-start;
+  width: 232px;
+  height: 100dvh;
+  transform: none;
+  z-index: 10;
+}
+.network-shell > .office-sidebar nav { flex-direction: column; overflow: visible; }
+@media (max-width: 1000px) {
+  .network-shell > .office-sidebar { width: 200px; }
+}
+@media (max-width: 720px) {
+  .network-shell > .office-sidebar {
+    position: relative;
+    width: 100%;
+    height: auto;
+    max-height: none;
+    overflow: visible;
+    transform: none;
+    padding: 18px;
+  }
+  .network-shell > .office-sidebar nav {
+    flex-direction: row;
+    overflow-x: auto;
+    overflow-y: hidden;
+    margin-top: 10px;
+  }
+  .network-shell > .office-sidebar nav a { flex-shrink: 0; }
+  .network-shell > .office-sidebar .office-sidebar-bottom {
+    display: flex;
+    flex-direction: row;
+    padding-top: 12px;
+  }
+  .network-shell > .office-sidebar .office-sidebar-bottom .office-note { display: none; }
+}
