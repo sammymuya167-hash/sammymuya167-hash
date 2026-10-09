@@ -107,6 +107,7 @@ public final class QueueInstrumentation extends Instrumentation {
             status(0, "encryptedLinkClearResetsTelemetryAndRetainsUnlink", 6, ".");
             status(1, "packagedUiLoadsOfflineWithNativeBridge", 7, "");
             queue.clear();queue.clearCommands();Session.clear(getTargetContext());
+            Session.prefs(getTargetContext()).edit().putLong("update_checked_at",System.currentTimeMillis()).commit();
             ui[0] = startActivitySync(new Intent(getTargetContext(), MainActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
             JSONObject screen = new JSONObject();
             for (int attempt = 0; attempt < 30; attempt++) {
@@ -289,7 +290,7 @@ public final class QueueInstrumentation extends Instrumentation {
             finish(Activity.RESULT_OK, result);
         } catch (Throwable error) {
             android.util.Log.e("RouteForgeTests",activeTest,error);
-            Bundle failure=new Bundle();failure.putString("class",getClass().getName());failure.putString("test",activeTest);failure.putInt("numtests",26);failure.putInt("current",activeNumber);failure.putString("stack",android.util.Log.getStackTraceString(error));failure.putString("stream",error.toString());sendStatus(-2,failure);
+            Bundle failure=new Bundle();failure.putString("class",getClass().getName());failure.putString("test",activeTest);failure.putInt("numtests",30);failure.putInt("current",activeNumber);failure.putString("stack",android.util.Log.getStackTraceString(error));failure.putString("stream",error.toString());sendStatus(-2,failure);
             Bundle result = new Bundle(); result.putString("stream", "Queue test failed: " + error);
             finish(Activity.RESULT_CANCELED, result);
         } finally { if(ui[0]!=null)runOnMainSync(ui[0]::finish);queue.clear();queue.clearCommands();Session.clear(getTargetContext());Session.prefs(getTargetContext()).edit().remove("pending_unlink").commit(); }
