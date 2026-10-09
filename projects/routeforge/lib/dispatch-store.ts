@@ -1,3 +1,4 @@
+import { guardLegacyDelivery } from "./network-actions";
 import { env } from "cloudflare:workers";
 import { z } from "zod";
 import { dispatchInput, evaluateArrival, type Dispatch, type GPSPoint } from "./dispatch";
@@ -52,6 +53,7 @@ export async function changeDispatch(owner:string,payload:unknown){
   if(!row)throw new TrackingError(404,"Dispatch not found.");
   const current=JSON.parse(row.dispatch_json) as Dispatch;
   if(current.id!==id)throw new TrackingError(409,"This dispatch has changed. Refresh before continuing.");
+  const network=await guardLegacyDelivery(owner,current,action);if(network)return network;
   if(action==="cancel"){
     const now=Date.now();
     const result=await db().batch([

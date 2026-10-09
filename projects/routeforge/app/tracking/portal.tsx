@@ -230,7 +230,7 @@ export default function TrackingPortal({
   const points = events.filter(
     (e): e is Extract<Event, { kind: "point" }> => e.kind === "point",
   );
-  const apk = "/downloads/routeforge-rider.apk?v=4";
+  const apk = "/downloads/routeforge-rider.apk?v=6";
   async function refreshOffice(){await Promise.all([refresh(),office.refresh()]);}
   return (
     <main className="tracking-shell">
@@ -519,10 +519,10 @@ export default function TrackingPortal({
           <Smartphone size={25} />
           <h2>Set up the driver phone</h2>
           <p>
-            Android 8 or newer. Install Rider 1.2 over your existing Rider app to preserve saved reports. Sign in using the office-issued username and password. Existing drivers keep their history and assignment. Go on duty and play the delivery alert test in Account.
+            Android 8 or newer. Install Rider 1.4 over your existing Rider app to preserve saved reports. Sign in using the office-issued username and password. Existing drivers keep their history and assignment. Go on duty and play the delivery alert test in Account.
           </p>
           <a className="tracking-primary" href={apk}>
-            Download RouteForge Rider 1.2 APK
+            Download RouteForge Rider 1.4 APK
           </a>
           <a
             className="tracking-docs"

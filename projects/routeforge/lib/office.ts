@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { requiredPhone } from "./account-input";
 import type { Device } from "./tracking";
 import { distanceMeters, type Dispatch, type GPSPoint } from "./dispatch";
 
@@ -29,10 +30,12 @@ export const driverProfileInput = z.object({
 export type DriverProfile = z.infer<typeof driverProfileInput> & { lastAssignedAt: number | null; lastReleasedAt: number | null };
 export type OfficeSettings = { name: string; location: Place | null };
 export const settingsInput = z.object({ name: z.string().trim().min(1).max(80), location: placeInput.nullable() }).strict();
+export const recipientInput = z.object({name:z.string().trim().min(1).max(100),phone:requiredPhone}).strict();
 export const orderInput = z.object({
   id: z.string().uuid(), title: z.string().trim().min(1).max(100),
   pickup: placeInput, destination: placeInput,
   notes: z.string().trim().max(1000).default(""),
+  customer: recipientInput.nullable().optional(),
   amountDue: z.number().finite().min(0).max(10000000).refine(v=>Math.abs(v*100-Math.round(v*100))<0.000001,"Use at most two decimal places.").nullable().default(null),
 }).strict();
 export type OrderStatus = "queued" | "offered" | "assigned" | "pickup_arrived" | "en_route" | "arrived" | "delivered" | "cancelled";
@@ -41,6 +44,7 @@ export const orderStatusLabels: Record<OrderStatus, string> = {
   en_route: "On delivery", arrived: "At destination", delivered: "Delivered", cancelled: "Cancelled",
 };
 export type OfficeOrder = z.infer<typeof orderInput> & {
+  network?: boolean;
   status: OrderStatus; deviceId: string | null; dispatchId: string | null;
   driverName: string | null; vehicleLabel: string | null; createdAt: number;
   assignedAt: number | null; pickedUpAt: number | null; arrivedAt: number | null;
