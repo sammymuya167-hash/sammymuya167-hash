@@ -9,6 +9,7 @@ const db=()=>env.DB as D1Database;
 export async function offerOrder(owner:string,id:string,version:number){
   const row=await db().prepare("SELECT * FROM office_orders WHERE id=? AND owner_id=?").bind(id,owner).first<OrderRow>();
   if(!row)throw new TrackingError(404,"Order not found in your office.");
+  if(await db().prepare("SELECT order_id FROM merchant_deliveries WHERE order_id=?").bind(id).first())throw new TrackingError(409,"Use the merchant delivery desk for this request.");
   const order=JSON.parse(row.payload_json) as OfficeOrder;
   if(order.status!=="queued"||row.version!==version)throw new TrackingError(409,"Refresh this queued request before offering it.");
   const [devices,dispatches,profiles]=await Promise.all([listDevices(owner),listDispatches(owner,false),db().prepare("SELECT profile_json FROM office_driver_profiles WHERE owner_id=?").bind(owner).all<{profile_json:string}>()]);

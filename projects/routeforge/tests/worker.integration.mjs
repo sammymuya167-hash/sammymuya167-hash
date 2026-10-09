@@ -1,3 +1,4 @@
+import { verifyNetwork } from "./network.integration.mjs";
 import assert from "node:assert/strict";
 import { createRequire } from "node:module";
 import { readFileSync, readdirSync } from "node:fs";
@@ -22,7 +23,7 @@ function moduleFiles(directory) {
   );
 }
 const main = path.join(serverRoot, "index.js");
-const geocoderCalls=[];
+const geocoderCalls=[],callbackCalls=[];
 const workerOptions = {
   modules: [
     main,
@@ -33,8 +34,10 @@ const workerOptions = {
   compatibilityDate: "2026-05-15",
   compatibilityFlags: ["nodejs_compat"],
   d1Databases: ["DB"],
+  bindings:{ROUTEFORGE_PLATFORM_OWNER:"network-admin",ROUTEFORGE_INTEGRATION_KEY:"42".repeat(32),ROUTEFORGE_NETWORK_ENABLED:"true",ROUTEFORGE_JOB_KEY:"81".repeat(32)},
   outboundService: async request => {
     const url=new URL(request.url);
+    if(url.origin==='https://hooks.merchant.example.org'){callbackCalls.push({body:await request.text(),timestamp:request.headers.get('x-routeforge-timestamp'),signature:request.headers.get('x-routeforge-signature')});return new Response(callbackCalls.fail?'Fixture failure':null,{status:callbackCalls.fail?503:204});}
     if(url.origin!=="https://photon.komoot.io")return new Response("Unexpected outbound request",{status:503});
     geocoderCalls.push(url);
     if(url.searchParams.get("q")==="Unavailable fixture")return new Response("Fixture unavailable",{status:503});
@@ -553,16 +556,24 @@ try {
   passed("the Worker serves the exact verified Android installer");
   const riderDownload = await request("/downloads/routeforge-rider.apk", "GET", undefined, null);
   assert.equal(riderDownload.status, 200);
-  assert.equal(createHash("sha256").update(new Uint8Array(await riderDownload.arrayBuffer())).digest("hex"), "6da02d5a7929174b43eb026580d190cf657466d039e8d13ee622953f2165e10b");
+  const riderHash="ac52711074e144f8c97c4f1381c56177c16c8d867c8ee463fa1765d6073c4837";
+  assert.equal(createHash("sha256").update(new Uint8Array(await riderDownload.arrayBuffer())).digest("hex"),riderHash);
+  for(const [url,expected] of [["/downloads/routeforge-rider-1.3.apk",riderHash],["/downloads/routeforge-rider-1.2.apk","6da02d5a7929174b43eb026580d190cf657466d039e8d13ee622953f2165e10b"]]){
+    const versioned=await request(url,"GET",undefined,null);assert.equal(versioned.status,200);
+    assert.equal(createHash("sha256").update(new Uint8Array(await versioned.arrayBuffer())).digest("hex"),expected);
+  }
   const riderMetadata = await (await request("/downloads/routeforge-rider-release.json", "GET", undefined, null)).json();
   assert.equal(riderMetadata.applicationId, "app.shadownet.routeforge.rider");
-  assert.equal(riderMetadata.versionCode,4);assert.equal(riderMetadata.offerWindowSeconds,30);assert.equal(riderMetadata.accountLoginRequired,true);
-  assert.equal(riderMetadata.apkSha256, "6da02d5a7929174b43eb026580d190cf657466d039e8d13ee622953f2165e10b");
+  assert.equal(riderMetadata.versionCode,5);assert.equal(riderMetadata.versionName,"1.3-rider");assert.equal(riderMetadata.offerWindowSeconds,30);assert.equal(riderMetadata.accountLoginRequired,true);
+  assert.equal(riderMetadata.apkSha256,riderHash);assert.equal(riderMetadata.financialTransactionsEnabled,false);
+  const loginDownloadPage=await request("/login","GET",undefined,null);
+  assert.match(await loginDownloadPage.text(),/href="\/downloads\/routeforge-rider.apk\?v=5"[^>]*>Download RouteForge Rider 1.3 APK/);
   assert.equal(riderMetadata.certificateSha256, "e0c3213d4cbb6cc15c5792d8f7ffecaa6758b963d6998b9afc9511c6c45dc72c");
   passed("the built Worker publicly serves the signed Rider APK and matching release metadata while preserving the pilot");
   await verifyDriver({mf,db,request,passed});
   await verifyOffice({mf,db,request,passed,geocoderCalls});
   await verifyAccounts({mf,db,request,passed});
+  await verifyNetwork({mf,db,request,passed,callbackCalls});
   await verifyBootstrap({createWorker:seed=>new Miniflare({...workerOptions,bindings:{ROUTEFORGE_AUTH_BOOTSTRAP:seed}}),resetWorker:(worker,seed,revision)=>worker.setOptions({...workerOptions,bindings:{ROUTEFORGE_AUTH_BOOTSTRAP:seed,AUTH_TEST_RELOAD:revision}}),passed});
 
 

@@ -1,6 +1,12 @@
-# RouteForge Rider 1.2 update
+# RouteForge Rider 1.3 update
 
-The office and rider app share one delivery reservation per phone. Rider 1.2 adds office and rider accounts, required-phone onboarding and 30-second offers. It retains the previous fixes for delivery visibility and alerts while retaining the previous dashboard's planning and financial tools.
+Rider 1.3 extends the same Android app for merchant-owned and shared fleets. Merchant offers show their business, pickup branch, fleet, fee and delivery window. Riders can accept or decline exclusive offers, navigate to pickup and drop-off, call only their assigned customer, collect the package, and enter the six-digit customer OTP at delivery. Legacy office orders retain their existing cash/till reporting and multi-stop controls.
+
+Collection and OTP completion queue in order during outages. Reports use stable receipt IDs and device-keystore encryption; queue summaries do not expose OTPs. A rejected OTP remains visible under Account → Saved rider reports and can be corrected without changing its receipt. Customer snapshots are encrypted locally and removed on sign-out. Contact information is removed from network history after delivery or cancellation. Network jobs show applicable earnings for review; live charges and settlements remain disabled.
+
+Install 1.3 over 1.2 without uninstalling or clearing app storage. Existing sign-in, history, local queues and notification settings remain linked. Download from the office login screen or tracking portal. Original pilot users follow their existing account migration instructions.
+
+The office and rider app share one delivery reservation per phone. Office and rider accounts, required-phone onboarding and 30-second offers continue from 1.2. It retains the previous fixes for delivery visibility and alerts while retaining the previous dashboard's planning and financial tools.
 
 | Requested feature | Implemented behaviour | Verification |
 | --- | --- | --- |
@@ -20,9 +26,9 @@ The office and rider app share one delivery reservation per phone. Rider 1.2 add
 
 ## Install and check
 
-Install the published Rider 1.2 APK over the existing RouteForge Rider app on each rider phone. It uses the same package and signing certificate. Keep local storage and queues, then sign in with the office-issued rider username and password. Existing accounts keep their driver record and assignments. See [ACCOUNT_LOGINS.md](ACCOUNT_LOGINS.md).
+Install the published Rider 1.3 APK over the existing RouteForge Rider app on each rider phone. It uses the same package and signing certificate. Keep local storage and queues, then sign in with the office-issued rider username and password. Existing accounts keep their driver record and assignments. See [ACCOUNT_LOGINS.md](ACCOUNT_LOGINS.md).
 
-In Account, use **Play delivery alert test**, then check both offer and assigned-delivery sound/popup settings. Start duty with GPS enabled and a fresh fix before offering work. A newly assigned order appears on Home and in the banner on every tab. Confirm collection, finish delivery, then enter cash or company till payment; review the report in office Sales & totals.
+In Account, use **Play delivery alert test**, then check both offer and assigned-delivery sound/popup settings. Start duty with GPS enabled and a fresh fix before offering work. A newly assigned order appears on Home and in the banner on every tab. For merchant jobs, confirm collection and enter the customer OTP after delivery. For legacy office jobs, finish delivery and report cash or company till payment; review it in office Sales & totals.
 
 The 30-second deadline is enforced by the server. Phones need a working connection and an active app service to receive offers promptly; Android volume, notification permission, channel settings, Do Not Disturb, scheduling and cooldown still govern sound and popups. Hardware sound and real-phone background delivery require a field check. Automated browser QA was unavailable in the managed build environment; no browser gesture result is claimed.
 

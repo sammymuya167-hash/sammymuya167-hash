@@ -1,0 +1,9 @@
+{
+  "name": "routeforge-shadownet-retries",
+  "main": "worker.mjs",
+  "compatibility_date": "2026-05-15",
+  "compatibility_flags": ["nodejs_compat"],
+  "vars": { "ROUTEFORGE_URL": "https://routeforge-shadownet.sammymuya167.chatgpt.site" },
+  "triggers": { "crons": ["* * * * *"] },
+  "observability": { "enabled": true, "head_sampling_rate": 1 }
+}
