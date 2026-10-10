@@ -32,6 +32,10 @@ final class GpsRecorder {
    if(delta<120000000000L&&metres>55*(delta/1e9)+anchor.getAccuracy()+fix.getAccuracy())return false;
    // Network fixes cannot win the sampling interval over a newer GPS fix.
    if(delta<2000000000L)return false;
+   // Indoor coordinate drift cannot win the movement sampling interval when
+   // the satellite provider reports no motion. A fresh location heartbeat
+   // every 30 seconds keeps dispatch availability without a fabricated ride.
+   if(fix.hasSpeed()&&fix.getSpeed()<.3f&&delta<30000000000L)return false;
    float noise=Math.max(3,Math.min(10,Math.min(anchor.getAccuracy(),fix.getAccuracy())*.35f));
    if(metres<noise&&delta<30000000000L)return false;
   }

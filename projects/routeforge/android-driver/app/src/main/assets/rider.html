@@ -3,9 +3,9 @@
 .deliveryalert{display:none;margin:0 18px 15px;padding:17px 18px;border:1px solid #598bff;background:linear-gradient(120deg,#183c68,#14213b);border-radius:19px;box-shadow:0 10px 35px #0005;position:sticky;top:8px;z-index:25}.deliveryalert h3{margin:5px 0 8px}.deliveryalert .offertrack{height:6px;margin:12px 0}.deliveryalert .countdown{font-size:22px}.deliveryalert .primary{min-height:44px}.deliveryalert .muted{margin:5px 0}nav button{position:relative}.navbadge{position:absolute;right:12%;top:0;background:var(--cyan);color:#071423;font-size:10px;font-weight:800;min-width:17px;height:17px;border-radius:20px;line-height:17px}.connectionline{font-size:12px;color:var(--cyan);line-height:1.5}.alert-warning{border-color:#80603d;color:#f5ca92}.offertrack i{background:linear-gradient(90deg,var(--blue),var(--cyan));transition:width .25s linear}.active-delivery{border:1px solid #49dce4;box-shadow:0 0 25px #49dce418}.active-delivery .eyebrow{margin-top:0}.rider-login{max-width:500px;margin:25px auto 0;animation:enter .3s ease-out}.rider-login h1{font-size:33px}.rider-login label{line-height:1.6}.rider-login input[type=checkbox]{vertical-align:middle}.rider-login .hero:before{z-index:0}.rider-login .hero>*{position:relative}.rider-login .hero>h2{margin:8px 0 25px}#appcontent,#ridernav{display:none}</style></head><body><div id="loading"></div><header><div class="brand">routeforge<b>.</b> <span style="font-size:10px;letter-spacing:2px;color:#9aadca">RIDER</span></div><span id="statusbadge" class="badge">OFF DUTY</span></header><div id="notice" role="status"></div><div id="deliveryalert" class="deliveryalert" role="status" aria-live="polite"></div><main><section id="loginscreen" class="rider-login"><div class="eyebrow">SHADOWNET RIDER ACCESS</div><h1>Your shift starts here.</h1><p>Sign in with the username and password issued by your office.</p><form class="card hero" onsubmit="nativeLogin(event)"><h2>Welcome back.</h2><label>Username<input id="loginusername" required maxlength="32" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="Your rider username"></label><label>Password<input id="loginpassword" type="password" required maxlength="72" autocomplete="current-password" placeholder="Your password"></label><label><input id="loginconsent" type="checkbox" required>I agree to share location while on duty. Privacy pause is always available.</label><button id="loginbutton" type="submit" class="primary wide">Sign in →</button><p class="muted">Signing in keeps your driver history and delivery assignment connected. Use Start duty when you are ready to work.</p></form><div id="loginqueue"></div><p class="muted">Forgot your password? Ask the office to generate a new one. Rider 1.6 · 30-second delivery offers.</p></section><div id="appcontent">
 <section id="home" class="page active"><div class="eyebrow">YOUR SHIFT, CONNECTED</div><h1 id="greeting">Ready when you are.</h1><p>A clear route. One delivery at a time.</p><div id="homecontent"></div></section>
 <section id="offers" class="page"><div class="eyebrow">YOUR DELIVERY DESK</div><h1>Your next delivery.</h1><p>Merchant jobs are offered to one eligible rider at a time. Office jobs keep their existing claim and assignment flow.</p><div id="offercontent"></div></section>
-<section id="route" class="page"><div class="eyebrow">YOUR NEXT STOP</div><h1>Stay on course.</h1><div id="journeycontent"></div><div id="routesummary"></div><div id="map" class="map" aria-label="Interactive rider destination map"><div id="maptiles" class="maptiles"></div><svg id="mapline" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none"></svg><div id="mapmarkers" class="mapmarkers"></div><div class="mapcontrols"><button aria-label="Zoom in" onclick="mapZoom(1)">+</button><button aria-label="Zoom out" onclick="mapZoom(-1)">−</button></div><button id="follow" class="mapfollow" onclick="followMap()">Follow rider ◎</button><span class="mapcredit"><button onclick="Rider.mapCredits()" style="font-size:11px;padding:2px;color:inherit;background:none">© OpenStreetMap contributors (ODbL)</button> · BRouter · map tiles need internet</span></div><p class="muted" style="margin-top:10px">Drag or pinch to explore. Routes follow mapped roads. First use downloads a regional road map (about 34 MB for Nairobi), then saves it for future rides. Distance and travel time are estimates without live traffic. The gold trail shows your measured journey, including offline points; gaps mean GPS was unavailable.</p><button class="primary wide" onclick="Rider.navigate()">↗ Open road navigation</button><div id="routeactions"></div></section>
+<section id="route" class="page"><div class="eyebrow">YOUR NEXT STOP</div><h1>Stay on course.</h1><div id="journeycontent"></div><div id="routesummary"></div><div id="map" class="map" aria-label="Interactive rider destination map"><div id="maptiles" class="maptiles"></div><svg id="mapline" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none"></svg><div id="mapmarkers" class="mapmarkers"></div><div class="mapcontrols"><button aria-label="Zoom in" onclick="mapZoom(1)">+</button><button aria-label="Zoom out" onclick="mapZoom(-1)">−</button></div><button id="follow" class="mapfollow" onclick="followMap()">Follow rider ◎</button><span class="mapcredit"><button onclick="Rider.mapCredits()" style="font-size:11px;padding:2px;color:inherit;background:none">© OpenStreetMap contributors (ODbL)</button> · BRouter · map tiles need internet</span></div><p class="muted" style="margin-top:10px">Drag or pinch to explore. Routes follow mapped roads. First use downloads a regional road map (about 34 MB for Nairobi), then saves it for future rides. Distance and travel time are estimates without live traffic. The gold trail starts after sustained movement and includes offline points. Stationary drift is hidden; gaps mean GPS was unavailable.</p><button class="primary wide" onclick="Rider.navigate()">↗ Open road navigation</button><div id="routeactions"></div></section>
 <section id="trips" class="page"><div class="eyebrow">DELIVERIES & COLLECTIONS</div><h1>Your shift ledger.</h1><p>Completed jobs, applicable network earnings, and office payment reports in one place.</p><div id="tripcontent"></div></section>
-<section id="account" class="page"><div class="eyebrow">PHONE & PRIVACY</div><h1>Your connection.</h1><div id="accountcontent"></div><div class="card"><h2>You control your location.</h2><p>Normal End duty follows delivery completion. Privacy pause stops GPS immediately, even during an order. It leaves the delivery open for office follow-up.</p><button class="danger wide" onclick="Rider.privacy()">Pause GPS for privacy</button><button class="secondary wide" onclick="Rider.settings()">Phone location settings</button><button class="secondary wide" onclick="Rider.permissions()">App permissions & notifications</button></div><p class="muted">Rider 1.6 · Offline GPS and delivery reports retry when connected. Force-stop, battery restrictions and powered-off phones can delay updates and offers. 30-second alert delivery is best effort, never guaranteed offline.</p></section>
+<section id="account" class="page"><div class="eyebrow">PHONE & PRIVACY</div><h1>Your connection.</h1><div id="accountcontent"></div><div class="card"><h2>You control your location.</h2><p>Normal End duty follows delivery completion. Privacy pause stops GPS immediately, even during an order. It leaves the delivery open for office follow-up.</p><button class="danger wide" onclick="Rider.privacy()">Pause GPS for privacy</button><button class="secondary wide" onclick="Rider.settings()">Phone location settings</button><button class="secondary wide" onclick="Rider.permissions()">App permissions & notifications</button></div><p class="muted">Rider 1.7 · Offline GPS and delivery reports retry when connected. Force-stop, battery restrictions and powered-off phones can delay updates and offers. 30-second alert delivery is best effort, never guaranteed offline.</p></section>
 </div></main><nav id="ridernav" aria-label="Rider navigation"><button class="active" data-page="home" onclick="go('home')"><b>⌂</b>Home</button><button data-page="offers" onclick="go('offers')"><b>⚡</b>Offers</button><button data-page="route" onclick="go('route')"><b>◈</b>Route</button><button data-page="trips" onclick="go('trips')"><b>▤</b>Trips</button><button data-page="account" onclick="go('account')"><b>◎</b>Account</button></nav>
 <div id="payment" class="sheetback" role="dialog" aria-modal="true" aria-labelledby="paytitle"><form class="sheet" onsubmit="submitPayment(event)"><div class="row"><h2 id="paytitle">Report customer payment</h2><button type="button" class="secondary" onclick="closePay()" aria-label="Close payment form">×</button></div><p id="payorder"></p><label>Payment received by<select id="method" onchange="paymentMethod()"><option value="cash">Cash collected</option><option value="till">Company till</option><option value="mixed">Cash + till</option></select></label><label>Amount actually received (KSh)<input id="amount" type="number" required min="0" max="10000000" step="0.01" inputmode="decimal" placeholder="0.00"></label><div id="splitamounts" hidden><label>Cash actually received (KSh)<input id="cashamount" type="number" min="0.01" step="0.01" inputmode="decimal"></label><label>Till actually received (KSh)<input id="tillamount" type="number" min="0.01" step="0.01" inputmode="decimal"></label></div><label>Till transaction / cash receipt reference<input id="reference" maxlength="80" autocomplete="off" placeholder="Transaction or receipt reference"></label><p class="muted">Cash plus till must equal the exact expected payment. Report only money actually received. Ask the office to resolve a shortfall before submitting. A till report does not verify a bank transaction. The office reviews every report. Submit once; offline retries use the same receipt ID.</p><p id="payerror" style="color:#ffb8bb"></p><button class="primary wide" type="submit">Save payment report →</button></form></div>
 <div id="historysheet" class="sheetback" role="dialog" aria-modal="true" aria-labelledby="historytitle"><section class="sheet"><div class="row"><h2 id="historytitle">Ride history</h2><button type="button" class="secondary" onclick="closeHistory()" aria-label="Close history">×</button></div><div id="historycontent"></div></section></div>
@@ -76,7 +76,7 @@ function path(root, pickup, destination) { for (const [p, i] of [[pickup, '◉']
     root.append(r);
 } }
 function nativeLogin(e) { e.preventDefault();if(state.busy||state.unlinkPending)return;const input=$('loginpassword'),password=input.value;Rider.login($('loginusername').value,password,$('loginconsent').checked);input.value=''; }
-function applyState(next) { state = next.paired ? next : Object.assign({},next,{data:{},commands:[],journey:{},point:null}); if (!state.paired) { closeHistory(); closeProof(); closePay(); roadLines.clear(); $('mapline').replaceChildren(); } if (proofDraft && (!assignment() || assignment().id!==proofDraft.dispatchId || assignment().orderId!==proofDraft.orderId)) closeProof();const issue = state.gpsIssue || state.error || state.stateError || state.alertsError || ''; $('loading').style.display = state.busy ? 'block' : 'none'; $('statusbadge').textContent = !state.paired?'SIGN IN':state.recording ? 'ON DUTY' : 'OFF DUTY'; $('notice').style.display = issue ? 'block' : 'none'; $('notice').textContent = issue;$('loginscreen').style.display=state.paired?'none':'block';$('appcontent').style.display=state.paired?'block':'none';$('ridernav').style.display=state.paired?'grid':'none';$('loginbutton').disabled=!!state.busy||!!state.unlinkPending;$('loginbutton').textContent=state.busy?'Signing in…':'Sign in →';const q=reset('loginqueue');if(state.unlinkPending){const c=card(q,'Unlink pending','Connect to send the saved unlink request before signing in again.');c.append(button('Send unlink request',()=>Rider.sync(),'secondary wide'));}else if(!state.paired&&((state.events||0)>0||(state.savedReports||0)>0)){const c=card(q,'Saved reports are safe.',state.events+' GPS events and '+(state.savedReports||0)+' rider reports remain on this phone. Sign in to the same rider account to sync them.');c.append(button('Review / clear saved queue',()=>Rider.unlink(),'danger wide'));}render(); }
+function applyState(next) { state = next.paired ? next : Object.assign({},next,{data:{},commands:[],journey:{},point:null}); if (!state.paired) { closeHistory(); closeProof(); closePay(); roadLines.clear(); heldRiderPosition=null; $('mapline').replaceChildren(); } if (proofDraft && (!assignment() || assignment().id!==proofDraft.dispatchId || assignment().orderId!==proofDraft.orderId)) closeProof();const issue = state.gpsIssue || state.error || state.stateError || state.alertsError || ''; $('loading').style.display = state.busy ? 'block' : 'none'; $('statusbadge').textContent = !state.paired?'SIGN IN':state.recording ? 'ON DUTY' : 'OFF DUTY'; $('notice').style.display = issue ? 'block' : 'none'; $('notice').textContent = issue;$('loginscreen').style.display=state.paired?'none':'block';$('appcontent').style.display=state.paired?'block':'none';$('ridernav').style.display=state.paired?'grid':'none';$('loginbutton').disabled=!!state.busy||!!state.unlinkPending;$('loginbutton').textContent=state.busy?'Signing in…':'Sign in →';const q=reset('loginqueue');if(state.unlinkPending){const c=card(q,'Unlink pending','Connect to send the saved unlink request before signing in again.');c.append(button('Send unlink request',()=>Rider.sync(),'secondary wide'));}else if(!state.paired&&((state.events||0)>0||(state.savedReports||0)>0)){const c=card(q,'Saved reports are safe.',state.events+' GPS events and '+(state.savedReports||0)+' rider reports remain on this phone. Sign in to the same rider account to sync them.');c.append(button('Review / clear saved queue',()=>Rider.unlink(),'danger wide'));}render(); }
 function render() { renderUpdateAlert();renderHistory();renderDeliveryAlert(); if (page === 'home')
     renderHome(); if (page === 'offers')
     renderOffers(); if (page === 'route')
@@ -235,9 +235,117 @@ function renderHistory(){if(!$('historysheet').classList.contains('open'))return
 function haversine(a, b) { const rad = x => x * Math.PI / 180, x = rad(b.lat - a.lat), y = rad(b.lng - a.lng), v = Math.sin(x / 2) ** 2 + Math.cos(rad(a.lat)) * Math.cos(rad(b.lat)) * Math.sin(y / 2) ** 2; return 6371 * 2 * Math.atan2(Math.sqrt(v), Math.sqrt(1 - v)); }
 function shownJourney(){return state.history&&state.history.selected||state.journey||{};}
 function journeyPoints(){const j=shownJourney();return state.paired&&Array.isArray(j.points)?j.points:[];}
-function journeySegments(points){const ordered=[...new Map(points.map(p=>[p.eventId,p])).values()].sort((a,b)=>a.recordedAt-b.recordedAt),segments=[];let anchor=null;for(let index=0;index<ordered.length;index++){const p=ordered[index],previous=ordered[index-1],next=ordered[index+1];if(previous&&next&&previous.tripId===p.tripId&&next.tripId===p.tripId&&next.recordedAt-previous.recordedAt>0&&next.recordedAt-previous.recordedAt<=10000&&previous.accuracy<=50&&next.accuracy<=50&&haversine(previous,next)*1000<Math.max(20,previous.accuracy+next.accuracy)&&haversine(previous,p)*1000>Math.max(60,3*(previous.accuracy+p.accuracy))&&haversine(next,p)*1000>Math.max(60,3*(next.accuracy+p.accuracy)))continue;if(![p.lat,p.lng,p.accuracy,p.recordedAt].every(Number.isFinite)||Math.abs(p.lat)>90||Math.abs(p.lng)>180||p.accuracy<0||p.accuracy>50)continue;const gap=anchor?p.recordedAt-anchor.recordedAt:0;if(!anchor||anchor.tripId!==p.tripId||gap>120000){segments.push([p]);anchor=p;continue;}if(gap<=0)continue;const metres=haversine(anchor,p)*1000;if(metres>55*gap/1000+anchor.accuracy+p.accuracy)continue;if(metres<Math.max(3,Math.min(10,Math.min(anchor.accuracy,p.accuracy)*.35)))continue;segments.at(-1).push(p);anchor=p;}return segments;}
-function renderJourney(){const root=reset('journeycontent'),j=shownJourney(),points=journeyPoints(),c=card(root,points.length?'Your saved journey':state.recording?'Recording your journey':'Record your next journey');if(points.length){c.append(el('p',j.total+' GPS points saved on this phone · '+j.pending+' waiting to sync · '+j.synced+' uploaded','connectionline'));c.append(el('p','Latest fix: '+new Date(points.at(-1).recordedAt).toLocaleString()+' · ±'+Math.round(points.at(-1).accuracy)+' m','muted'));if(j.shown<j.total)c.append(el('p','Showing the most recent '+j.shown+' points of this journey. Every unsent point stays in the upload queue.','muted'));c.append(button('Fit recorded journey',fitJourney,'secondary wide'));}else c.append(el('p',state.recording?'Waiting for a precise GPS fix. Keep phone location enabled. Recording works without internet or a delivery assignment.':'Start duty to record a walk or ride. Recording works without a delivery assignment.','muted'));if(state.recording&&(!state.lastFix||Date.now()-state.lastFix>45000))c.append(el('p','Waiting for a fresh precise fix. Move into open sky if needed; saved points remain safe.','muted'));c.append(button('Sync saved journey',()=>Rider.sync(),'secondary wide'));c.append(button('Ride history · cloud backup & restore',()=>openHistory('trips'),'secondary wide'));if(state.history&&state.history.restoreProgress){const p=state.history.restoreProgress;c.append(button('Continue restore',()=>historyAction('restore',p.kind,p.id),'primary wide'));}if(state.history&&state.history.selected)c.append(button('Return to current ride',()=>{Rider.history('latest','','');following=true;},'primary wide'));}
-function fitJourney(){const segments=journeySegments(journeyPoints()),points=segments.flat();if(!points.length)return;following=false;const coords=points.map(p=>world(p,0)),minX=Math.min(...coords.map(p=>p.x)),maxX=Math.max(...coords.map(p=>p.x)),minY=Math.min(...coords.map(p=>p.y)),maxY=Math.max(...coords.map(p=>p.y));zoom=Math.max(2,Math.min(18,Math.floor(Math.log2(Math.min(($('map').clientWidth-70)/Math.max(.001,maxX-minX),($('map').clientHeight-70)/Math.max(.001,maxY-minY))))));center=fromWorld({x:(minX+maxX)/2,y:(minY+maxY)/2},0);drawMap();}
+// BEGIN SHARED JOURNEY FILTER
+function journeyDistance(a, b) {
+    const r = Math.PI / 180, n = Math.sin((b.lat - a.lat) * r / 2) ** 2 + Math.cos(a.lat * r) * Math.cos(b.lat * r) * Math.sin((b.lng - a.lng) * r / 2) ** 2;
+    return 12742000 * Math.atan2(Math.sqrt(n), Math.sqrt(Math.max(0, 1 - n)));
+}
+/** One movement gate for the office, native map and mileage. Raw evidence is
+ * never rewritten. Three coherent fixes must confirm motion before a trail is
+ * backfilled. A zero-speed fix is a location heartbeat, not travelled distance.
+ * Missing GPS and separate trips never acquire invented connecting lines.
+ */
+function journeyView(points) {
+    const ordered = [...new Map(points.map(p => [p.eventId, p])).values()].sort((a, b) => a.recordedAt - b.recordedAt);
+    const valid = [];
+    for (let i = 0; i < ordered.length; i++) {
+        const p = ordered[i], previous = ordered[i - 1], next = ordered[i + 1];
+        if (![p.lat, p.lng, p.accuracy, p.recordedAt].every(Number.isFinite) || Math.abs(p.lat) > 90 || Math.abs(p.lng) > 180 || p.accuracy < 0 || p.accuracy > 50)
+            continue;
+        if (previous && next && previous.tripId === p.tripId && next.tripId === p.tripId && next.recordedAt - previous.recordedAt > 0 && next.recordedAt - previous.recordedAt <= 10000 && previous.accuracy <= 50 && next.accuracy <= 50 && journeyDistance(previous, next) < Math.max(15, (previous.accuracy + next.accuracy) * .75) && journeyDistance(previous, p) > Math.max(30, 1.5 * (previous.accuracy + p.accuracy)) && journeyDistance(next, p) > Math.max(30, 1.5 * (next.accuracy + p.accuracy)))
+            continue;
+        const a = valid.at(-1), gap = a ? p.recordedAt - a.recordedAt : 0;
+        if (a && a.tripId === p.tripId && (gap <= 0 || gap <= 120000 && journeyDistance(a, p) > 55 * gap / 1000 + a.accuracy + p.accuracy))
+            continue;
+        valid.push(p);
+    }
+    const segments = [];
+    let anchor = null, previous = null, pending = [], moving = false, segment = null, quietAt = null;
+    for (const p of valid) {
+        if (!previous || previous.tripId !== p.tripId || p.recordedAt - previous.recordedAt > 120000) {
+            anchor = p;
+            pending = [p];
+            moving = false;
+            segment = null;
+            quietAt = null;
+            previous = p;
+            continue;
+        }
+        previous = p;
+        // Explicit zero speed wins over changing indoor coordinates. Availability,
+        // battery and last-seen heartbeats continue without drawing those fixes.
+        const stopped = p.speed != null && p.speed < .3;
+        if (stopped) {
+            if (quietAt == null)
+                quietAt = p.recordedAt;
+            pending = [];
+            if (p.recordedAt - quietAt >= 10000) {
+                moving = false;
+                segment = null;
+            }
+            continue;
+        }
+        quietAt = null;
+        if (moving && anchor && segment) {
+            const metres = journeyDistance(anchor, p), noise = Math.max(3, Math.min(10, Math.min(anchor.accuracy, p.accuracy) * .35));
+            if (metres < noise) {
+                if (!pending.length)
+                    pending = [anchor];
+                pending.push(p);
+                if (p.recordedAt - pending[0].recordedAt >= 15000) {
+                    moving = false;
+                    segment = null;
+                    pending = [anchor, p];
+                }
+                continue;
+            }
+            pending = [];
+            segment.push(p);
+            anchor = p;
+            continue;
+        }
+        if (!pending.length)
+            pending = anchor ? [anchor] : [p];
+        // An old anchor is not evidence of movement across a long wait.
+        if (p.recordedAt - pending[0].recordedAt > 120000)
+            pending = [p];
+        const last = pending.at(-1);
+        if (p.eventId !== last.eventId && journeyDistance(last, p) >= Math.max(3, Math.min(10, Math.min(last.accuracy, p.accuracy) * .35)))
+            pending.push(p);
+        if (pending.length < 3)
+            continue;
+        const first = pending[0], seconds = (p.recordedAt - first.recordedAt) / 1000;
+        if (seconds < 6)
+            continue;
+        const travelled = pending.slice(1).reduce((n, q, i) => n + journeyDistance(pending[i], q), 0), net = journeyDistance(first, p), accuracy = pending.reduce((n, q) => n + q.accuracy, 0) / pending.length;
+        const speedEvidence = pending.filter(q => q.speed != null && q.speed >= .65).length >= 2;
+        // Without speed, require stronger positional evidence. Random indoor fixes
+        // and gradual provider drift cannot accumulate mileage through this gate.
+        const threshold = Math.max(speedEvidence ? 8 : 15, accuracy * (speedEvidence ? 1.5 : 3));
+        if (net < threshold || net / Math.max(1, travelled) < (speedEvidence ? .65 : .75) || net / seconds < .35)
+            continue;
+        segment = [...pending];
+        segments.push(segment);
+        anchor = p;
+        pending = [];
+        moving = true;
+    }
+    const latest = valid.at(-1), position = anchor && latest ? { ...latest, lat: anchor.lat, lng: anchor.lng, accuracy: Math.max(anchor.accuracy, latest.accuracy), speed: moving ? latest.speed : 0, heading: moving ? latest.heading : null } : null;
+    const accepted = new Set(segments.flat().map(p => p.eventId));
+    return { segments, position, moving, excludedPoints: ordered.length - accepted.size };
+}
+function journeySegments(points) { return journeyView(points).segments; }
+/** Keep an on-screen stationary marker fixed as bounded history windows roll.
+ * Fresh metadata still advances, and a new trip, GPS gap or verified movement
+ * releases the anchor. This is a derived marker, never a rewritten GPS event. */
+function holdStationaryPosition(previous, next, moving) {
+    if (!previous || !next || moving || previous.tripId !== next.tripId || next.recordedAt < previous.recordedAt || next.recordedAt - previous.recordedAt > 120000)
+        return next;
+    return { ...next, lat: previous.lat, lng: previous.lng, accuracy: Math.max(previous.accuracy, next.accuracy) };
+}
+// END SHARED JOURNEY FILTER
+function renderJourney(){const root=reset('journeycontent'),j=shownJourney(),points=journeyPoints(),c=card(root,points.length?'Your saved journey':state.recording?'Recording your journey':'Record your next journey');if(points.length){const view=journeyView(points);c.append(el('p',view.moving?'Confirmed movement · measured GPS trail':view.segments.length?'Stationary · journey paused':'Stationary · waiting for sustained movement','connectionline'));c.append(el('p',j.total+' GPS points saved on this phone · '+j.pending+' waiting to sync · '+j.synced+' uploaded','connectionline'));c.append(el('p','Latest fix: '+new Date(points.at(-1).recordedAt).toLocaleString()+' · ±'+Math.round(points.at(-1).accuracy)+' m','muted'));if(j.shown<j.total)c.append(el('p','Showing the most recent '+j.shown+' points of this journey. Every unsent point stays in the upload queue.','muted'));c.append(button('Fit recorded journey',fitJourney,'secondary wide'));}else c.append(el('p',state.recording?'Waiting for a precise GPS fix. Keep phone location enabled. Recording works without internet or a delivery assignment.':'Start duty to record a walk or ride. Recording works without a delivery assignment.','muted'));if(state.recording&&(!state.lastFix||Date.now()-state.lastFix>45000))c.append(el('p','Waiting for a fresh precise fix. Move into open sky if needed; saved points remain safe.','muted'));c.append(button('Sync saved journey',()=>Rider.sync(),'secondary wide'));c.append(button('Ride history · cloud backup & restore',()=>openHistory('trips'),'secondary wide'));if(state.history&&state.history.restoreProgress){const p=state.history.restoreProgress;c.append(button('Continue restore',()=>historyAction('restore',p.kind,p.id),'primary wide'));}if(state.history&&state.history.selected)c.append(button('Return to current ride',()=>{Rider.history('latest','','');following=true;},'primary wide'));}
+function fitJourney(){const view=journeyView(journeyPoints()),points=view.segments.flat();if(!points.length){if(view.position){center=view.position;zoom=17;following=false;drawMap();}return;}following=false;const coords=points.map(p=>world(p,0)),minX=Math.min(...coords.map(p=>p.x)),maxX=Math.max(...coords.map(p=>p.x)),minY=Math.min(...coords.map(p=>p.y)),maxY=Math.max(...coords.map(p=>p.y));zoom=Math.max(2,Math.min(18,Math.floor(Math.log2(Math.min(($('map').clientWidth-70)/Math.max(.001,maxX-minX),($('map').clientHeight-70)/Math.max(.001,maxY-minY))))));center=fromWorld({x:(minX+maxX)/2,y:(minY+maxY)/2},0);drawMap();}
 function drawJourney(pos){for(const segment of journeySegments(journeyPoints())){const line=document.createElementNS('http://www.w3.org/2000/svg','path'),d=segment.map((p,i)=>{const q=pos(p);return(i?'L':'M')+q.x.toFixed(2)+','+q.y.toFixed(2);}).join(' ');for(const [k,v] of Object.entries({d,fill:'none',stroke:'#ffd27c','stroke-width':'4','stroke-linecap':'round','stroke-linejoin':'round','data-journey':'true'}))line.setAttribute(k,v);$('mapline').append(line);}}
 const roadLines=new Map();
 function decodeRoadLine(value){if(typeof value!=='string'||!value||value.length>150000)return [];let i=0,lat=0,lng=0;const points=[];function delta(){let result=0,shift=0,b;do{if(i>=value.length||shift>30)throw Error('Invalid road geometry');b=value.charCodeAt(i++)-63;if(b<0||b>63)throw Error('Invalid road geometry');result+=(b&31)*2**shift;shift+=5;}while(b>=32);return result%2?-(Math.floor(result/2)+1):result/2;}try{while(i<value.length){lat+=delta();lng+=delta();const p={lat:lat/1e6,lng:lng/1e6};if(Math.abs(p.lat)>85||Math.abs(p.lng)>180||points.length>=30000)return [];points.push(p);}return points.length>1?points:[];}catch{return [];}}
@@ -246,12 +354,14 @@ let zoom = 16, center = null, following = true, pointers = new Map(), pinch = nu
 function world(p, z = zoom) { const size = 256 * 2 ** z, lat = Math.max(-85, Math.min(85, p.lat)) * Math.PI / 180; return { x: (p.lng + 180) / 360 * size, y: (1 - Math.log(Math.tan(lat) + 1 / Math.cos(lat)) / Math.PI) / 2 * size }; }
 function fromWorld(p, z = zoom) { const size = 256 * 2 ** z; return { lng: p.x / size * 360 - 180, lat: Math.atan(Math.sinh(Math.PI * (1 - 2 * p.y / size))) * 180 / Math.PI }; }
 function target() { const a = active(); return a ? nextStop(a) : null; }
-function followMap() { following = true; center = state.point || journeyPoints().at(-1) || target(); drawMap(); }
+let heldRiderPosition=null;
+function riderMapPoint(){if(!state.paired){heldRiderPosition=null;return null;}const points=journeyPoints(),historic=state.history&&state.history.selected,raw=state.point;const measured=!historic&&raw&&!points.some(p=>p.eventId===raw.eventId)?[...points,raw]:points,view=journeyView(measured);if(historic)return view.position;heldRiderPosition=holdStationaryPosition(heldRiderPosition,view.position,view.moving);return heldRiderPosition;}
+function followMap() { following = true; center = riderMapPoint() || target(); drawMap(); }
 function zoomAt(next, x, y) { if (!center)
     return; const w = $('map').clientWidth, h = $('map').clientHeight, c = world(center), anchor = fromWorld({ x: c.x + x - w / 2, y: c.y + y - h / 2 }), z = Math.max(2, Math.min(19, next)), a = world(anchor, z); zoom = z; center = fromWorld({ x: a.x - x + w / 2, y: a.y - y + h / 2 }); drawMap(); }
 function mapZoom(delta) { zoomAt(Math.round(zoom) + delta, $('map').clientWidth / 2, $('map').clientHeight / 2); }
 function drawMap() { if (page !== 'route')
-    return; const node = $('map'), w = node.clientWidth, h = node.clientHeight, p = state.history&&state.history.selected?journeyPoints().at(-1):state.point || journeyPoints().at(-1), d = state.history&&state.history.selected?null:target(); if (following && p)
+    return; const node = $('map'), w = node.clientWidth, h = node.clientHeight, p = riderMapPoint(), d = state.history&&state.history.selected?null:target(); if (following && p)
     center = p; if (!center)
     center = p || d; if (!center) {
     $('maptiles').replaceChildren();

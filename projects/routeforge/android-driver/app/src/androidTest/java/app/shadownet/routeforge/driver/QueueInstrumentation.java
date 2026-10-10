@@ -32,7 +32,7 @@ public final class QueueInstrumentation extends Instrumentation {
     private void status(int code, String name, int number, String message) {
         activeTest=name;activeNumber=number;
         Bundle b = new Bundle(); b.putString("class", getClass().getName());
-        b.putString("test", name); b.putInt("numtests", 30); b.putInt("current", number);
+        b.putString("test", name); b.putInt("numtests", 32); b.putInt("current", number);
         b.putString("stream", message); sendStatus(code, b);
     }
     private boolean notificationCount(NotificationManager manager,int expected) throws Exception {
@@ -286,11 +286,23 @@ public final class QueueInstrumentation extends Instrumentation {
             java.io.File mapDir=new java.io.File(getTargetContext().getFilesDir(),"maps-v1");mapDir.mkdirs();java.io.File fixtureMap=new java.io.File(mapDir,"kenya.map");try(java.io.InputStream in=getContext().getAssets().open("fixture.map");java.io.FileOutputStream out=new java.io.FileOutputStream(fixtureMap)){byte[] bytes=new byte[8192];int n;while((n=in.read(bytes))!=-1)out.write(bytes,0,n);}
             org.mapsforge.map.reader.MapFile testMap=new org.mapsforge.map.reader.MapFile(fixtureMap);org.mapsforge.core.model.BoundingBox box=testMap.boundingBox();double mapLat=(box.minLatitude+box.maxLatitude)/2,mapLng=(box.minLongitude+box.maxLongitude)/2;testMap.close();int mapZ=14;long tx=(long)Math.floor((mapLng+180)/360*(1<<mapZ)),ty=(long)Math.floor((1-Math.log(Math.tan(Math.toRadians(mapLat))+1/Math.cos(Math.toRadians(mapLat)))/Math.PI)/2*(1<<mapZ));android.webkit.WebResourceResponse vectorTile=OfflineMaps.tile(getTargetContext(),"https://tile.openstreetmap.org/"+mapZ+"/"+tx+"/"+ty+".png");check(vectorTile!=null,"Mapsforge must return an offline PNG from a real map file");android.graphics.Bitmap tileBitmap=android.graphics.BitmapFactory.decodeStream(vectorTile.getData());check(tileBitmap!=null&&tileBitmap.getWidth()==256&&tileBitmap.getHeight()==256,"Offline basemap renders actual 256px tiles");tileBitmap.recycle();fixtureMap.delete();status(0,"actualOfflineVectorBasemapRendersWithoutNetwork",30,".");
 
-            Bundle result = new Bundle(); result.putString("stream", "\nOK (26 tests)\n");
+            status(1,"stationaryGpsOnlyCreatesAvailabilityHeartbeats",31,"");
+            GpsRecorder stillFilter=new GpsRecorder();clock=System.currentTimeMillis();elapsed=android.os.SystemClock.elapsedRealtimeNanos();android.location.Location resting=fix(clock,elapsed,-1.28,36.82,22,"gps");resting.setSpeed(0);check(stillFilter.eligible(resting,elapsed,clock),"First fresh fix keeps availability");stillFilter.accepted(resting);
+            for(int i=1;i<30;i++){android.location.Location wandering=fix(clock+i*1000,elapsed+i*1000000000L,-1.28+Math.sin(i)*.0002,36.82+Math.cos(i)*.0002,22,"gps");wandering.setSpeed(0);check(!stillFilter.eligible(wandering,elapsed+i*1000000000L,clock+i*1000),"Stationary coordinate changes cannot create fast movement fixes");}
+            android.location.Location heartbeat=fix(clock+30000,elapsed+30000000000L,-1.2801,36.8201,22,"gps");heartbeat.setSpeed(0);check(stillFilter.eligible(heartbeat,elapsed+30000000000L,clock+30000),"Stationary heartbeat keeps dispatch GPS fresh");
+            status(0,"stationaryGpsOnlyCreatesAvailabilityHeartbeats",31,".");
+            status(1,"stationaryWebViewHasNoTrailAndOfflineWalkingStillHasOne",32,"");
+            JSONArray stillPoints=new JSONArray();for(int i=0;i<500;i++)stillPoints.put(new JSONObject().put("eventId",UUID.randomUUID().toString()).put("tripId","stationary-fixture").put("kind","point").put("recordedAt",clock+i*30000L).put("lat",-1.28+Math.sin(i*1.37)*.0002).put("lng",36.82+Math.cos(i*.83)*.0002).put("accuracy",22).put("speed",0));
+            CountDownLatch stationaryUi=new CountDownLatch(1);AtomicReference<String> stationaryResult=new AtomicReference<>();
+            String stationaryScript="(function(){var raw="+stillPoints+",before=JSON.stringify(raw),v=journeyView(raw),walking=[];for(var i=0;i<10;i++)walking.push({eventId:'walk-'+i,tripId:'walking-fixture',kind:'point',recordedAt:raw[0].recordedAt+i*3000,lat:-1.28+i*.00005,lng:36.82,accuracy:5,speed:1});var walk=journeyView(walking);applyState({paired:true,recording:true,journey:{points:raw,total:500,pending:500,synced:0},point:raw[499],data:{},commands:[]});go('route');var result={lines:v.segments.length,moving:v.moving,anchored:v.position.lat===raw[0].lat&&v.position.lng===raw[0].lng,unchanged:before===JSON.stringify(raw),drawn:document.querySelectorAll('[data-journey]').length,walking:walk.segments.reduce((n,s)=>n+s.length,0)};applyState({paired:false,data:{}});return result;})()";
+            runOnMainSync(()->{WebView web=(WebView)((ViewGroup)ui[0].findViewById(android.R.id.content)).getChildAt(0);web.evaluateJavascript(stationaryScript,value->{stationaryResult.set(value);stationaryUi.countDown();});});
+            check(stationaryUi.await(5,TimeUnit.SECONDS),"Stationary map must respond");JSONObject stillResult=new JSONObject(stationaryResult.get());check(stillResult.getInt("lines")==0&&!stillResult.getBoolean("moving")&&stillResult.getBoolean("anchored")&&stillResult.getBoolean("unchanged")&&stillResult.getInt("drawn")==0&&stillResult.getInt("walking")==10,"Stationary drift is hidden and genuine offline movement retained: "+stillResult);
+            status(0,"stationaryWebViewHasNoTrailAndOfflineWalkingStillHasOne",32,".");
+            Bundle result = new Bundle(); result.putString("stream", "\nOK (32 tests)\n");
             finish(Activity.RESULT_OK, result);
         } catch (Throwable error) {
             android.util.Log.e("RouteForgeTests",activeTest,error);
-            Bundle failure=new Bundle();failure.putString("class",getClass().getName());failure.putString("test",activeTest);failure.putInt("numtests",30);failure.putInt("current",activeNumber);failure.putString("stack",android.util.Log.getStackTraceString(error));failure.putString("stream",error.toString());sendStatus(-2,failure);
+            Bundle failure=new Bundle();failure.putString("class",getClass().getName());failure.putString("test",activeTest);failure.putInt("numtests",32);failure.putInt("current",activeNumber);failure.putString("stack",android.util.Log.getStackTraceString(error));failure.putString("stream",error.toString());sendStatus(-2,failure);
             Bundle result = new Bundle(); result.putString("stream", "Queue test failed: " + error);
             finish(Activity.RESULT_CANCELED, result);
         } finally { if(ui[0]!=null)runOnMainSync(ui[0]::finish);queue.clear();queue.clearCommands();Session.clear(getTargetContext());Session.prefs(getTargetContext()).edit().remove("pending_unlink").commit(); }
