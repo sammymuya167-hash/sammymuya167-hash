@@ -32,7 +32,7 @@ public final class QueueInstrumentation extends Instrumentation {
     private void status(int code, String name, int number, String message) {
         activeTest=name;activeNumber=number;
         Bundle b = new Bundle(); b.putString("class", getClass().getName());
-        b.putString("test", name); b.putInt("numtests", 32); b.putInt("current", number);
+        b.putString("test", name); b.putInt("numtests", 33); b.putInt("current", number);
         b.putString("stream", message); sendStatus(code, b);
     }
     private boolean notificationCount(NotificationManager manager,int expected) throws Exception {
@@ -298,11 +298,23 @@ public final class QueueInstrumentation extends Instrumentation {
             runOnMainSync(()->{WebView web=(WebView)((ViewGroup)ui[0].findViewById(android.R.id.content)).getChildAt(0);web.evaluateJavascript(stationaryScript,value->{stationaryResult.set(value);stationaryUi.countDown();});});
             check(stationaryUi.await(5,TimeUnit.SECONDS),"Stationary map must respond");JSONObject stillResult=new JSONObject(stationaryResult.get());check(stillResult.getInt("lines")==0&&!stillResult.getBoolean("moving")&&stillResult.getBoolean("anchored")&&stillResult.getBoolean("unchanged")&&stillResult.getInt("drawn")==0&&stillResult.getInt("walking")==10,"Stationary drift is hidden and genuine offline movement retained: "+stillResult);
             status(0,"stationaryWebViewHasNoTrailAndOfflineWalkingStillHasOne",32,".");
-            Bundle result = new Bundle(); result.putString("stream", "\nOK (32 tests)\n");
+            status(1,"installedUpdateClearsCachedBannerAndShowsCurrentVersion",33,"");
+            check(UpdateApi.installedVersion(getTargetContext())==9&&UpdateApi.installedName(getTargetContext()).equals("1.7"),"Rider identity must match this installed 1.7 APK");
+            int retainedQueue=queue.count();JSONObject priorUpdate=new JSONObject().put("applicationId","app.shadownet.routeforge.rider").put("certificateSha256","e0c3213d4cbb6cc15c5792d8f7ffecaa6758b963d6998b9afc9511c6c45dc72c").put("apkSha256","a".repeat(64)).put("versionedApkPath","/downloads/routeforge-rider-1.7.apk").put("versionCode",9).put("available",true);
+            Session.prefs(getTargetContext()).edit().putString("rider_update",priorUpdate.toString()).commit();
+            check(!UpdateApi.cached(getTargetContext()).optBoolean("available")&&UpdateApi.downloadUrl(getTargetContext()).equals(Session.API+"/login"),"A cached pre-install notification must not offer the already installed update, even offline");
+            priorUpdate.put("versionCode",10).put("versionedApkPath","/downloads/routeforge-rider-1.8.apk");Session.prefs(getTargetContext()).edit().putString("rider_update",priorUpdate.toString()).commit();
+            check(UpdateApi.cached(getTargetContext()).optBoolean("available")&&UpdateApi.downloadUrl(getTargetContext()).endsWith("/routeforge-rider-1.8.apk")&&queue.count()==retainedQueue,"A newer same-identity release remains available without touching saved GPS");
+            Session.prefs(getTargetContext()).edit().remove("rider_update").commit();
+            CountDownLatch versionUi=new CountDownLatch(1);AtomicReference<String> versionResult=new AtomicReference<>();
+            runOnMainSync(()->{WebView web=(WebView)((ViewGroup)ui[0].findViewById(android.R.id.content)).getChildAt(0);web.evaluateJavascript("(function(){applyState({paired:true,appVersionName:'1.7',commands:[],data:{}});go('account');var result=document.getElementById('accountcontent').textContent.indexOf('Rider 1.7')>=0;applyState({paired:false});return result;})()",value->{versionResult.set(value);versionUi.countDown();});});
+            check(versionUi.await(5,TimeUnit.SECONDS)&&"true".equals(versionResult.get()),"The actual account screen must show the installed Rider 1.7 version");
+            status(0,"installedUpdateClearsCachedBannerAndShowsCurrentVersion",33,".");
+            Bundle result = new Bundle(); result.putString("stream", "\nOK (33 tests)\n");
             finish(Activity.RESULT_OK, result);
         } catch (Throwable error) {
             android.util.Log.e("RouteForgeTests",activeTest,error);
-            Bundle failure=new Bundle();failure.putString("class",getClass().getName());failure.putString("test",activeTest);failure.putInt("numtests",32);failure.putInt("current",activeNumber);failure.putString("stack",android.util.Log.getStackTraceString(error));failure.putString("stream",error.toString());sendStatus(-2,failure);
+            Bundle failure=new Bundle();failure.putString("class",getClass().getName());failure.putString("test",activeTest);failure.putInt("numtests",33);failure.putInt("current",activeNumber);failure.putString("stack",android.util.Log.getStackTraceString(error));failure.putString("stream",error.toString());sendStatus(-2,failure);
             Bundle result = new Bundle(); result.putString("stream", "Queue test failed: " + error);
             finish(Activity.RESULT_CANCELED, result);
         } finally { if(ui[0]!=null)runOnMainSync(ui[0]::finish);queue.clear();queue.clearCommands();Session.clear(getTargetContext());Session.prefs(getTargetContext()).edit().remove("pending_unlink").commit(); }
