@@ -3,7 +3,7 @@ import { z } from "zod";
 import { TrackingError } from "./tracking";
 import { changeDispatch, listDispatches } from "./dispatch-store";
 import type { Dispatch } from "./dispatch";
-import { driverProfileInput, orderInput, partnerInput, settingsInput, salesSummary, type Payment, type OfficeData, type OfficeOrder, type OfficeSettings, type DriverProfile, type Partner, type Place } from "./office";
+import { driverProfileInput, orderInput, partnerInput, recipientInput, settingsInput, salesSummary, type Payment, type OfficeData, type OfficeOrder, type OfficeSettings, type DriverProfile, type Partner, type Place } from "./office";
 import { syncOfficeDispatch } from "./office-sync";
 import { assignOrder, type OrderRow } from "./assignment-store";
 import { offerOrder, reconcileOffers } from "./offer-store";
@@ -76,17 +76,26 @@ export async function updateSettings(owner:string,payload:unknown){
   if(!parsed.success)throw new TrackingError(422,"Choose the office name and a valid map location.");
   await db().prepare("INSERT INTO office_settings(owner_id,payload_json,updated_at) VALUES(?,?,?) ON CONFLICT(owner_id) DO UPDATE SET payload_json=excluded.payload_json,updated_at=excluded.updated_at").bind(owner,JSON.stringify(parsed.data),Date.now()).run();return {ok:true};
 }
-export async function changeOrder(owner:string,payload:unknown){
-  const parsed=z.object({id:z.string().uuid(),version:z.number().int().positive(),action:z.enum(["assign","offer","confirm_pickup","confirm_delivery","cancel"]),deviceId:z.union([z.literal("auto"),z.string().uuid()]).optional()}).strict().safeParse(payload);
+export async function changeOrder(owner:string,payload:unknown,actor=owner){
+  const parsed=z.object({id:z.string().uuid(),version:z.number().int().positive(),action:z.enum(["assign","offer","confirm_pickup","confirm_delivery","cancel","update_customer"]),deviceId:z.union([z.literal("auto"),z.string().uuid()]).optional(),customer:recipientInput.nullable().optional()}).strict().safeParse(payload);
   if(!parsed.success)throw new TrackingError(422,"Choose the order and an available onboarded driver.");
   const {id,version,action,deviceId}=parsed.data;
+  if(action==="update_customer"?parsed.data.customer===undefined:parsed.data.customer!==undefined)throw new TrackingError(422,"Send recipient details only when updating the recipient.");
   const row=await db().prepare("SELECT * FROM office_orders WHERE id=? AND owner_id=?").bind(id,owner).first<OrderRow>();
   if(!row)throw new TrackingError(404,"Order not found in your office.");
   if(action==="assign"&&row.version!==version)throw new TrackingError(409,"This order has updated. Refresh before continuing.");
   const current=parse<OfficeOrder>(row);
+  if(await db().prepare("SELECT order_id FROM merchant_deliveries WHERE order_id=? AND merchant_id=?").bind(id,owner).first()){if(action==="cancel"){const {cancelNetworkDelivery}=await import("./network-actions");return cancelNetworkDelivery(owner,id,owner);}throw new TrackingError(409,"Use the merchant delivery desk and rider OTP flow for this request.");}
   if(action==="offer")return offerOrder(owner,id,version);
   if(action==="assign")return assignOrder(owner,row,deviceId??"auto");
   if(current.status==="delivered"||current.status==="cancelled")throw new TrackingError(409,"This order is already closed.");
+  if(action==="update_customer"){
+    const now=Date.now(),customer=JSON.stringify(parsed.data.customer),changed=await db().batch([
+      db().prepare("UPDATE office_orders SET payload_json=json_set(payload_json,'$.customer',json(?),'$.version',version+1,'$.updatedAt',?),version=version+1,updated_at=? WHERE id=? AND owner_id=? AND version=? AND status NOT IN ('delivered','cancelled') RETURNING payload_json").bind(customer,now,now,id,owner,version),
+      db().prepare("INSERT INTO network_audit(id,merchant_id,actor,action,subject_id,created_at) SELECT ?,?,?,'office.delivery.recipient_updated',?,? WHERE changes()=1 AND EXISTS(SELECT 1 FROM office_orders WHERE id=? AND owner_id=? AND version=? AND updated_at=? AND json_extract(payload_json,'$.customer') IS json_extract(?,'$'))").bind(crypto.randomUUID(),owner,actor,id,now,id,owner,version+1,now,customer),
+    ]);
+    const row=changed[0].results[0] as {payload_json:string}|undefined;if(!row)throw new TrackingError(409,"This delivery changed. Refresh before updating its recipient.");return parse<OfficeOrder>(row);
+  }
   if(current.dispatchId&&current.deviceId){
     const active=await db().prepare("SELECT dispatch_json FROM driver_dispatches WHERE device_id=? AND owner_id=? AND json_extract(dispatch_json,'$.id')=?").bind(current.deviceId,owner,current.dispatchId).first<{dispatch_json:string}>();
     if(!active)throw new TrackingError(409,"This assignment has changed. Refresh the office.");
