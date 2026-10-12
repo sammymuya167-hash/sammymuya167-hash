@@ -1,0 +1,8 @@
+build/
+DerivedData/
+*.xcuserstate
+xcuserdata/
+*.mobileprovision
+*.p8
+*.p12
+RouteForgeShop.xcodeproj/

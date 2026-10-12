@@ -1,0 +1,61 @@
+name: RouteForge customer iOS
+on:
+  push:
+    branches: [routeforge-ios-customer-1-0]
+    paths: ["projects/routeforge/ios-customer/**", ".github/workflows/routeforge-ios-customer.yml"]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  customer-ios:
+    runs-on: macos-26
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: projects/routeforge/ios-customer
+    steps:
+      - uses: actions/checkout@v4
+      - name: Prepare existing customer iOS project
+        run: |
+          if ! command -v xcodegen >/dev/null; then brew install xcodegen; fi
+          mkdir -p build/release
+          xcodegen --version > build/release/toolchain.txt
+          xcodebuild -version >> build/release/toolchain.txt
+          xcodegen generate --spec project.yml
+          git rev-parse HEAD > build/release/source-sha.txt
+          find Sources Tests UITests Assets.xcassets -type f -print0 | sort -z | xargs -0 shasum -a 256 > build/release/source-manifest.sha256
+      - name: Compile device archive without distribution credentials
+        run: |
+          set -o pipefail
+          xcodebuild archive -project RouteForgeShop.xcodeproj -scheme RouteForgeShop -configuration Release -sdk iphoneos -destination 'generic/platform=iOS' -archivePath build/RouteForgeShop-unsigned.xcarchive CODE_SIGNING_ALLOWED=NO | tee build/release/device-build.log
+          ditto -c -k --keepParent build/RouteForgeShop-unsigned.xcarchive build/release/RouteForge-Customer-1.0-unsigned-device-archive.zip
+      - name: Select available iPhone simulator
+        run: |
+          xcrun simctl list devices available -j > build/simulators.json
+          python3 - <<'PY'
+          import json, os
+          with open('build/simulators.json') as f:
+              devices = [d for ds in json.load(f)['devices'].values() for d in ds if d.get('isAvailable') and d['name'].startswith('iPhone')]
+          if not devices:
+              raise SystemExit('No iPhone simulator is available')
+          device = next((d for d in devices if 'Pro' in d['name']), devices[0])
+          with open(os.environ['GITHUB_ENV'], 'a') as f:
+              f.write('ROUTEFORGE_SIMULATOR_ID=' + device['udid'] + '\n')
+          print('Testing on ' + device['name'])
+          PY
+      - name: Test installed app on iPhone simulator
+        run: |
+          set -o pipefail
+          xcodebuild test -project RouteForgeShop.xcodeproj -scheme RouteForgeShop -configuration Debug -destination "platform=iOS Simulator,id=$ROUTEFORGE_SIMULATOR_ID" -parallel-testing-enabled NO -derivedDataPath build/DerivedData -resultBundlePath build/CustomerTests.xcresult CODE_SIGNING_ALLOWED=NO | tee build/release/simulator-tests.log
+          ditto -c -k --keepParent build/DerivedData/Build/Products/Debug-iphonesimulator/RouteForgeShop.app build/release/RouteForge-Customer-1.0-simulator.zip
+          xcrun xcresulttool get test-results summary --path build/CustomerTests.xcresult --format json > build/release/test-results.json
+          cp README.md build/release/iOS-handoff.md
+          shasum -a 256 build/release/*.zip > build/release/binary-checksums.sha256
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: routeforge-customer-ios-build
+          path: |
+            projects/routeforge/ios-customer/build/release/
+            projects/routeforge/ios-customer/build/CustomerTests.xcresult/
+          retention-days: 14
