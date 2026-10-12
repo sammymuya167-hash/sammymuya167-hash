@@ -1,0 +1,58 @@
+name: RouteForge customer Android
+on:
+  push:
+    branches: [routeforge-customer-1-0]
+    paths: ["projects/routeforge/android-customer/**", ".github/workflows/routeforge-customer.yml"]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  customer:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    defaults:
+      run:
+        working-directory: projects/routeforge/android-customer
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - uses: android-actions/setup-android@v4
+        with:
+          cmdline-tools-version: 11076708
+          packages: "platform-tools emulator platforms;android-36 build-tools;36.0.0"
+          log-accepted-android-sdk-licenses: false
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: 8.11.1
+      - run: gradle :app:testDebugUnitTest :app:assembleDebug :app:assembleRelease :app:bundleRelease :app:lintDebug :app:lintRelease :app:assembleDebugAndroidTest
+      - name: Package customer binaries for owner signing
+        run: |
+          mkdir -p customer-release
+          "$ANDROID_HOME/build-tools/36.0.0/zipalign" -f 4 app/build/outputs/apk/release/app-release-unsigned.apk customer-release/routeforge-customer-unsigned.apk
+          cp app/build/outputs/bundle/release/app-release.aab customer-release/routeforge-customer-unsigned.aab
+          cp "$ANDROID_HOME/build-tools/36.0.0/lib/apksigner.jar" customer-release/apksigner.jar
+          git rev-parse HEAD > customer-release/source-sha.txt
+          find app/src/main -type f -print0 | sort -z | xargs -0 sha256sum > customer-release/source-manifest.sha256
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 36
+          arch: x86_64
+          target: google_apis
+          working-directory: projects/routeforge/android-customer
+          script: gradle :app:connectedDebugAndroidTest
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: routeforge-customer-release
+          path: |
+            projects/routeforge/android-customer/customer-release/
+            projects/routeforge/android-customer/app/build/reports/
+          retention-days: 14
