@@ -95,6 +95,11 @@ test('an inaccurate network anchor cannot swallow a subsequent genuine walking d
  assert.deepEqual(journeySegments(fixes),[fixes.slice(1)]);
 });
 
+test('sparse offline walking fixes retain the full journey while each signal gap remains within the limit',()=>{
+ const fixes=[point(0),point(70,-1.27937),point(140,-1.27874)];
+ assert.deepEqual(journeySegments(fixes),[fixes]);assert.equal(journeyView(fixes).position.lat,fixes.at(-1).lat);
+});
+
 test('continuous movement checks stop a confirmed walk from appending low-quality network drift',()=>{
  const walk=[point(0),point(5,-1.2799),point(10,-1.2798)],noise=Array.from({length:15},(_,i)=>point(30+i*10,-1.2798+Math.sin(i)*.00003,36.82+Math.cos(i)*.00003,{accuracy:35,speed:null}));
  const view=journeyView([...walk,...noise]);assert.deepEqual(view.segments,[walk]);assert.equal(view.moving,false);

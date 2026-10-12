@@ -10,7 +10,7 @@ export function journeyDistance(a: {lat:number;lng:number}, b: {lat:number;lng:n
 function movementEvidence(points:GPSPoint[],continuing=false) {
   if(points.length<3)return false;
   const first=points[0],last=points.at(-1)!,seconds=(last.recordedAt-first.recordedAt)/1000;
-  if(seconds<6||seconds>60)return false;
+  if(seconds<6||seconds>240)return false;
   const travelled=points.slice(1).reduce((n,p,i)=>n+journeyDistance(points[i],p),0),net=journeyDistance(first,last),accuracy=points.reduce((n,p)=>n+p.accuracy,0)/points.length;
   const speedEvidence=points.filter(p=>p.speed!=null&&p.speed>=.65).length>=2;
   const threshold=Math.max(continuing?6:speedEvidence?8:15,accuracy*(continuing?1.2:speedEvidence?1.5:3),first.accuracy+last.accuracy);
@@ -69,7 +69,7 @@ export function journeyView(points: GPSPoint[]): JourneyView {
     const sensorStopped=!steadyTravel&&p.motion==='still'&&(p.speed==null||p.speed<3)&&(!anchor||journeyDistance(anchor,p)<=Math.max(30,anchor.accuracy+p.accuracy));
     const stopped=gpsStopped||sensorStopped;
     if(stopped) {
-      if(sensorStopped&&!gpsStopped){if(!pending.length&&anchor)pending=[anchor];pending.push(p);pending=pending.filter(q=>p.recordedAt-q.recordedAt<=60000);}else pending=[];
+      if(sensorStopped&&!gpsStopped){if(!pending.length&&anchor)pending=[anchor];pending.push(p);pending=pending.filter(q=>p.recordedAt-q.recordedAt<=240000);}else pending=[];
       moving=false;segment=null;
       continue;
     }
@@ -80,7 +80,7 @@ export function journeyView(points: GPSPoint[]): JourneyView {
         if(p.recordedAt-pending[0].recordedAt>=15000){moving=false;segment=null;pending=[anchor,p];}
         continue;
       }
-      const proof=[...segment.slice(-5),...pending,p].filter(q=>p.recordedAt-q.recordedAt<=60000);
+      const proof=[...segment.slice(-5),...pending,p].filter(q=>p.recordedAt-q.recordedAt<=240000);
       if(movementEvidence(proof,true)){segment.push(...pending.filter(q=>q.eventId!==anchor!.eventId),p);pending=[];anchor=p;continue;}
       // Motion must stay credible. A previous good walk is not permission to
       // append changing indoor coordinates or low-quality network locations.
@@ -89,7 +89,7 @@ export function journeyView(points: GPSPoint[]): JourneyView {
     if(!pending.length)pending=anchor?[anchor]:[p];
     // Slide the confirmation window: an inaccurate old network fix must not
     // poison every subsequent walking fix until a whole trip is restarted.
-    while(pending.length&&p.recordedAt-pending[0].recordedAt>60000)pending.shift();
+    while(pending.length&&p.recordedAt-pending[0].recordedAt>240000)pending.shift();
     if(!pending.length)pending=[p];
     const last=pending.at(-1)!;
     if(p.eventId!==last.eventId&&journeyDistance(last,p)>=Math.max(3,Math.min(10,Math.min(last.accuracy,p.accuracy)*.35)))pending.push(p);
