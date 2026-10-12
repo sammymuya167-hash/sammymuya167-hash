@@ -313,9 +313,10 @@ public final class QueueInstrumentation extends Instrumentation {
             status(1,"heartbeatReportsActualInstalledPackageVersion",34,"");
             int queueBeforeHeartbeat=queue.count();
             android.content.pm.PackageInfo installedInfo=getTargetContext().getPackageManager().getPackageInfo(getTargetContext().getPackageName(),0);
-            JSONObject heartbeat=DriverApi.stateInput(getTargetContext());
-            check(heartbeat.getLong("appVersion")==installedInfo.getLongVersionCode()&&heartbeat.getLong("appVersion")==10,"The actual heartbeat payload must report this installed APK instead of stale Rider 1.6 code 8");
-            check(heartbeat.getBoolean("gpsEnabled")==DriverApi.gpsEnabled(getTargetContext())&&heartbeat.getBoolean("onDuty")== (TrackingService.running&&Session.prefs(getTargetContext()).getBoolean("duty",false))&&queue.count()==queueBeforeHeartbeat,"Reading package identity must preserve duty, GPS permissions and queued journeys");
+            long expectedHeartbeatVersion=android.os.Build.VERSION.SDK_INT>=28?installedInfo.getLongVersionCode():installedInfo.versionCode;
+            JSONObject heartbeatVersionPayload=DriverApi.stateInput(getTargetContext());
+            check(heartbeatVersionPayload.getLong("appVersion")==expectedHeartbeatVersion&&heartbeatVersionPayload.getLong("appVersion")==10,"The actual heartbeat payload must report this installed APK instead of stale Rider 1.6 code 8");
+            check(heartbeatVersionPayload.getBoolean("gpsEnabled")==DriverApi.gpsEnabled(getTargetContext())&&heartbeatVersionPayload.getBoolean("onDuty")== (TrackingService.running&&Session.prefs(getTargetContext()).getBoolean("duty",false))&&queue.count()==queueBeforeHeartbeat,"Reading package identity must preserve duty, GPS permissions and queued journeys");
             status(0,"heartbeatReportsActualInstalledPackageVersion",34,".");
             Bundle result = new Bundle(); result.putString("stream", "\nOK (34 tests)\n");
             finish(Activity.RESULT_OK, result);
