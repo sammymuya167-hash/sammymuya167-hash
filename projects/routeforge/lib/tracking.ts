@@ -25,6 +25,7 @@ export const trackingEvent = z.discriminatedUnion("kind", [
       lat: z.number().finite().min(-90).max(90),
       lng: z.number().finite().min(-180).max(180),
       accuracy: z.number().finite().min(0).max(100000),
+      motion: z.enum(['moving','still','unknown']).optional(),
       speed: z.number().finite().min(0).max(200).nullable().optional(),
       heading: z.number().finite().min(0).max(360).nullable().optional(),
       battery: z.number().int().min(0).max(100).nullable().optional(),
@@ -54,6 +55,8 @@ export type Device = {
   latestPoint:
     | (Extract<TrackingEvent, { kind: "point" }> & { receivedAt: number })
     | null;
+  // Derived for maps; latestPoint and archived events remain original evidence.
+  mapPosition?: (Extract<TrackingEvent, {kind:"point"}> & {moving:boolean}) | null;
   status:
     | "pending"
     | "expired"

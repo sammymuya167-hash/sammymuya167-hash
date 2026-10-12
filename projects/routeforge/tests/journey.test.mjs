@@ -84,3 +84,31 @@ test('packaged native map uses exactly the office movement filter',()=>{
 test('a legacy isolated GPS detour is hidden while original evidence and real turns stay intact',()=>{
  const start=point(0),bad=point(3,-1.2791),back=point(6,-1.27995),next=point(10,-1.2799);const input=[start,bad,back,next],raw=JSON.stringify(input);assert.deepEqual(journeySegments(input),[[start,back,next]]);assert.equal(JSON.stringify(input),raw);
 });
+
+test('the anonymized stationary field trace with false walking speeds draws no journey',()=>{
+ const fixes=JSON.parse(readFileSync('tests/fixtures/stationary-drift.json','utf8')),before=JSON.stringify(fixes),view=journeyView(fixes);
+ assert.ok(fixes.some(p=>p.speed>2));assert.deepEqual(view.segments,[]);assert.equal(view.moving,false);assert.equal(view.excludedPoints,fixes.length);assert.equal(JSON.stringify(fixes),before);
+});
+
+test('an inaccurate network anchor cannot swallow a subsequent genuine walking departure',()=>{
+ const fixes=[point(0,-1.28,36.82,{accuracy:30,speed:null}),point(20,-1.28,36.82045,{accuracy:6}),point(44,-1.28,36.82025,{accuracy:3}),point(54,-1.28,36.82015,{accuracy:3})];
+ assert.deepEqual(journeySegments(fixes),[fixes.slice(1)]);
+});
+
+test('continuous movement checks stop a confirmed walk from appending low-quality network drift',()=>{
+ const walk=[point(0),point(5,-1.2799),point(10,-1.2798)],noise=Array.from({length:15},(_,i)=>point(30+i*10,-1.2798+Math.sin(i)*.00003,36.82+Math.cos(i)*.00003,{accuracy:35,speed:null}));
+ const view=journeyView([...walk,...noise]);assert.deepEqual(view.segments,[walk]);assert.equal(view.moving,false);
+});
+
+test('phone motion evidence rejects stationary false walking speeds and preserves a real local loop',()=>{
+ const still=Array.from({length:200},(_,i)=>point(i*4,-1.28+Math.sin(i)*.00006,36.82+Math.cos(i)*.00006,{accuracy:3,speed:1.8,motion:'still'}));
+ assert.deepEqual(journeySegments(still),[]);
+ const loop=Array.from({length:80},(_,i)=>point(i*3,-1.28+Math.sin(i*Math.PI/20)*.0003,36.82+Math.cos(i*Math.PI/20)*.0003,{accuracy:2,speed:1.7,motion:'moving'}));
+ const kept=journeySegments(loop).flat();assert.ok(kept.length>50);assert.equal(kept.at(-1).eventId,loop.at(-1).eventId);
+});
+
+test('a quiet accelerometer does not suppress sustained vehicle travel or reuse an earlier trip anchor',()=>{
+ const road=Array.from({length:80},(_,i)=>point(i*5,-1.28+i*.00009,36.82,{accuracy:3,speed:2,motion:'still'}));
+ const view=journeyView(road);assert.equal(view.moving,true);assert.equal(view.position.eventId,road.at(-1).eventId);assert.equal(view.position.lat,road.at(-1).lat);assert.ok(view.segments.flat().length>60);
+ const next=point(500,-1.27,36.83,{tripId:crypto.randomUUID(),speed:0});const restarted=journeyView([...road,next]);assert.equal(restarted.position.lat,next.lat);assert.equal(restarted.position.lng,next.lng);
+});

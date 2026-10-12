@@ -26,6 +26,7 @@ public final class TrackingService extends Service implements LocationListener {
  static volatile boolean running=false;
  private LocationManager locations;private ConnectivityManager connectivity;private String trip;private boolean started=false;
  private final GpsRecorder recorder=new GpsRecorder();
+ private final MotionSampler motion=new MotionSampler();
  private ScheduledExecutorService sync,offers,commands;
  private final ConnectivityManager.NetworkCallback networkCallback=new ConnectivityManager.NetworkCallback(){@Override public void onAvailable(Network network){if(sync!=null&&!sync.isShutdown())sync.execute(()->Api.sync(getApplicationContext()));if(commands!=null&&!commands.isShutdown())commands.execute(()->DriverApi.flush(getApplicationContext()));if(offers!=null&&!offers.isShutdown())offers.execute(()->DriverApi.poll(getApplicationContext()));}};
  public IBinder onBind(Intent intent){return null;}
@@ -40,7 +41,7 @@ public final class TrackingService extends Service implements LocationListener {
    PendingIntent pause=PendingIntent.getService(this,2,new Intent(this,TrackingService.class).setAction("PAUSE"),PendingIntent.FLAG_IMMUTABLE|PendingIntent.FLAG_UPDATE_CURRENT);
    Notification notification=new Notification.Builder(this,"trip-recording").setSmallIcon(R.drawable.ic_route).setContentTitle("RouteForge · On duty").setContentText("GPS shared with your office. Open to manage delivery.").setContentIntent(open).setOngoing(true).setOnlyAlertOnce(true).addAction(new Notification.Action.Builder(null,"Privacy pause",pause).build()).build();
    if(Build.VERSION.SDK_INT>=29)startForeground(11,notification,ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION);else startForeground(11,notification);
-   locations=getSystemService(LocationManager.class);trip=GpsRecorder.begin(this);recorder.restore(this,trip);started=true;running=true;
+   locations=getSystemService(LocationManager.class);trip=GpsRecorder.begin(this);recorder.restore(this,trip);motion.start(this);started=true;running=true;
    DriverApi.enqueue(this,new JSONObject().put("action","start_duty"));
    // Dense satellite fixes retain walking turns. The recorder uses network
    // locations only when a fresh satellite fix is unavailable.
@@ -66,11 +67,11 @@ public final class TrackingService extends Service implements LocationListener {
  @Override public void onLocationChanged(Location location){
   if(!started||!running)return;
   try{
-   recorder.record(this,trip,location);
+   recorder.record(this,trip,location,motion.evidence(android.os.SystemClock.elapsedRealtime()));
   }catch(Exception e){Session.prefs(this).edit().putBoolean("duty",false).putString("gps_issue","Phone storage could not save this GPS fix. Recording stopped; previously saved points are safe. Free storage before restarting.").commit();stopSelf();}
  }
  @Override public void onDestroy(){
-  running=false;if(locations!=null)locations.removeUpdates(this);if(connectivity!=null)try{connectivity.unregisterNetworkCallback(networkCallback);}catch(Exception ignored){}
+  running=false;motion.stop();if(locations!=null)locations.removeUpdates(this);if(connectivity!=null)try{connectivity.unregisterNetworkCallback(networkCallback);}catch(Exception ignored){}
   for(ScheduledExecutorService executor:new ScheduledExecutorService[]{sync,offers,commands})if(executor!=null)executor.shutdownNow();
   boolean ended=!Session.prefs(this).getBoolean("duty",false)||!Session.loggedIn(this);
   if(ended){if(started)try{record("stop");if(Session.loggedIn(this)&&trip!=null)JourneyApi.requestBackup(this,"trip",trip);}catch(Exception ignored){}Session.prefs(this).edit().remove("trip").putBoolean("duty",false).apply();}

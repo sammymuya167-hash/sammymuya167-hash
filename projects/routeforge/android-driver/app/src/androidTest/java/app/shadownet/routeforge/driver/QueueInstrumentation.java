@@ -32,7 +32,7 @@ public final class QueueInstrumentation extends Instrumentation {
     private void status(int code, String name, int number, String message) {
         activeTest=name;activeNumber=number;
         Bundle b = new Bundle(); b.putString("class", getClass().getName());
-        b.putString("test", name); b.putInt("numtests", 34); b.putInt("current", number);
+        b.putString("test", name); b.putInt("numtests", 37); b.putInt("current", number);
         b.putString("stream", message); sendStatus(code, b);
     }
     private boolean notificationCount(NotificationManager manager,int expected) throws Exception {
@@ -315,14 +315,47 @@ public final class QueueInstrumentation extends Instrumentation {
             android.content.pm.PackageInfo installedInfo=getTargetContext().getPackageManager().getPackageInfo(getTargetContext().getPackageName(),0);
             long expectedHeartbeatVersion=android.os.Build.VERSION.SDK_INT>=28?installedInfo.getLongVersionCode():installedInfo.versionCode;
             JSONObject heartbeatVersionPayload=DriverApi.stateInput(getTargetContext());
-            check(heartbeatVersionPayload.getLong("appVersion")==expectedHeartbeatVersion&&heartbeatVersionPayload.getLong("appVersion")==10,"The actual heartbeat payload must report this installed APK instead of stale Rider 1.6 code 8");
+            check(heartbeatVersionPayload.getLong("appVersion")==expectedHeartbeatVersion&&heartbeatVersionPayload.getLong("appVersion")==11,"The actual heartbeat payload must report this installed APK instead of stale Rider 1.6 code 8");
             check(heartbeatVersionPayload.getBoolean("gpsEnabled")==DriverApi.gpsEnabled(getTargetContext())&&heartbeatVersionPayload.getBoolean("onDuty")== (TrackingService.running&&Session.prefs(getTargetContext()).getBoolean("duty",false))&&queue.count()==queueBeforeHeartbeat,"Reading package identity must preserve duty, GPS permissions and queued journeys");
             status(0,"heartbeatReportsActualInstalledPackageVersion",34,".");
-            Bundle result = new Bundle(); result.putString("stream", "\nOK (34 tests)\n");
+            status(1,"motionEvidenceDistinguishesStillWalkingAndMissingSensor",35,"");
+            MotionSampler motionFixture=new MotionSampler();long motionTime=1000;
+            check(motionFixture.evidence(motionTime).equals("unknown"),"No sensor data must remain unknown, not stationary");
+            for(int i=0;i<70;i++){motionTime+=200;motionFixture.sample(0,0,9.81f,motionTime);}
+            check(motionFixture.evidence(motionTime).equals("still"),"A phone at rest must supply independent stationary evidence");
+            for(int i=0;i<100;i++){motionTime+=50;motionFixture.sample(0,0,9.81f+(float)Math.sin(i*1.7)*1.5f,motionTime);}
+            check(motionFixture.evidence(motionTime).equals("moving"),"Repeated walking acceleration must release the stationary gate");
+            for(int i=0;i<70;i++){motionTime+=200;motionFixture.sample(0,0,9.81f,motionTime);}
+            check(motionFixture.evidence(motionTime).equals("still")&&motionFixture.evidence(motionTime+4000).equals("unknown"),"Rest must recover, and stale sensor evidence must never veto travel");
+            motionFixture.stop();check(motionFixture.evidence(motionTime).equals("unknown"),"Privacy pause must release the sensor state");
+            status(0,"motionEvidenceDistinguishesStillWalkingAndMissingSensor",35,".");
+
+            status(1,"gpsKeepsOriginalMotionEvidenceAndPrefersFreshSatellite",36,"");
+            long motionClock=System.currentTimeMillis(),motionElapsed=android.os.SystemClock.elapsedRealtimeNanos();
+            android.location.Location motionFix=fix(motionClock,motionElapsed,-1.28,36.82,3,"gps");motionFix.setSpeed(1.8f);
+            int motionQueueBefore=EventQueue.get(getTargetContext()).count();
+            JSONObject motionEvent=new GpsRecorder().record(getTargetContext(),UUID.randomUUID().toString(),motionFix,"still");
+            check(motionEvent!=null&&motionEvent.getString("motion").equals("still")&&Math.abs(motionEvent.getDouble("speed")-1.8)<.01&&motionEvent.getDouble("lat")==motionFix.getLatitude(),"Sensor evidence must accompany the original GPS fix, without rewriting its speed or coordinates");
+            check(EventQueue.get(getTargetContext()).count()==motionQueueBefore+1,"Motion-tagged GPS must use the durable offline queue");
+            GpsRecorder freshSatellite=new GpsRecorder();android.location.Location gpsRest=fix(motionClock,motionElapsed,-1.28,36.82,5,"gps");gpsRest.setSpeed(0);freshSatellite.accepted(gpsRest);
+            android.location.Location quietSatellite=fix(motionClock+29000,motionElapsed+29000000000L,-1.28,36.82,5,"gps");quietSatellite.setSpeed(0);
+            check(!freshSatellite.eligible(quietSatellite,motionElapsed+29000000000L,motionClock+29000),"Stationary sampling remains a heartbeat");
+            check(!freshSatellite.eligible(fix(motionClock+31000,motionElapsed+31000000000L,-1.2801,36.8201,20,"network"),motionElapsed+31000000000L,motionClock+31000),"A fresh satellite fix must beat a network location even when deliberately not queued");
+            status(0,"gpsKeepsOriginalMotionEvidenceAndPrefersFreshSatellite",36,".");
+
+            status(1,"packagedMapRejectsRealStationaryFalseSpeedTrace",37,"");
+            String fieldFixture;try(java.io.InputStream input=getContext().getAssets().open("stationary-drift.json");java.io.ByteArrayOutputStream output=new java.io.ByteArrayOutputStream()){byte[] buffer=new byte[8192];int n;while((n=input.read(buffer))!=-1)output.write(buffer,0,n);fieldFixture=new String(output.toByteArray(),java.nio.charset.StandardCharsets.UTF_8);}
+            CountDownLatch fieldUi=new CountDownLatch(1);AtomicReference<String> fieldResult=new AtomicReference<>();
+            String fieldScript="(function(){var p="+fieldFixture+",raw=JSON.stringify(p),v=journeyView(p);return {lines:v.segments.length,moving:v.moving,excluded:v.excludedPoints,unchanged:raw===JSON.stringify(p),count:p.length};})()";
+            runOnMainSync(()->{WebView web=(WebView)((ViewGroup)ui[0].findViewById(android.R.id.content)).getChildAt(0);web.evaluateJavascript(fieldScript,value->{fieldResult.set(value);fieldUi.countDown();});});
+            check(fieldUi.await(5,TimeUnit.SECONDS),"Packaged field trace must respond");JSONObject fieldView=new JSONObject(fieldResult.get());
+            check(fieldView.getInt("lines")==0&&!fieldView.getBoolean("moving")&&fieldView.getBoolean("unchanged")&&fieldView.getInt("count")>300&&fieldView.getInt("excluded")==fieldView.getInt("count"),"Real false-speed indoor GPS must draw no journey while every original fix stays intact: "+fieldView);
+            status(0,"packagedMapRejectsRealStationaryFalseSpeedTrace",37,".");
+            Bundle result = new Bundle(); result.putString("stream", "\nOK (37 tests)\n");
             finish(Activity.RESULT_OK, result);
         } catch (Throwable error) {
             android.util.Log.e("RouteForgeTests",activeTest,error);
-            Bundle failure=new Bundle();failure.putString("class",getClass().getName());failure.putString("test",activeTest);failure.putInt("numtests",34);failure.putInt("current",activeNumber);failure.putString("stack",android.util.Log.getStackTraceString(error));failure.putString("stream",error.toString());sendStatus(-2,failure);
+            Bundle failure=new Bundle();failure.putString("class",getClass().getName());failure.putString("test",activeTest);failure.putInt("numtests",37);failure.putInt("current",activeNumber);failure.putString("stack",android.util.Log.getStackTraceString(error));failure.putString("stream",error.toString());sendStatus(-2,failure);
             Bundle result = new Bundle(); result.putString("stream", "Queue test failed: " + error);
             finish(Activity.RESULT_CANCELED, result);
         } finally { if(ui[0]!=null)runOnMainSync(ui[0]::finish);queue.clear();queue.clearCommands();Session.clear(getTargetContext());Session.prefs(getTargetContext()).edit().remove("pending_unlink").commit(); }

@@ -24,6 +24,9 @@ final class GpsRecorder {
   long age=elapsedNanos-fix.getElapsedRealtimeNanos();
   if(age<0||age>30000000000L||Math.abs(wallTime-fix.getTime())>120000)return false;
   boolean satellite=LocationManager.GPS_PROVIDER.equals(fix.getProvider());
+  // A fresh satellite fix still wins over network locations when it was
+  // deliberately retained as a 30-second stationary heartbeat.
+  if(satellite)gpsAt=Math.max(gpsAt,fix.getElapsedRealtimeNanos());
   if(!satellite&&(fix.getAccuracy()>40||(gpsAt>0&&elapsedNanos-gpsAt<30000000000L)))return false;
   if(anchor!=null) {
    long delta=fix.getElapsedRealtimeNanos()-anchor.getElapsedRealtimeNanos();
@@ -43,9 +46,13 @@ final class GpsRecorder {
  }
  void accepted(Location fix) {anchor=new Location(fix);if(LocationManager.GPS_PROVIDER.equals(fix.getProvider()))gpsAt=fix.getElapsedRealtimeNanos();}
  JSONObject record(Context c,String trip,Location fix)throws Exception {
+  return record(c,trip,fix,"unknown");
+ }
+ JSONObject record(Context c,String trip,Location fix,String motion)throws Exception {
   long elapsed=SystemClock.elapsedRealtimeNanos(),now=System.currentTimeMillis();
   if(!eligible(fix,elapsed,now))return null;
   JSONObject event=new JSONObject().put("eventId",UUID.randomUUID().toString()).put("tripId",trip).put("kind","point").put("recordedAt",fix.getTime()).put("lat",fix.getLatitude()).put("lng",fix.getLongitude()).put("accuracy",fix.getAccuracy());
+  if("moving".equals(motion)||"still".equals(motion)||"unknown".equals(motion))event.put("motion",motion);
   if(fix.hasSpeed()&&Float.isFinite(fix.getSpeed())&&fix.getSpeed()>=0&&fix.getSpeed()<=200)event.put("speed",fix.getSpeed());
   if(fix.hasBearing()&&Float.isFinite(fix.getBearing())&&fix.getBearing()>=0&&fix.getBearing()<=360)event.put("heading",fix.getBearing());
   android.os.BatteryManager batteries=c.getSystemService(android.os.BatteryManager.class);int battery=batteries.getIntProperty(android.os.BatteryManager.BATTERY_PROPERTY_CAPACITY);if(battery>=0&&battery<=100)event.put("battery",battery);
