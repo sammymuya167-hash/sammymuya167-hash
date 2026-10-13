@@ -32,7 +32,7 @@ public final class QueueInstrumentation extends Instrumentation {
     private void status(int code, String name, int number, String message) {
         activeTest=name;activeNumber=number;
         Bundle b = new Bundle(); b.putString("class", getClass().getName());
-        b.putString("test", name); b.putInt("numtests", 37); b.putInt("current", number);
+        b.putString("test", name); b.putInt("numtests", 38); b.putInt("current", number);
         b.putString("stream", message); sendStatus(code, b);
     }
     private boolean notificationCount(NotificationManager manager,int expected) throws Exception {
@@ -351,11 +351,17 @@ public final class QueueInstrumentation extends Instrumentation {
             check(fieldUi.await(5,TimeUnit.SECONDS),"Packaged field trace must respond");JSONObject fieldView=new JSONObject(fieldResult.get());
             check(fieldView.getInt("lines")==0&&!fieldView.getBoolean("moving")&&fieldView.getBoolean("unchanged")&&fieldView.getInt("count")>300&&fieldView.getInt("excluded")==fieldView.getInt("count")&&fieldView.getInt("sparseWalk")==3,"Real false-speed indoor GPS must draw no journey while every original fix and sparse offline walk stay intact: "+fieldView);
             status(0,"packagedMapRejectsRealStationaryFalseSpeedTrace",37,".");
-            Bundle result = new Bundle(); result.putString("stream", "\nOK (37 tests)\n");
+            status(1,"customerCollectionDistinguishesPrepaidHandoffAndExactCod",38,"");
+            CountDownLatch paymentUi=new CountDownLatch(1);AtomicReference<String> paymentResult=new AtomicReference<>();
+            runOnMainSync(()->{WebView web=(WebView)((ViewGroup)ui[0].findViewById(android.R.id.content)).getChildAt(0);web.evaluateJavascript("(function(){var base={id:'fixture',title:'Synthetic customer purchase',pickup:{},destination:{}};var cod={...base,amountDue:1150,customerPayment:{method:'cod',reason:'Collect the full confirmed shopping and delivery total.',till:'1681622',payee:'Felix Ndegwa'}};var prepaid={...base,amountDue:0,customerPayment:{method:'mpesa',reason:'M-Pesa payment verified: nothing to collect.'}};var handoff={...base,amountDue:0,customerPayment:{method:'legacy',reason:'Courier handoff: no customer payment to collect.'}};return {cod:paymentCollectionRequired(cod),prepaid:paymentCollectionRequired(prepaid),handoff:paymentCollectionRequired(handoff),zero:paymentCollectionRequired({...base,amountDue:0}),legacyUnknown:paymentCollectionRequired({...base,amountDue:null}),explanation:collectionExplanation(prepaid),courierExplanation:collectionExplanation(handoff)};})()",value->{paymentResult.set(value);paymentUi.countDown();});});
+            check(paymentUi.await(5,TimeUnit.SECONDS),"Customer payment UI must respond");JSONObject paymentView=new JSONObject(paymentResult.get());
+            check(paymentView.getBoolean("cod")&&!paymentView.getBoolean("prepaid")&&!paymentView.getBoolean("handoff")&&!paymentView.getBoolean("zero")&&paymentView.getBoolean("legacyUnknown")&&paymentView.getString("explanation").contains("nothing to collect")&&paymentView.getString("courierExplanation").contains("Courier handoff"),"Only an actual outstanding collection should open the exact payment form: "+paymentView);
+            status(0,"customerCollectionDistinguishesPrepaidHandoffAndExactCod",38,".");
+            Bundle result = new Bundle(); result.putString("stream", "\nOK (38 tests)\n");
             finish(Activity.RESULT_OK, result);
         } catch (Throwable error) {
             android.util.Log.e("RouteForgeTests",activeTest,error);
-            Bundle failure=new Bundle();failure.putString("class",getClass().getName());failure.putString("test",activeTest);failure.putInt("numtests",37);failure.putInt("current",activeNumber);failure.putString("stack",android.util.Log.getStackTraceString(error));failure.putString("stream",error.toString());sendStatus(-2,failure);
+            Bundle failure=new Bundle();failure.putString("class",getClass().getName());failure.putString("test",activeTest);failure.putInt("numtests",38);failure.putInt("current",activeNumber);failure.putString("stack",android.util.Log.getStackTraceString(error));failure.putString("stream",error.toString());sendStatus(-2,failure);
             Bundle result = new Bundle(); result.putString("stream", "Queue test failed: " + error);
             finish(Activity.RESULT_CANCELED, result);
         } finally { if(ui[0]!=null)runOnMainSync(ui[0]::finish);queue.clear();queue.clearCommands();Session.clear(getTargetContext());Session.prefs(getTargetContext()).edit().remove("pending_unlink").commit(); }
