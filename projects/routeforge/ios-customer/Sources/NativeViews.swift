@@ -87,6 +87,7 @@ struct NativeSettings: View {
                 Section("Order updates") {
                     Button("Enable order alerts") { Task { await client.enableAlerts() } }.accessibilityIdentifier("enableNativeAlerts")
                     Button("Turn order alerts off") { client.disableAlerts() }
+                    if let message = client.alertMessage { Text(message).font(.footnote).accessibilityIdentifier("nativeAlertStatus") }
                     Text("Your orders refresh while the app is open. Notifications after closing the app are not enabled in this build.").font(.footnote).foregroundStyle(.secondary)
                 }
                 Section("Your account and data") {
