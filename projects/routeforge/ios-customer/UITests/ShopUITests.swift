@@ -23,17 +23,25 @@ final class ShopUITests: XCTestCase {
     func testNativeSettingsExposeVersionPrivacyAndDeletion() {
         let app = XCUIApplication(); app.launch()
         app.buttons["nativeSettings"].tap()
-        XCTAssertTrue(app.staticTexts["1.0 (1)"].waitForExistence(timeout: 10))
-        XCTAssertTrue(app.buttons["Privacy & data"].exists)
-        XCTAssertTrue(app.buttons["Delete my account"].exists)
-        XCTAssertTrue(app.buttons["enableNativeAlerts"].exists)
+        XCTAssertTrue(app.buttons["enableNativeAlerts"].waitForExistence(timeout: 10))
         XCTAssertTrue(app.staticTexts["Your orders refresh while the app is open. Notifications after closing the app are not enabled in this build."].exists)
+        reveal(app.buttons["Privacy & data"], in: app)
+        XCTAssertTrue(app.buttons["Privacy & data"].exists)
+        reveal(app.buttons["Delete my account"], in: app)
+        XCTAssertTrue(app.buttons["Delete my account"].exists)
+        reveal(app.staticTexts["1.0 (1)"], in: app)
+        XCTAssertTrue(app.staticTexts["1.0 (1)"].exists)
     }
     func testOfflineScreenAllowsRetryAndKeepsNativeNavigation() {
         let app = XCUIApplication(); app.launchArguments = ["--offline-ui-test"]; app.launch()
         XCTAssertTrue(app.buttons["retryShop"].waitForExistence(timeout: 10))
         XCTAssertTrue(app.staticTexts["connectionMessage"].label.contains("saved basket"))
         app.buttons["nativeSettings"].tap()
-        XCTAssertTrue(app.buttons["Delete my account"].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.buttons["enableNativeAlerts"].waitForExistence(timeout: 10))
+        reveal(app.buttons["Delete my account"], in: app)
+        XCTAssertTrue(app.buttons["Delete my account"].exists)
+    }
+    private func reveal(_ element: XCUIElement, in app: XCUIApplication) {
+        for _ in 0..<5 { if element.exists { return }; app.swipeUp() }
     }
 }

@@ -45,9 +45,11 @@ struct CustomerRoot: View {
         }
         .sheet(isPresented: $showOrders) {
             NativeOrders(client: client) { showOrders = false; controller?.loadShop() }
+                .presentationDetents([.large])
         }
         .sheet(isPresented: $showSettings, onDismiss: { client.alertMessage = nil }) {
             NativeSettings(client: client) { path in showSettings = false; controller?.loadShop(path: path) }
+                .presentationDetents([.large])
         }
         .alert("Order alerts", isPresented: Binding(get: { client.alertMessage != nil && !showSettings }, set: { if !$0 { client.alertMessage = nil } })) {
             Button("OK") { client.alertMessage = nil }

@@ -24,12 +24,13 @@ final class CoreTests: XCTestCase {
         XCTAssertFalse(ShopOrigin.isAPI(URL(string: "https://evil.test/api/customer/orders")!))
     }
     func testOnlySecureExactHostHttpOnlyCustomerCookieIsUsed() {
-        func cookie(_ changes: [HTTPCookiePropertyKey: Any] = [:]) -> HTTPCookie {
-            let base: [HTTPCookiePropertyKey: Any] = [.name: ShopOrigin.cookieName, .value: "test-token", .domain: ShopOrigin.host, .path: "/", .secure: "TRUE", HTTPCookiePropertyKey("HttpOnly"): "TRUE", .expires: Date(timeIntervalSinceNow: 3600)]
+        func cookie(_ changes: [HTTPCookiePropertyKey: Any] = [:], httpOnly: Bool = true) -> HTTPCookie {
+            var base: [HTTPCookiePropertyKey: Any] = [.name: ShopOrigin.cookieName, .value: "test-token", .domain: ShopOrigin.host, .path: "/", .secure: "TRUE", .expires: Date(timeIntervalSinceNow: 3600)]
+            if httpOnly { base[HTTPCookiePropertyKey("HttpOnly")] = "TRUE" }
             return HTTPCookie(properties: base.merging(changes, uniquingKeysWith: { _, b in b }))!
         }
         XCTAssertNotNil(ShopOrigin.sessionCookie(in: [cookie()]))
-        for c in [cookie([.domain: ".chatgpt.site"]), cookie([.name: "office_session"]), cookie([.path: "/shop"]), cookie([.expires: Date(timeIntervalSinceNow: -1)]), cookie([HTTPCookiePropertyKey("HttpOnly"): "FALSE"])] {
+        for c in [cookie([.domain: ".chatgpt.site"]), cookie([.name: "office_session"]), cookie([.path: "/shop"]), cookie([.expires: Date(timeIntervalSinceNow: -1)]), cookie(httpOnly: false)] {
             XCTAssertNil(ShopOrigin.sessionCookie(in: [c]))
         }
     }

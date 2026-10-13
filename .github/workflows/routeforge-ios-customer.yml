@@ -23,7 +23,7 @@ jobs:
           xcodebuild -version >> build/release/toolchain.txt
           xcodegen generate --spec project.yml
           git rev-parse HEAD > build/release/source-sha.txt
-          find Sources Tests UITests Assets.xcassets -type f -print0 | sort -z | xargs -0 shasum -a 256 > build/release/source-manifest.sha256
+          find Sources Tests UITests Assets.xcassets Info.plist PrivacyInfo.xcprivacy project.yml README.md .gitignore -type f -print0 | sort -z | xargs -0 shasum -a 256 > build/release/source-manifest.sha256
           cp README.md build/release/iOS-handoff.md
       - name: Compile device archive without distribution credentials
         run: |
@@ -49,11 +49,11 @@ jobs:
           PY
       - name: Boot selected simulator
         run: |
-          open -a Simulator
-          xcrun simctl boot "$ROUTEFORGE_SIMULATOR_ID" 2>/dev/null || true
           python3 - <<'PY'
           import os, subprocess
-          subprocess.run(['xcrun', 'simctl', 'bootstatus', os.environ['ROUTEFORGE_SIMULATOR_ID'], '-b'], check=True, timeout=240)
+          subprocess.run(['open', '-a', 'Simulator'], check=True, timeout=30)
+          subprocess.run(['xcrun', 'simctl', 'boot', os.environ['ROUTEFORGE_SIMULATOR_ID']], check=False, timeout=600)
+          subprocess.run(['xcrun', 'simctl', 'bootstatus', os.environ['ROUTEFORGE_SIMULATOR_ID'], '-b'], check=True, timeout=600)
           PY
       - name: Build signed simulator test application
         run: |
