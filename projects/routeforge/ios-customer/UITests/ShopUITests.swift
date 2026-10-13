@@ -29,8 +29,10 @@ final class ShopUITests: XCTestCase {
         XCTAssertTrue(app.buttons["Privacy & data"].exists)
         reveal(app.buttons["Delete my account"], in: app)
         XCTAssertTrue(app.buttons["Delete my account"].exists)
-        reveal(app.staticTexts["1.0 (1)"], in: app)
-        XCTAssertTrue(app.staticTexts["1.0 (1)"].exists)
+        let version = app.descendants(matching: .any).matching(identifier: "installedVersion").firstMatch
+        reveal(version, in: app)
+        XCTAssertTrue(version.exists, app.debugDescription)
+        XCTAssertEqual(version.value as? String, "1.0 (1)")
     }
     func testOfflineScreenAllowsRetryAndKeepsNativeNavigation() {
         let app = XCUIApplication(); app.launchArguments = ["--offline-ui-test"]; app.launch()

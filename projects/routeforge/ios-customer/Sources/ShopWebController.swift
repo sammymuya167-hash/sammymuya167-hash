@@ -25,7 +25,7 @@ import SwiftUI
         configuration.limitsNavigationsToAppBoundDomains = true
         configuration.preferences.javaScriptCanOpenWindowsAutomatically = false
         configuration.defaultWebpagePreferences.allowsContentJavaScript = true
-        configuration.applicationNameForUserAgent = "RouteForgeCustomeriOS/1.0"
+        configuration.applicationNameForUserAgent = "RouteForgeCustomeriOS/" + ShopOrigin.version
         webView = WKWebView(frame: .zero, configuration: configuration)
         super.init(nibName: nil, bundle: nil)
         webView.navigationDelegate = self

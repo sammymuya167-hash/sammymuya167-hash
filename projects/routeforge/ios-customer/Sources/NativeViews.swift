@@ -97,7 +97,11 @@ struct NativeSettings: View {
                     Text("Location is optional and is used when you choose a delivery pin. This customer app does not record your journeys.").font(.footnote).foregroundStyle(.secondary)
                 }
                 Section("RouteForge by SHADOWNET") {
-                    LabeledContent("Customer iOS version", value: "1.0 (1)")
+                    LabeledContent("Customer iOS version", value: ShopOrigin.versionLabel)
+                        .accessibilityElement(children: .combine)
+                        .accessibilityLabel("Customer iOS version")
+                        .accessibilityValue(ShopOrigin.versionLabel)
+                        .accessibilityIdentifier("installedVersion")
                     Link("Contact support", destination: URL(string: "mailto:sammymuya167@gmail.com")!)
                 }
             }.navigationTitle("App settings")

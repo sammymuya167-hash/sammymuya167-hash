@@ -5,6 +5,11 @@ enum ShopOrigin {
     static let base = URL(string: "https://" + host)!
     static let shop = base.appendingPathComponent("shop")
     static let cookieName = "__Host-routeforge-customer"
+    static var version: String { Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "unknown" }
+    static var versionLabel: String {
+        let build = Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "unknown"
+        return version + " (" + build + ")"
+    }
 
     static func isFirstParty(_ url: URL) -> Bool {
         url.scheme?.lowercased() == "https" && url.host?.lowercased() == host
