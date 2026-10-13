@@ -299,23 +299,23 @@ public final class QueueInstrumentation extends Instrumentation {
             check(stationaryUi.await(5,TimeUnit.SECONDS),"Stationary map must respond");JSONObject stillResult=new JSONObject(stationaryResult.get());check(stillResult.getInt("lines")==0&&!stillResult.getBoolean("moving")&&stillResult.getBoolean("anchored")&&stillResult.getBoolean("unchanged")&&stillResult.getInt("drawn")==0&&stillResult.getInt("walking")==10,"Stationary drift is hidden and genuine offline movement retained: "+stillResult);
             status(0,"stationaryWebViewHasNoTrailAndOfflineWalkingStillHasOne",32,".");
             status(1,"installedUpdateClearsCachedBannerAndShowsCurrentVersion",33,"");
-            check(UpdateApi.installedVersion(getTargetContext())==11&&UpdateApi.installedName(getTargetContext()).equals("1.9"),"Rider identity must match this installed 1.9 APK");
-            int retainedQueue=queue.count();JSONObject priorUpdate=new JSONObject().put("applicationId","app.shadownet.routeforge.rider").put("certificateSha256","e0c3213d4cbb6cc15c5792d8f7ffecaa6758b963d6998b9afc9511c6c45dc72c").put("apkSha256","a".repeat(64)).put("versionedApkPath","/downloads/routeforge-rider-1.9.apk").put("versionCode",11).put("available",true);
+            check(UpdateApi.installedVersion(getTargetContext())==12&&UpdateApi.installedName(getTargetContext()).equals("1.10"),"Rider identity must match this installed 1.10 APK");
+            int retainedQueue=queue.count();JSONObject priorUpdate=new JSONObject().put("applicationId","app.shadownet.routeforge.rider").put("certificateSha256","e0c3213d4cbb6cc15c5792d8f7ffecaa6758b963d6998b9afc9511c6c45dc72c").put("apkSha256","a".repeat(64)).put("versionedApkPath","/downloads/routeforge-rider-1.10.apk").put("versionCode",12).put("available",true);
             Session.prefs(getTargetContext()).edit().putString("rider_update",priorUpdate.toString()).commit();
             check(!UpdateApi.cached(getTargetContext()).optBoolean("available")&&UpdateApi.downloadUrl(getTargetContext()).equals(Session.API+"/login"),"A cached pre-install notification must not offer the already installed update, even offline");
-            priorUpdate.put("versionCode",12).put("versionedApkPath","/downloads/routeforge-rider-1.10.apk");Session.prefs(getTargetContext()).edit().putString("rider_update",priorUpdate.toString()).commit();
-            check(UpdateApi.cached(getTargetContext()).optBoolean("available")&&UpdateApi.downloadUrl(getTargetContext()).endsWith("/routeforge-rider-1.10.apk")&&queue.count()==retainedQueue,"A newer same-identity release remains available without touching saved GPS");
+            priorUpdate.put("versionCode",13).put("versionedApkPath","/downloads/routeforge-rider-1.11.apk");Session.prefs(getTargetContext()).edit().putString("rider_update",priorUpdate.toString()).commit();
+            check(UpdateApi.cached(getTargetContext()).optBoolean("available")&&UpdateApi.downloadUrl(getTargetContext()).endsWith("/routeforge-rider-1.11.apk")&&queue.count()==retainedQueue,"A newer same-identity release remains available without touching saved GPS");
             Session.prefs(getTargetContext()).edit().remove("rider_update").commit();
             CountDownLatch versionUi=new CountDownLatch(1);AtomicReference<String> versionResult=new AtomicReference<>();
-            runOnMainSync(()->{WebView web=(WebView)((ViewGroup)ui[0].findViewById(android.R.id.content)).getChildAt(0);web.evaluateJavascript("(function(){applyState({paired:true,appVersionName:'1.9',commands:[],data:{}});go('account');var result=document.getElementById('accountcontent').textContent.indexOf('Rider 1.9')>=0;applyState({paired:false});return result;})()",value->{versionResult.set(value);versionUi.countDown();});});
-            check(versionUi.await(5,TimeUnit.SECONDS)&&"true".equals(versionResult.get()),"The actual account screen must show the installed Rider 1.9 version");
+            runOnMainSync(()->{WebView web=(WebView)((ViewGroup)ui[0].findViewById(android.R.id.content)).getChildAt(0);web.evaluateJavascript("(function(){applyState({paired:true,appVersionName:'1.10',commands:[],data:{}});go('account');var result=document.getElementById('accountcontent').textContent.indexOf('Rider 1.10')>=0;applyState({paired:false});return result;})()",value->{versionResult.set(value);versionUi.countDown();});});
+            check(versionUi.await(5,TimeUnit.SECONDS)&&"true".equals(versionResult.get()),"The actual account screen must show the installed Rider 1.10 version");
             status(0,"installedUpdateClearsCachedBannerAndShowsCurrentVersion",33,".");
             status(1,"heartbeatReportsActualInstalledPackageVersion",34,"");
             int queueBeforeHeartbeat=queue.count();
             android.content.pm.PackageInfo installedInfo=getTargetContext().getPackageManager().getPackageInfo(getTargetContext().getPackageName(),0);
             long expectedHeartbeatVersion=android.os.Build.VERSION.SDK_INT>=28?installedInfo.getLongVersionCode():installedInfo.versionCode;
             JSONObject heartbeatVersionPayload=DriverApi.stateInput(getTargetContext());
-            check(heartbeatVersionPayload.getLong("appVersion")==expectedHeartbeatVersion&&heartbeatVersionPayload.getLong("appVersion")==11,"The actual heartbeat payload must report this installed APK instead of stale Rider 1.6 code 8");
+            check(heartbeatVersionPayload.getLong("appVersion")==expectedHeartbeatVersion&&heartbeatVersionPayload.getLong("appVersion")==12,"The actual heartbeat payload must report this installed APK instead of stale Rider 1.6 code 8");
             check(heartbeatVersionPayload.getBoolean("gpsEnabled")==DriverApi.gpsEnabled(getTargetContext())&&heartbeatVersionPayload.getBoolean("onDuty")== (TrackingService.running&&Session.prefs(getTargetContext()).getBoolean("duty",false))&&queue.count()==queueBeforeHeartbeat,"Reading package identity must preserve duty, GPS permissions and queued journeys");
             status(0,"heartbeatReportsActualInstalledPackageVersion",34,".");
             status(1,"motionEvidenceDistinguishesStillWalkingAndMissingSensor",35,"");
@@ -367,3 +367,4 @@ public final class QueueInstrumentation extends Instrumentation {
         } finally { if(ui[0]!=null)runOnMainSync(ui[0]::finish);queue.clear();queue.clearCommands();Session.clear(getTargetContext());Session.prefs(getTargetContext()).edit().remove("pending_unlink").commit(); }
     }
 }
+
