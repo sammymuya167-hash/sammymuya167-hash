@@ -9,6 +9,7 @@ export type OrderRow={payload_json:string;input_json:string;version:number;dispa
 const parse=<T>(row:{payload_json:string})=>JSON.parse(row.payload_json) as T;
 export async function assignOrder(owner:string,row:OrderRow,deviceId:string,offerMode?:"claim"|"fallback"){
   const current=parse<OfficeOrder>(row);
+  if(await db().prepare("SELECT order_id FROM merchant_deliveries WHERE order_id=?").bind(current.id).first())throw new TrackingError(409,"Use merchant dispatch for this delivery.");
   if(current.status!=="queued"&&current.status!=="offered")throw new TrackingError(409,"This order is already assigned or closed.");
   if(offerMode&&current.status!=="offered")throw new TrackingError(409,"This order has no active offer window.");
   const offer=current.status==="offered"?await db().prepare("SELECT expires_at,eligible_json FROM order_offers WHERE order_id=? AND owner_id=?").bind(current.id,owner).first<{expires_at:number;eligible_json:string}>():null;

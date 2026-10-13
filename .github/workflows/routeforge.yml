@@ -2,7 +2,7 @@ name: RouteForge checks
 
 on:
   push:
-    branches: [main]
+    branches: [main, routeforge-rider-1-6]
     paths: ["projects/routeforge/**", ".github/workflows/routeforge.yml"]
   pull_request:
     paths: ["projects/routeforge/**", ".github/workflows/routeforge.yml"]
@@ -13,6 +13,7 @@ permissions:
 
 jobs:
   verify:
+    if: github.ref != 'refs/heads/routeforge-rider-1-6'
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -53,6 +54,16 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: 8.11.1
+      - name: Bundle real Nairobi/Kiambu roads and test the same graph
+        run: |
+          mkdir -p app/src/androidTest/assets/roads
+          curl --fail --silent --show-error --max-time 180 --retry 2 https://brouter.de/brouter/segments4/E35_S5.rd5 --output app/src/androidTest/assets/roads/E35_S5.rd5
+          test "$(wc -c < app/src/androidTest/assets/roads/E35_S5.rd5)" -gt 30000000
+          cp app/src/androidTest/assets/roads/E35_S5.rd5 app/src/main/assets/roads/E35_S5.rd5
+      - name: Fetch upstream Mapsforge renderer test map
+        run: curl --fail --silent --show-error --max-time 45 https://raw.githubusercontent.com/mapsforge/mapsforge/0.25.0/mapsforge-map-reader/src/test/resources/with_data/output.map --output app/src/androidTest/assets/fixture.map
+      - name: Include actual dashboard CSS for WebView contrast checks
+        run: cp ../app/globals.css app/src/androidTest/assets/dashboard.css
       - run: gradle :app:assembleDebug :app:assembleRelease :app:lintDebug :app:lintRelease :app:assembleDebugAndroidTest
       - name: Package aligned unsigned rider release for owner signing
         run: |
@@ -61,14 +72,15 @@ jobs:
           cp "$ANDROID_HOME/build-tools/35.0.0/lib/apksigner.jar" rider-release/apksigner.jar
           cp "$ANDROID_HOME/build-tools/35.0.0/NOTICE.txt" rider-release/sdk-tool-NOTICE.txt
           git rev-parse HEAD > rider-release/source-sha.txt
-          find app/src/main -type f -print0 | sort -z | xargs -0 sha256sum > rider-release/source-manifest.sha256
-          sha256sum app/build.gradle build.gradle settings.gradle >> rider-release/source-manifest.sha256
+          find app/src/main brouter-engine/src/main -type f -print0 | sort -z | xargs -0 sha256sum > rider-release/source-manifest.sha256
+          sha256sum app/build.gradle build.gradle settings.gradle brouter-engine/build.gradle brouter-engine/LICENSE brouter-engine/UPSTREAM.json >> rider-release/source-manifest.sha256
+          sha256sum app/src/androidTest/assets/roads/E35_S5.rd5 > rider-release/test-road-data.sha256
       - name: Enable KVM for the disposable test emulator
         run: |
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
-      - name: Verify offline queue on Android
+      - name: Verify offline walk recovery, journey privacy, contrast and road routing on Android
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 35

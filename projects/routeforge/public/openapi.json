@@ -1,0 +1,553 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "RouteForge Universal Delivery API",
+    "version": "2.0.0",
+    "description": "Server-to-server merchant API. Onboarding, approval, active service areas and appropriate fleet consent are required. Persist externalId, trackingToken and deliveryOtp before submitting; retry exactly the same payload. Status callbacks are signed, stable-ID and at-least-once. M-Pesa and live payments are disabled. Native Shopify/WooCommerce payloads are not accepted."
+  },
+  "servers": [
+    {
+      "url": "https://routeforge-shadownet.sammymuya167.chatgpt.site"
+    }
+  ],
+  "security": [
+    {
+      "MerchantApiKey": []
+    }
+  ],
+  "paths": {
+    "/api/v1/branches": {
+      "get": {
+        "summary": "List authorized pickup branches",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Rejected request (400/401/403/404/409/413/422/429/503 as applicable).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/quote": {
+      "post": {
+        "summary": "Validate pickup branch and destination; estimate KES fee",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Rejected request (400/401/403/404/409/413/422/429/503 as applicable).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "branchId",
+                  "destination"
+                ],
+                "properties": {
+                  "branchId": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "destination": {
+                    "$ref": "#/components/schemas/Place"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/deliveries": {
+      "post": {
+        "summary": "Create or exactly replay an external delivery",
+        "responses": {
+          "201": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeliveryStatus"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Rejected request (400/401/403/404/409/413/422/429/503 as applicable).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeliveryInput"
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "If supplied, must equal externalId."
+          }
+        ]
+      }
+    },
+    "/api/v1/deliveries/{id}": {
+      "get": {
+        "summary": "Read a delivery belonging to this integration merchant",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeliveryStatus"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Rejected request (400/401/403/404/409/413/422/429/503 as applicable).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ]
+      }
+    },
+    "/api/v1/deliveries/{id}/ready": {
+      "post": {
+        "summary": "Mark a queued package ready and initiate dispatch",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeliveryStatus"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Rejected request (400/401/403/404/409/413/422/429/503 as applicable).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ]
+      }
+    },
+    "/api/webhooks/{integrationId}": {
+      "post": {
+        "summary": "HMAC-authenticated universal delivery intake",
+        "responses": {
+          "201": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeliveryStatus"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Rejected request (400/401/403/404/409/413/422/429/503 as applicable).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeliveryInput"
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "integrationId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "X-RouteForge-Timestamp",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9]{10}$"
+            }
+          },
+          {
+            "name": "X-RouteForge-Signature",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            },
+            "description": "HMAC-SHA256(signingSecret, timestamp + '.' + exactRawJsonBody), five-minute tolerance."
+          }
+        ],
+        "security": []
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "MerchantApiKey": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "Tenant-scoped rf_live_ key. Keep it on your merchant server."
+      }
+    },
+    "schemas": {
+      "Place": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "name",
+          "address",
+          "lat",
+          "lng"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "address": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 250
+          },
+          "lat": {
+            "type": "number",
+            "minimum": -85,
+            "maximum": 85
+          },
+          "lng": {
+            "type": "number",
+            "minimum": -180,
+            "maximum": 180
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "photon",
+              "partner",
+              "manual",
+              "office",
+              "previous"
+            ],
+            "default": "manual"
+          },
+          "partnerId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      },
+      "DeliveryInput": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "externalId",
+          "branchId",
+          "title",
+          "destination",
+          "customer",
+          "weightKg",
+          "trackingToken",
+          "deliveryOtp"
+        ],
+        "properties": {
+          "externalId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "branchId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "destination": {
+            "$ref": "#/components/schemas/Place"
+          },
+          "customer": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "name",
+              "phone"
+            ],
+            "properties": {
+              "name": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 80
+              },
+              "phone": {
+                "type": "string",
+                "description": "International phone; Kenyan 07/01 prefixes are normalized to +254."
+              }
+            }
+          },
+          "weightKg": {
+            "type": "number",
+            "exclusiveMinimum": 0,
+            "maximum": 1000
+          },
+          "vehicleType": {
+            "type": "string",
+            "enum": [
+              "any",
+              "bicycle",
+              "motorcycle",
+              "car",
+              "van"
+            ],
+            "default": "any"
+          },
+          "priority": {
+            "type": "string",
+            "enum": [
+              "normal",
+              "urgent"
+            ],
+            "default": "normal"
+          },
+          "ready": {
+            "type": "boolean",
+            "default": false
+          },
+          "notes": {
+            "type": "string",
+            "maxLength": 1000,
+            "default": ""
+          },
+          "windowEnd": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "UTC epoch milliseconds",
+            "default": null
+          },
+          "trackingToken": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$",
+            "writeOnly": true,
+            "description": "Random 32-byte token, persisted by caller before submitting and shared privately in /track#token."
+          },
+          "deliveryOtp": {
+            "type": "string",
+            "pattern": "^[0-9]{6}$",
+            "writeOnly": true,
+            "description": "Persist before submission and send privately to the customer."
+          }
+        }
+      },
+      "DeliveryStatus": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "externalId": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "queued",
+              "offered",
+              "assigned",
+              "pickup_arrived",
+              "en_route",
+              "arrived",
+              "delivered",
+              "cancelled"
+            ]
+          },
+          "ready": {
+            "type": "boolean"
+          },
+          "feeMinor": {
+            "type": "integer"
+          },
+          "currency": {
+            "const": "KES"
+          },
+          "fleet": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "exception": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "version": {
+            "type": "integer"
+          },
+          "proof": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "method": {
+                "const": "otp"
+              },
+              "verifiedAt": {
+                "type": "integer"
+              },
+              "deviceId": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "externalDocs": {
+    "description": "Full integration guide and operational limits",
+    "url": "https://routeforge-shadownet.sammymuya167.chatgpt.site/integrations"
+  }
+}

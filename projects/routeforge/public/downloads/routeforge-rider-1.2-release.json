@@ -1,0 +1,22 @@
+{
+  "app": "RouteForge Rider",
+  "applicationId": "app.shadownet.routeforge.rider",
+  "versionCode": 4,
+  "versionName": "1.2-rider",
+  "minimumAndroidApi": 26,
+  "targetAndroidApi": 35,
+  "apkPath": "/downloads/routeforge-rider.apk",
+  "apkSha256": "6da02d5a7929174b43eb026580d190cf657466d039e8d13ee622953f2165e10b",
+  "certificateSha256": "e0c3213d4cbb6cc15c5792d8f7ffecaa6758b963d6998b9afc9511c6c45dc72c",
+  "sourceCommit": "78bbaf698fb83673426383db5ba4e1bcfbb10386",
+  "buildCheckoutCommit": "90559115b7f486580fa9e1418672c6339068c599",
+  "workflowRun": 37838156201,
+  "unsignedArtifactId": 11575464938,
+  "androidChecks": 12,
+  "unitChecks": 56,
+  "workerChecks": 74,
+  "nativeSourceChecksums": 15,
+  "migration": "Install Rider 1.2 over an existing RouteForge Rider installation without clearing storage. Sign in with the office-issued rider account; saved reports resume only under the same driver record. Original pilot users sync and stop the pilot, then install Rider alongside it and sign in to the existing driver account.",
+  "offerWindowSeconds": 30,
+  "accountLoginRequired": true
+}

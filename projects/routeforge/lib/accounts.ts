@@ -44,8 +44,8 @@ function cookieToken(value:string){const token=value.split(";").map(v=>v.trim())
 export async function officeIdentity(){
   await ensureAccounts();const h=await headers(),cookie=h.get("cookie")??"",token=cookieToken(cookie);
   if(token){
-    const a=await db().prepare("SELECT a.owner_id,a.username FROM office_sessions s JOIN company_accounts a ON a.id=s.account_id WHERE s.token_hash=? AND s.expires_at>? AND s.account_version=a.version AND a.enabled=1 AND a.role='office'").bind(await hashSecret(token),Date.now()).first<{owner_id:string;username:string}>();
-    return a?{owner:a.owner_id,name:a.username}:null;
+    const a=await db().prepare("SELECT a.id,a.owner_id,a.username,COALESCE(m.role,'owner') AS staff_role,t.status AS merchant_status FROM office_sessions s JOIN company_accounts a ON a.id=s.account_id LEFT JOIN merchant_staff m ON m.account_id=a.id AND m.merchant_id=a.owner_id LEFT JOIN merchants t ON t.id=a.owner_id WHERE s.token_hash=? AND s.expires_at>? AND s.account_version=a.version AND a.enabled=1 AND a.role='office'").bind(await hashSecret(token),Date.now()).first<{id:string;owner_id:string;username:string;staff_role:string;merchant_status:string|null}>();
+    return a?{owner:a.owner_id,name:a.username,accountId:a.id,role:a.staff_role,merchantStatus:a.merchant_status}:null;
   }
   if(cookie.includes(OFFICE_COOKIE+"="))return null;
   if((env as unknown as {ROUTEFORGE_AUTH_BOOTSTRAP?:string}).ROUTEFORGE_AUTH_BOOTSTRAP)return null;
@@ -53,9 +53,11 @@ export async function officeIdentity(){
   // account is present, ChatGPT identity alone cannot bypass its password.
   const user=await getChatGPTUser();if(!user)return null;
   const configured=await db().prepare("SELECT id FROM company_accounts WHERE owner_id=? AND role='office' LIMIT 1").bind(user.userId).first();
-  return configured?null:{owner:user.userId,name:user.fullName??"SHADOWNET"};
+  if(configured)return null;
+  const merchant=await db().prepare("SELECT status FROM merchants WHERE id=?").bind(user.userId).first<{status:string}>();
+  return {owner:user.userId,name:user.fullName??"SHADOWNET",accountId:null,role:"owner",merchantStatus:merchant?.status??null};
 }
-export async function officeOwner(){return (await officeIdentity())?.owner??null;}
+export async function officeOwner(){const a=await officeIdentity();if(a?.merchantStatus==="suspended")throw new TrackingError(403,"This merchant account is suspended. Contact RouteForge.");return a?.owner??null;}
 async function accountLogin(request:Request,payload:unknown,role:Account["role"]){
   await ensureAccounts();const parsed=loginInput.safeParse(payload);if(!parsed.success)throw new TrackingError(422,"Enter your username and password.");
   const input=parsed.data,key=input.username.toLowerCase(),now=Date.now();

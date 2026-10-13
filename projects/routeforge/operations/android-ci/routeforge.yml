@@ -1,0 +1,99 @@
+name: RouteForge checks
+
+on:
+  push:
+    branches: [main, routeforge-rider-1-6]
+    paths: ["projects/routeforge/**", ".github/workflows/routeforge.yml"]
+  pull_request:
+    paths: ["projects/routeforge/**", ".github/workflows/routeforge.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    if: github.ref != 'refs/heads/routeforge-rider-1-6'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: projects/routeforge
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.25.0
+          package_json_file: projects/routeforge/package.json
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run typecheck
+      - run: pnpm run lint
+      - run: pnpm test
+      - run: pnpm run build
+      - run: pnpm run test:integration
+
+  android:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: projects/routeforge/android-driver
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - uses: android-actions/setup-android@v4
+        with:
+          cmdline-tools-version: 11076708
+          packages: "platform-tools emulator platforms;android-35 build-tools;35.0.0"
+          log-accepted-android-sdk-licenses: false
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: 8.11.1
+      - name: Bundle real Nairobi/Kiambu roads and test the same graph
+        run: |
+          mkdir -p app/src/androidTest/assets/roads
+          curl --fail --silent --show-error --max-time 180 --retry 2 https://brouter.de/brouter/segments4/E35_S5.rd5 --output app/src/androidTest/assets/roads/E35_S5.rd5
+          test "$(wc -c < app/src/androidTest/assets/roads/E35_S5.rd5)" -gt 30000000
+          cp app/src/androidTest/assets/roads/E35_S5.rd5 app/src/main/assets/roads/E35_S5.rd5
+      - name: Fetch upstream Mapsforge renderer test map
+        run: curl --fail --silent --show-error --max-time 45 https://raw.githubusercontent.com/mapsforge/mapsforge/0.25.0/mapsforge-map-reader/src/test/resources/with_data/output.map --output app/src/androidTest/assets/fixture.map
+      - name: Include actual dashboard CSS for WebView contrast checks
+        run: cp ../app/globals.css app/src/androidTest/assets/dashboard.css
+      - run: gradle :app:assembleDebug :app:assembleRelease :app:lintDebug :app:lintRelease :app:assembleDebugAndroidTest
+      - name: Package aligned unsigned rider release for owner signing
+        run: |
+          mkdir -p rider-release
+          "$ANDROID_HOME/build-tools/35.0.0/zipalign" -f 4 app/build/outputs/apk/release/app-release-unsigned.apk rider-release/routeforge-rider-unsigned.apk
+          cp "$ANDROID_HOME/build-tools/35.0.0/lib/apksigner.jar" rider-release/apksigner.jar
+          cp "$ANDROID_HOME/build-tools/35.0.0/NOTICE.txt" rider-release/sdk-tool-NOTICE.txt
+          git rev-parse HEAD > rider-release/source-sha.txt
+          find app/src/main brouter-engine/src/main -type f -print0 | sort -z | xargs -0 sha256sum > rider-release/source-manifest.sha256
+          sha256sum app/build.gradle build.gradle settings.gradle brouter-engine/build.gradle brouter-engine/LICENSE brouter-engine/UPSTREAM.json >> rider-release/source-manifest.sha256
+          sha256sum app/src/androidTest/assets/roads/E35_S5.rd5 > rider-release/test-road-data.sha256
+      - name: Enable KVM for the disposable test emulator
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Verify offline walk recovery, journey privacy, contrast and road routing on Android
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          arch: x86_64
+          target: google_apis
+          working-directory: projects/routeforge/android-driver
+          script: gradle :app:connectedDebugAndroidTest
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: routeforge-rider-release
+          path: |
+            projects/routeforge/android-driver/rider-release/
+            projects/routeforge/android-driver/app/build/reports/androidTests/
+            projects/routeforge/android-driver/app/build/reports/lint-results-*.html
+          retention-days: 14

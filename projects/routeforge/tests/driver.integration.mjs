@@ -6,7 +6,7 @@ export async function verifyDriver({mf,db,request,passed}){
   async function ok(response,expected=200){assert.equal(response.status,expected,await response.clone().text());return response.json();}
   const bundle=async()=>ok(await office("/api/office"));
   const getOrder=async id=>(await bundle()).orders.find(o=>o.id===id);
-  const create=async(title="Synthetic rider order",amountDue=8799.25)=>ok(await office("/api/office/orders","POST",{id:crypto.randomUUID(),title,pickup:place,destination,amountDue}),201);
+  const create=async(title="Synthetic rider order",amountDue=8799.25,customer)=>ok(await office("/api/office/orders","POST",{id:crypto.randomUUID(),title,pickup:place,destination,amountDue,...(customer?{customer}:{})}),201);
   const officeAction=(order,action,deviceId)=>office("/api/office/orders","PATCH",{id:order.id,version:order.version,action,...(deviceId?{deviceId}:{})});
   const native=(phone,path,body,origin)=>mf.dispatchFetch(`https://routeforge.test${path}`,{method:"POST",headers:{"Content-Type":"application/json",...(phone?{Authorization:`Bearer ${phone.token}`} :{}),...(origin?{Origin:origin}:{})},body:JSON.stringify(body)});
   const state=(phone,onDuty=true,gpsEnabled=true)=>native(phone,"/api/driver/state",{appVersion:3,onDuty,gpsEnabled});
@@ -29,15 +29,24 @@ export async function verifyDriver({mf,db,request,passed}){
   passed("native endpoints require scoped device tokens; GPS enabled is distinct from receiving a fresh fix");
 
   await duty(a);await duty(b);await duty(foreign);
-  const queued=await create("No active offer fixture");assert.equal((await action(a,{action:"accept",orderId:queued.id})).status,409);
+  const queued=await create("No active offer fixture",8799.25,{name:"Synthetic recipient",phone:"0712345678"});assert.equal(queued.customer.phone,"+254712345678");assert.equal((await action(a,{action:"accept",orderId:queued.id})).status,409);
   const offered=await ok(await officeAction(queued,"offer"));assert.equal(offered.status,"offered");assert.equal(offered.offerDeadline-offered.offerStartedAt,30000);assert.ok(offered.offerDeadline-Date.now()>25000);
   assert.deepEqual((await ok(await office("/api/office/order-updates","GET",undefined,other))).orders,[]);
-  const feed=await ok(await state(a));assert.equal(feed.offers[0].id,offered.id);assert.equal(feed.offers[0].offerRiders,2);await ok(await state(b,true,false));assert.deepEqual((await ok(await state(b,true,false))).offers,[]);assert.equal((await action(b,{action:"accept",orderId:offered.id})).status,409);await ok(await state(b));assert.equal((await state(a)).headers.get("cache-control"),"private, no-store");
+  const feed=await ok(await state(a));assert.equal(feed.offers[0].id,offered.id);assert.equal(feed.offers[0].offerRiders,2);assert.equal(feed.offers[0].customer,null);assert.ok(!JSON.stringify(feed.offers).includes("+254712345678"));await ok(await state(b,true,false));assert.deepEqual((await ok(await state(b,true,false))).offers,[]);assert.equal((await action(b,{action:"accept",orderId:offered.id})).status,409);await ok(await state(b));assert.equal((await state(a)).headers.get("cache-control"),"private, no-store");
   assert.deepEqual((await ok(await state(foreign))).offers,[]);assert.equal((await action(foreign,{action:"accept",orderId:offered.id})).status,404);
   const claims=await Promise.all([action(a,{action:"accept",orderId:offered.id}),action(b,{action:"accept",orderId:offered.id})]);assert.equal(claims.filter(r=>r.status===200).length,1);assert.ok(claims.every(r=>[200,409].includes(r.status)));
   const claimed=await claims.find(r=>r.status===200).json(),assigned=claimed.order,winner=assigned.deviceId===a.deviceId?a:b,loser=winner===a?b:a;
   assert.equal((await db.prepare("SELECT COUNT(*) n FROM driver_dispatches WHERE owner_id=? AND json_extract(dispatch_json,'$.orderId')=?").bind(owner,offered.id).first()).n,1);
-  assert.equal((await ok(await state(winner))).order.id,assigned.id);assert.equal((await ok(await state(loser))).order,null);
+  assert.equal((await ok(await state(winner))).order.id,assigned.id);assert.equal((await ok(await state(winner))).order.customer.phone,"+254712345678");assert.ok((await ok(await state(winner))).recentOrders.every(o=>o.customer===null));assert.equal((await ok(await state(winner))).routingProfile,"driving");assert.equal((await ok(await state(loser))).order,null);
+  const contactChange={id:assigned.id,version:assigned.version,action:"update_customer",customer:{name:"Changed recipient",phone:"0723456789"}};
+  assert.equal((await office("/api/office/orders","PATCH",contactChange,other)).status,404);
+  assert.equal((await office("/api/office/orders","PATCH",{...contactChange,customer:{name:"Invalid",phone:"123"}})).status,422);
+  const contactRace=await Promise.all([office("/api/office/orders","PATCH",contactChange),office("/api/office/orders","PATCH",contactChange)]);assert.equal(contactRace.filter(r=>r.status===200).length,1);assert.equal(contactRace.filter(r=>r.status===409).length,1);const updatedContact=await ok(contactRace.find(r=>r.status===200));assert.equal(updatedContact.version,assigned.version+1);
+  assert.equal((await ok(await state(winner))).order.customer.phone,"+254723456789");
+  assert.equal((await office("/api/office/orders","PATCH",contactChange)).status,409);
+  const audit=await db.prepare("SELECT actor,action FROM network_audit WHERE subject_id=? AND action='office.delivery.recipient_updated'").bind(assigned.id).all();assert.equal(audit.results.length,1);assert.equal(audit.results[0].actor,owner);
+  assert.equal((await ok(await office("/api/office/orders","POST",{id:queued.id,title:queued.title,pickup:place,destination,amountDue:8799.25,customer:{name:"Synthetic recipient",phone:"0712345678"}}),201)).customer.phone,"+254723456789");
+  passed("recipient contacts normalize per delivery, remain exclusive to the assigned rider, and update with tenant isolation, version checks and an audit record");
   const cancelledRows=[];for(let i=0;i<11;i++){const id=crypto.randomUUID(),old={...assigned,id,status:'cancelled',dispatchId:null,updatedAt:Date.now()+i+1000};cancelledRows.push(db.prepare("INSERT INTO office_orders(id,owner_id,device_id,status,input_json,payload_json,version,updated_at) VALUES(?,?,?,'cancelled','{}',?,1,?)").bind(id,owner,winner.deviceId,JSON.stringify(old),old.updatedAt));}await db.batch(cancelledRows);
   const recoveredCurrent=await ok(await state(winner));assert.equal(recoveredCurrent.recentOrders.length,10);assert.ok(!recoveredCurrent.recentOrders.some(o=>o.id===assigned.id));assert.equal(recoveredCurrent.order.id,assigned.id);assert.equal(recoveredCurrent.assignment.id,assigned.dispatchId);
   passed("the current assigned ride is returned even when it is older than the latest ten rider records");
@@ -62,7 +71,7 @@ export async function verifyDriver({mf,db,request,passed}){
 
   const collectId=crypto.randomUUID(),deliverId=crypto.randomUUID();await ok(await progress(winner,assigned,"collected",collectId));await ok(await progress(winner,assigned,"collected",collectId));
   assert.equal((await getOrder(assigned.id)).status,"en_route");await ok(await progress(winner,assigned,"delivered",deliverId));await ok(await progress(winner,assigned,"delivered",deliverId));
-  const completed=await getOrder(assigned.id);assert.equal(completed.status,"delivered");assert.equal(completed.completionSource,"driver");assert.equal(completed.driverIssue,null);
+  const completed=await getOrder(assigned.id);assert.equal(completed.status,"delivered");assert.equal(completed.completionSource,"driver");assert.equal(completed.driverIssue,null);const completedFeed=await ok(await state(winner));assert.equal(completedFeed.order.customer,null);assert.ok(completedFeed.recentOrders.every(o=>o.customer===null));assert.equal((await office("/api/office/orders","PATCH",{...contactChange,version:completed.version})).status,409);
   assert.equal((await ok(await state(winner))).canStop,true);await ok(await action(winner,{action:"stop_duty"}));
   passed("rider collection and finish reports close the same office order and replay safely without requiring false GPS arrival");
 
@@ -105,6 +114,9 @@ export async function verifyDriver({mf,db,request,passed}){
   let legacyState=await ok(await state(loser));assert.ok(legacyState.assignment.stops[0].deliveredAt);assert.equal(legacyState.assignment.stops[1].deliveredAt,null);assert.equal(legacyState.canStop,false);
   await ok(await action(loser,{action:"delivered",dispatchId:legacy.id,stopId:"legacy-two"}));assert.equal((await ok(await state(loser))).canStop,true);
   passed("legacy multi-stop routes use stop identity so replaying confirmation cannot complete the following destination");
+  const clearable=await create("Nullable recipient fixture",null,{name:"Synthetic recipient",phone:"0712345678"});const cleared=await ok(await office("/api/office/orders","PATCH",{id:clearable.id,version:clearable.version,action:"update_customer",customer:null}));assert.equal(cleared.customer,null);
+  assert.equal((await office("/api/office/orders","PATCH",{id:cleared.id,version:cleared.version,action:"cancel",customer:{name:"Synthetic",phone:"0712345678"}})).status,422);await ok(await officeAction(cleared,"cancel"));
+  passed("recipient removal accepts explicit null, preserves old delivery requests and cannot be smuggled through another office action");
   const totalOwner="alltime-totals-fixture",rows=[];
   const baseOrder=await getOrder(assigned.id);
   for(let i=0;i<501;i++){const id=crypto.randomUUID(),order={...baseOrder,id,amountDue:1,status:"delivered",deviceId:loser.deviceId,dispatchId:null,measuredKm:1,ratePerKm:1},p={orderId:id,deviceId:loser.deviceId,driverName:"Synthetic totals",method:"cash",amountMinor:100,status:"verified",reference:"Fixture",reportedAt:Date.now(),verifiedAt:Date.now(),version:1};rows.push(db.prepare("INSERT INTO office_orders(id,owner_id,status,input_json,payload_json,version,updated_at) VALUES(?,?,'delivered','{}',?,1,?)").bind(id,totalOwner,JSON.stringify(order),Date.now()),db.prepare("INSERT INTO office_payments(order_id,owner_id,device_id,status,amount_minor,payload_json,updated_at,version) VALUES(?,?,?,'verified',100,?,?,1)").bind(id,totalOwner,loser.deviceId,JSON.stringify(p),Date.now()));}

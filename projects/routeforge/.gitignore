@@ -50,3 +50,6 @@ next-env.d.ts
 /work/
 
 *.tsbuildinfo
+
+.dev.vars*
+operations/retry-worker/.wrangler/

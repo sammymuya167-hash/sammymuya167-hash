@@ -10,6 +10,6 @@ final public class SyncJob extends JobService {
   jobs.schedule(new JobInfo.Builder(2001,component).setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY).setPersisted(true).setPeriodic(15*60*1000).build());retry(c);}
  static void retry(Context c){c.getSystemService(JobScheduler.class).schedule(new JobInfo.Builder(2002,new ComponentName(c,SyncJob.class)).setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY).setMinimumLatency(1000).setBackoffCriteria(30000,JobInfo.BACKOFF_POLICY_EXPONENTIAL).setPersisted(true).build());}
  private volatile boolean cancelled;
- public boolean onStartJob(JobParameters params){cancelled=false;new Thread(()->{boolean actions=DriverApi.flush(getApplicationContext());boolean done=Api.sync(getApplicationContext())&&actions;if(!cancelled)jobFinished(params,!done&&(Session.loggedIn(this)||Session.pendingUnlink(this)!=null));},"routeforge-sync").start();return true;}
+ public boolean onStartJob(JobParameters params){cancelled=false;new Thread(()->{boolean actions=DriverApi.flush(getApplicationContext());boolean done=Api.sync(getApplicationContext())&&actions;JourneyApi.flush(getApplicationContext());UpdateApi.check(getApplicationContext(),false);if(!cancelled)jobFinished(params,!done&&(Session.loggedIn(this)||Session.pendingUnlink(this)!=null));},"routeforge-sync").start();return true;}
  public boolean onStopJob(JobParameters params){cancelled=true;return true;}
 }

@@ -84,3 +84,11 @@ test('live GPS alone cannot make a rider available when phone GPS is off or the 
   assert.equal(choices.find(c=>c.device.id==='gps-off').reason,'Phone GPS is off');
   assert.equal(choices.find(c=>c.device.id==='disconnected').reason,'Rider app disconnected');
 });
+
+test('per-delivery recipients normalize Kenyan and international phone numbers while preserving older requests',()=>{
+ const input={id:crypto.randomUUID(),title:'Synthetic contact request',pickup:place,destination:place};
+ assert.equal(orderInput.parse(input).customer,undefined);
+ assert.deepEqual(orderInput.parse({...input,customer:{name:' Test recipient ',phone:'0712 345 678'}}).customer,{name:'Test recipient',phone:'+254712345678'});
+ assert.equal(orderInput.parse({...input,customer:{name:'Test',phone:'+44 7700 900123'}}).customer.phone,'+447700900123');
+ for(const customer of [{name:'',phone:'0712345678'},{name:'Test',phone:'javascript:alert(1)'},{name:'Test',phone:'123'},{name:'Test',phone:'0712345678',ownerId:'other'}])assert.equal(orderInput.safeParse({...input,customer}).success,false);
+});

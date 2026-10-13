@@ -221,6 +221,8 @@ export async function pairDevice(payload: unknown) {
 }
 export async function unlinkDevice(owner:string,id:string,disableAccount=false){
   const now=Date.now();
+  const networkOrders=await db().prepare("SELECT m.order_id,m.merchant_id FROM merchant_deliveries m JOIN office_orders o ON o.id=m.order_id WHERE m.rider_owner=? AND o.device_id=? AND o.status NOT IN ('delivered','cancelled') AND EXISTS(SELECT 1 FROM tracking_devices WHERE id=? AND owner_id=?)").bind(owner,id,id,owner).all<{order_id:string;merchant_id:string}>();
+  for(const order of networkOrders.results){const {cancelNetworkDelivery}=await import("./network-actions");await cancelNetworkDelivery(order.merchant_id,order.order_id,owner);}
   await db().batch([
     db().prepare("UPDATE company_accounts SET enabled=0,version=version+1,updated_at=? WHERE device_id=? AND owner_id=? AND role='rider' AND ?=1").bind(now,id,owner,Number(disableAccount)),
     db().prepare("UPDATE tracking_devices SET revoked_at=?,token_hash=NULL,pair_code_hash=NULL,pair_expires_at=NULL WHERE id=? AND owner_id=?").bind(now,id,owner),

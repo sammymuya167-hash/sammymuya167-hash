@@ -1,6 +1,6 @@
 # Office and rider accounts
 
-Use the office username and password at the dashboard. Rider accounts sign in through Rider 1.2. Initial credentials are configured privately and do not appear in this repository.
+Use the office username and password at the dashboard. Rider accounts sign in through Rider 1.4. Initial credentials are configured privately and do not appear in this repository.
 
 ## Create a driver login
 
@@ -9,7 +9,7 @@ Use the office username and password at the dashboard. Rider accounts sign in th
 3. Enter the driver name and a required phone number. Kenyan local numbers are normalized to international format. Vehicle details are optional.
 4. Enter a custom username, or leave it blank to generate one. Usernames are case-insensitive and unique; passwords are case-sensitive.
 5. Save or copy the generated password when it is shown. Share it privately with that rider. The password cannot be retrieved later; **Reset password** generates a replacement.
-6. The rider installs Rider 1.2 and signs in. Start duty with GPS enabled and check delivery alert settings before offering work.
+6. The rider installs Rider 1.4 and signs in. Start duty with GPS enabled and check delivery alert settings before offering work.
 
 Normal rider sign-out uploads saved reports, ends duty and revokes the phone token. It retains delivery and payment history. Finish delivery before ending duty or signing out. Privacy pause remains available during unfinished work. A password reset ends previous sessions and duty, while leaving any unfinished assignment visible for office follow-up.
 

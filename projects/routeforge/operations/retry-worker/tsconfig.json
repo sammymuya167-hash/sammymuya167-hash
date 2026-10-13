@@ -1,0 +1,6 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": { "allowJs": true, "checkJs": true, "incremental": false },
+  "include": ["./worker.mjs", "./worker-configuration.d.ts"],
+  "exclude": []
+}

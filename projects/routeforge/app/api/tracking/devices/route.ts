@@ -1,3 +1,4 @@
+import { legacyMutationPermission } from "../../../../lib/network-access";
 import { currentOwner, checkOrigin } from "../../../../lib/api";
 import {
   trackingPayload,
@@ -35,6 +36,7 @@ async function mutate(request: Request, change: boolean) {
     const owner = await currentOwner();
     if (!owner)
       throw new TrackingError(401, "Sign in to manage driver devices.");
+    await legacyMutationPermission(request);
     const body = await trackingPayload(request);
     return trackingResponse(
       await (change ? changeDevice(owner, body) : createDevice(owner, body)),

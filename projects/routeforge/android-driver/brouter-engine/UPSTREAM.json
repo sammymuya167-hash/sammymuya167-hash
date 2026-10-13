@@ -1,0 +1,513 @@
+{
+  "repository": "https://github.com/abrensch/brouter",
+  "tag": "v1.7.10",
+  "commit": "4d2639af77ea5ed9c30d3e400764eb6f9e8522da",
+  "license": "MIT",
+  "files": [
+    {
+      "upstream": "brouter-core/src/main/java/btools/router/OsmNogoPolygon.java",
+      "local": "android-driver/brouter-engine/src/main/java/btools/router/OsmNogoPolygon.java",
+      "sha256": "279950f775c3bebf7dcf0c34e62f60d925f24e1412ead6bb7875405321ddd8c2"
+    },
+    {
+      "upstream": "brouter-core/src/main/java/btools/router/ProfileCache.java",
+      "local": "android-driver/brouter-engine/src/main/java/btools/router/ProfileCache.java",
+      "sha256": "dd1db9be01185f1a934df7691ed4879ea17fa0f1b881db4af40a10daed066172"
+    },
+    {
+      "upstream": "brouter-core/src/main/java/btools/router/StdPath.java",
+      "local": "android-driver/brouter-engine/src/main/java/btools/router/StdPath.java",
+      "sha256": "09c3afa3e0ea34cea5bfff6c65194c49abfceb6fe6195e683e28b7ca051fdd79"
+    },
+    {
+      "upstream": "brouter-core/src/main/java/btools/router/RoutingHelper.java",
+      "local": "android-driver/brouter-engine/src/main/java/btools/router/RoutingHelper.java",
+      "sha256": "755d30ba9c9880a671c9ec56b64acb6b33ec1031048002a925763f657c2e98b7"
+    },
+    {
+      "upstream": "brouter-core/src/main/java/btools/router/VoiceHintList.java",
+      "local": "android-driver/brouter-engine/src/main/java/btools/router/VoiceHintList.java",
+      "sha256": "a9ac52671b1a3f338673a2c799064b3fb21a421ad79bf3d2ee8ab7687369f186"
+    },
+    {
+      "upstream": "brouter-core/src/main/java/btools/router/OsmNodeNamed.java",
+      "local": "android-driver/brouter-engine/src/main/java/btools/router/OsmNodeNamed.java",
+      "sha256": "e45fd8e74fef3ac9c2b28b7090c3e038885e345a2e1faa678fd066145da2e259"
+    },
+    {
+      "upstream": "brouter-core/src/main/java/btools/router/MessageData.java",
+      "local": "android-driver/brouter-engine/src/main/java/btools/router/MessageData.java",
+      "sha256": "ed19ca15ae94471e690047ca777f3f3a7d7f2ca8d019677c4372e46f63370b04"
+    },
+    {
+      "upstream": "brouter-core/src/main/java/btools/router/KinematicNoCostModel.java",
+      "local": "android-driver/brouter-engine/src/main/java/btools/router/KinematicNoCostModel.java",
+      "sha256": "313889da64466ab479eee4799b307ada4d95c4dfa4d197f4f40f8105e44aa513"
+    },
+    {
+      "upstream": "brouter-core/src/main/java/btools/router/KinematicPath.java",
+      "local": "android-driver/brouter-engine/src/main/java/btools/router/KinematicPath.java",
+      "sha256": "8a856ece3d56d06a76cbf64c3197cc82f307ed8eba16cbc1e5297cc95f60eb9e"
+    },
+    {
+      "upstream": "brouter-core/src/main/java/btools/router/StdModel.java",
+      "local": "android-driver/brouter-engine/src/main/java/btools/router/StdModel.java",
+      "sha256": "83d94848f8dfbf828536e64a1997281b83d632566cd22474675ac035a6e65e07"
+    },
+    {
+      "upstream": "brouter-core/src/main/java/btools/router/FormatGpx.java",
+      "local": "android-driver/brouter-engine/src/main/java/btools/router/FormatGpx.java",
+      "sha256": "3c03891b843b4b4f38d2f15b727a232ce5c4154ebe7b0528cfcaa5e522fc927e"
+    },
+    {
+      "upstream": "brouter-core/src/main/java/btools/router/OsmPathElement.java",
+      "local": "android-driver/brouter-engine/src/main/java/btools/router/OsmPathElement.java",
+      "sha256": "4230fb5bcdf014398e665b0aaf2bd715c5412e5b0f853ebeeb062efabfb455c8"
+    },
+    {
+      "upstream": "brouter-core/src/main/java/btools/router/OsmPath.java",
+      "local": "android-driver/brouter-engine/src/main/java/btools/router/OsmPath.java",
+      "sha256": "f21538165c9109135e80e1805660692253e8828aa8f6375c299cb8c5e11dece9"
+    },
+    {
+      "upstream": "brouter-core/src/main/java/btools/router/VoiceHint.java",
+      "local": "android-driver/brouter-engine/src/main/java/btools/router/VoiceHint.java",
+      "sha256": "ab4f6720041a8275f6f6469d5dccd4a518fbb807fa415947054d6c78ff4df9ff"
+    },
+    {
+      "upstream": "brouter-core/src/main/java/btools/router/RoutingContext.java",
+      "local": "android-driver/brouter-engine/src/main/java/btools/router/RoutingContext.java",
+      "sha256": "094919f9d7d374e83e979d34c4181f79241aeec885b45d1d6c20819887d7ce13"
+    },
+    {
+      "upstream": "brouter-core/src/main/java/btools/router/SearchBoundary.java",
+      "local": "android-driver/brouter-engine/src/main/java/btools/router/SearchBoundary.java",
+      "sha256": "a7b384acdd9b5a293e9519c3fda28125cef7612a0dfdfaafc08f7e13ded80d05"
+    },
+    {
+      "upstream": "brouter-core/src/main/java/btools/router/OsmPathModel.java",
+      "local": "android-driver/brouter-engine/src/main/java/btools/router/OsmPathModel.java",
+      "sha256": "c4106ea4d87f8185eaeb520bee88353a86f3604b4d233d735f4714e4dd8eff5b"
+    },
+    {
+      "upstream": "brouter-core/src/main/java/btools/router/Formatter.java",
+      "local": "android-driver/brouter-engine/src/main/java/btools/router/Formatter.java",
+      "sha256": "ef6c9c8387162e42e194161893b823359c3ec747f41e4b9b7a6f8d3432850811"
+    },
+    {
+      "upstream": "brouter-core/src/main/java/btools/router/FormatJson.java",
+      "local": "android-driver/brouter-engine/src/main/java/btools/router/FormatJson.java",
+      "sha256": "405f05fe4d94765ba909c519a8126bb6d066c0848a5315f02071c665b84410fb"
+    },
+    {
+      "upstream": "brouter-core/src/main/java/btools/router/OsmPrePath.java",
+      "local": "android-driver/brouter-engine/src/main/java/btools/router/OsmPrePath.java",
+      "sha256": "f89056292c57604d7acc0ea252124901084b333e452c1323bb0c0918d567d5bf"
+    },
+    {
+      "upstream": "brouter-core/src/main/java/btools/router/VoiceHintProcessor.java",
+      "local": "android-driver/brouter-engine/src/main/java/btools/router/VoiceHintProcessor.java",
+      "sha256": "006fb5e461d0e761f881b07fd61a613574ed0db4bc8742318805069b53a51031"
+    },
+    {
+      "upstream": "brouter-core/src/main/java/btools/router/OsmTrack.java",
+      "local": "android-driver/brouter-engine/src/main/java/btools/router/OsmTrack.java",
+      "sha256": "b4d3c3b7cff1409ed4eefacc078bfec03fdf85d00efeff18790462c58b6a66c6"
+    },
+    {
+      "upstream": "brouter-core/src/main/java/btools/router/KinematicPrePath.java",
+      "local": "android-driver/brouter-engine/src/main/java/btools/router/KinematicPrePath.java",
+      "sha256": "5807abe070c24e8210d0be4e183bf3668ad6bf0ba257b27050f2c25169073c3e"
+    },
+    {
+      "upstream": "brouter-core/src/main/java/btools/router/RoutingIslandException.java",
+      "local": "android-driver/brouter-engine/src/main/java/btools/router/RoutingIslandException.java",
+      "sha256": "9942049d80b4e7a0e7c8e2822bd2f9512b9ce0cec12749c5bfa32cea43f82a38"
+    },
+    {
+      "upstream": "brouter-core/src/main/java/btools/router/FormatKml.java",
+      "local": "android-driver/brouter-engine/src/main/java/btools/router/FormatKml.java",
+      "sha256": "fa0d30ba40a60704ad585fc47c212cd747feb468be75a0b123a449eaf81ec554"
+    },
+    {
+      "upstream": "brouter-core/src/main/java/btools/router/AreaInfo.java",
+      "local": "android-driver/brouter-engine/src/main/java/btools/router/AreaInfo.java",
+      "sha256": "36cab194fe4850edebd9f81f557b1953fd68a5d119bc0020021793bdc59008d6"
+    },
+    {
+      "upstream": "brouter-core/src/main/java/btools/router/SuspectInfo.java",
+      "local": "android-driver/brouter-engine/src/main/java/btools/router/SuspectInfo.java",
+      "sha256": "0e886d8623e03fadafd44d0f00f7f867a65a6cd8969bf47f3ebf5ad53d3ff42d"
+    },
+    {
+      "upstream": "brouter-core/src/main/java/btools/router/RoutingParamCollector.java",
+      "local": "android-driver/brouter-engine/src/main/java/btools/router/RoutingParamCollector.java",
+      "sha256": "6eec428bbb38b25822dd2647e802f3c0ceae6811332dcdc10fb3dcca90883630"
+    },
+    {
+      "upstream": "brouter-core/src/main/java/btools/router/KinematicNoCostPath.java",
+      "local": "android-driver/brouter-engine/src/main/java/btools/router/KinematicNoCostPath.java",
+      "sha256": "a441fd309c9495e904e5d1cb14ebeb6853f8489a9c45e136ab77aab96c66053f"
+    },
+    {
+      "upstream": "brouter-core/src/main/java/btools/router/AreaReader.java",
+      "local": "android-driver/brouter-engine/src/main/java/btools/router/AreaReader.java",
+      "sha256": "fe4a4f5df656bba54ed61cb98d0af3fdbee3dadd8858e35968c19fdbc4b6f9c0"
+    },
+    {
+      "upstream": "brouter-core/src/main/java/btools/router/KinematicModel.java",
+      "local": "android-driver/brouter-engine/src/main/java/btools/router/KinematicModel.java",
+      "sha256": "c01fb4b166cdbde359e66668cad67eadae14acac09e2d9ee559a14d3fd0dc17f"
+    },
+    {
+      "upstream": "brouter-core/src/main/java/btools/router/FormatCsv.java",
+      "local": "android-driver/brouter-engine/src/main/java/btools/router/FormatCsv.java",
+      "sha256": "0cc81b96f6014d50b5cdb95e2201066068cc55249fb04ad83e1c7415cc4cc51a"
+    },
+    {
+      "upstream": "brouter-core/src/main/java/btools/router/RoutingEngine.java",
+      "local": "android-driver/brouter-engine/src/main/java/btools/router/RoutingEngine.java",
+      "sha256": "ec9afa5403d83fe892413d852034eacf568978b35d3ccadcc4f62ba5a0f76e78"
+    },
+    {
+      "upstream": "brouter-mapaccess/src/main/java/btools/mapaccess/OsmFile.java",
+      "local": "android-driver/brouter-engine/src/main/java/btools/mapaccess/OsmFile.java",
+      "sha256": "e984494d6fc05d36ce82a8b20ee01f0f9569dd8dcdef4bdcbf501280826635b9"
+    },
+    {
+      "upstream": "brouter-mapaccess/src/main/java/btools/mapaccess/Rd5DiffValidator.java",
+      "local": "android-driver/brouter-engine/src/main/java/btools/mapaccess/Rd5DiffValidator.java",
+      "sha256": "47bd2d2b2546958ffbb98ac740d40bf5b5ad9cc9cfb1525433062a0bc8114b50"
+    },
+    {
+      "upstream": "brouter-mapaccess/src/main/java/btools/mapaccess/OsmPos.java",
+      "local": "android-driver/brouter-engine/src/main/java/btools/mapaccess/OsmPos.java",
+      "sha256": "3054a8180ea2a5e76c48e4a4cfd58cda185a21d5b57b7df000136d17c35ade38"
+    },
+    {
+      "upstream": "brouter-mapaccess/src/main/java/btools/mapaccess/Rd5DiffTool.java",
+      "local": "android-driver/brouter-engine/src/main/java/btools/mapaccess/Rd5DiffTool.java",
+      "sha256": "77842dd8c8d33a4027a1a935898f27906a1b28c628672893cf0ca777884b0e85"
+    },
+    {
+      "upstream": "brouter-mapaccess/src/main/java/btools/mapaccess/OsmNodesMap.java",
+      "local": "android-driver/brouter-engine/src/main/java/btools/mapaccess/OsmNodesMap.java",
+      "sha256": "1e25d3014111f5cbfdede500472afa1a0c008e5e4b2ea1d1fdf3b3872f801d19"
+    },
+    {
+      "upstream": "brouter-mapaccess/src/main/java/btools/mapaccess/PhysicalFile.java",
+      "local": "android-driver/brouter-engine/src/main/java/btools/mapaccess/PhysicalFile.java",
+      "sha256": "6cd660015e9f63a714b4c9da0951965d6b41e503ae13273c0e9db7681262fbf7"
+    },
+    {
+      "upstream": "brouter-mapaccess/src/main/java/btools/mapaccess/OsmNodePairSet.java",
+      "local": "android-driver/brouter-engine/src/main/java/btools/mapaccess/OsmNodePairSet.java",
+      "sha256": "0fa0ade63402cb3a5a48d1a1d1c7f79fcaa4fdc49d8334e5197318c50a45b4c0"
+    },
+    {
+      "upstream": "brouter-mapaccess/src/main/java/btools/mapaccess/TurnRestriction.java",
+      "local": "android-driver/brouter-engine/src/main/java/btools/mapaccess/TurnRestriction.java",
+      "sha256": "0446b08e20dbe494089d32a62a548c225f7278014c43878ae674729824ecce11"
+    },
+    {
+      "upstream": "brouter-mapaccess/src/main/java/btools/mapaccess/GeometryDecoder.java",
+      "local": "android-driver/brouter-engine/src/main/java/btools/mapaccess/GeometryDecoder.java",
+      "sha256": "0323578d10060f0969d7f001481a91917622e2aa54b8df57538a8bd0bb0a93f3"
+    },
+    {
+      "upstream": "brouter-mapaccess/src/main/java/btools/mapaccess/StorageConfigHelper.java",
+      "local": "android-driver/brouter-engine/src/main/java/btools/mapaccess/StorageConfigHelper.java",
+      "sha256": "095e81b72c1d0748842363998b9a394be1b47f921917d9db8c33286800852837"
+    },
+    {
+      "upstream": "brouter-mapaccess/src/main/java/btools/mapaccess/OsmLinkHolder.java",
+      "local": "android-driver/brouter-engine/src/main/java/btools/mapaccess/OsmLinkHolder.java",
+      "sha256": "4d45d519420064b66b040d49d9cab2f922cbcdf40162034703b33f2adcdb40e1"
+    },
+    {
+      "upstream": "brouter-mapaccess/src/main/java/btools/mapaccess/NodesList.java",
+      "local": "android-driver/brouter-engine/src/main/java/btools/mapaccess/NodesList.java",
+      "sha256": "90854d923ca438140f1972d83f9eb2c89dc0e011bf30319faf4b42e943ec2236"
+    },
+    {
+      "upstream": "brouter-mapaccess/src/main/java/btools/mapaccess/OsmLink.java",
+      "local": "android-driver/brouter-engine/src/main/java/btools/mapaccess/OsmLink.java",
+      "sha256": "2b1bb284d351bf576bf61a474ef3b5b2ae5a68d8703fc0ac4f5b7b7dfce4163e"
+    },
+    {
+      "upstream": "brouter-mapaccess/src/main/java/btools/mapaccess/MatchedWaypoint.java",
+      "local": "android-driver/brouter-engine/src/main/java/btools/mapaccess/MatchedWaypoint.java",
+      "sha256": "53de6fbabb2c67cb80b2e9595bc62e657a5abccc328ba4428729a3ab6faa17e4"
+    },
+    {
+      "upstream": "brouter-mapaccess/src/main/java/btools/mapaccess/WaypointMatcherImpl.java",
+      "local": "android-driver/brouter-engine/src/main/java/btools/mapaccess/WaypointMatcherImpl.java",
+      "sha256": "4fde0d86c10fb428b10cbcfe568d9028dc73320a847a7d5385730c0fff296b4f"
+    },
+    {
+      "upstream": "brouter-mapaccess/src/main/java/btools/mapaccess/NodesCache.java",
+      "local": "android-driver/brouter-engine/src/main/java/btools/mapaccess/NodesCache.java",
+      "sha256": "5c4b6ea9995b9fa489dc0e0da4b75ae8d962c10da5bc404470725f175beb27b9"
+    },
+    {
+      "upstream": "brouter-mapaccess/src/main/java/btools/mapaccess/DirectWeaver.java",
+      "local": "android-driver/brouter-engine/src/main/java/btools/mapaccess/DirectWeaver.java",
+      "sha256": "03435c1b5e17928bde29a1b47f15d63dd35ade742158b37043ee678a20b45749"
+    },
+    {
+      "upstream": "brouter-mapaccess/src/main/java/btools/mapaccess/Rd5DiffManager.java",
+      "local": "android-driver/brouter-engine/src/main/java/btools/mapaccess/Rd5DiffManager.java",
+      "sha256": "ab41954f2c7f4d8bea953a0409445623052e6625d556f64b99dc00d4a291554d"
+    },
+    {
+      "upstream": "brouter-mapaccess/src/main/java/btools/mapaccess/OsmTransferNode.java",
+      "local": "android-driver/brouter-engine/src/main/java/btools/mapaccess/OsmTransferNode.java",
+      "sha256": "419183e4eaa69a23a4107820d71bac052ebb2439761ddfdaec6328b0bbcd6cfc"
+    },
+    {
+      "upstream": "brouter-mapaccess/src/main/java/btools/mapaccess/OsmNode.java",
+      "local": "android-driver/brouter-engine/src/main/java/btools/mapaccess/OsmNode.java",
+      "sha256": "4d5c377b7d4f4e419ab169ee993d7f90380b645c8c0d2be5333ecd9abb91f732"
+    },
+    {
+      "upstream": "brouter-codec/src/main/java/btools/codec/MicroCache2.java",
+      "local": "android-driver/brouter-engine/src/main/java/btools/codec/MicroCache2.java",
+      "sha256": "e18fb7c583a84adf66ed0238fadb05cfedc21a31ead15c35817c3448d591fa5f"
+    },
+    {
+      "upstream": "brouter-codec/src/main/java/btools/codec/NoisyDiffCoder.java",
+      "local": "android-driver/brouter-engine/src/main/java/btools/codec/NoisyDiffCoder.java",
+      "sha256": "0b627d9a8f5fb95b0038e4371b084d1e4c36605056138ad4fc7c3c2348bbec3d"
+    },
+    {
+      "upstream": "brouter-codec/src/main/java/btools/codec/LinkedListContainer.java",
+      "local": "android-driver/brouter-engine/src/main/java/btools/codec/LinkedListContainer.java",
+      "sha256": "28d1bbd60fc035a490d513d18b38bbd08b74637b6613a68104782093bdae57d0"
+    },
+    {
+      "upstream": "brouter-codec/src/main/java/btools/codec/MicroCache.java",
+      "local": "android-driver/brouter-engine/src/main/java/btools/codec/MicroCache.java",
+      "sha256": "4f14106aca23f41e5d1a75a7710d3c33a092f02d8b1eab2f47659aaa523cad7a"
+    },
+    {
+      "upstream": "brouter-codec/src/main/java/btools/codec/IntegerFifo3Pass.java",
+      "local": "android-driver/brouter-engine/src/main/java/btools/codec/IntegerFifo3Pass.java",
+      "sha256": "f4cb06e94405bbaa5619f7a84e792f3b40fcda17855e2234d113dd4b29e07615"
+    },
+    {
+      "upstream": "brouter-codec/src/main/java/btools/codec/TagValueValidator.java",
+      "local": "android-driver/brouter-engine/src/main/java/btools/codec/TagValueValidator.java",
+      "sha256": "3d963ba494b6b488645f3ff0640ab5bcccfa027acd3d97825b06c991de8c7c4b"
+    },
+    {
+      "upstream": "brouter-codec/src/main/java/btools/codec/TagValueCoder.java",
+      "local": "android-driver/brouter-engine/src/main/java/btools/codec/TagValueCoder.java",
+      "sha256": "cdaa60f2fb75f1bb5c8d0a8da7af763fe6fa2b6164dc3d29ef8d4cdda8d98526"
+    },
+    {
+      "upstream": "brouter-codec/src/main/java/btools/codec/DataBuffers.java",
+      "local": "android-driver/brouter-engine/src/main/java/btools/codec/DataBuffers.java",
+      "sha256": "9fc4cfecf04f94557552f21c3d4f98570ce5017dc4a85c91cf2cf50a342b2f4e"
+    },
+    {
+      "upstream": "brouter-codec/src/main/java/btools/codec/WaypointMatcher.java",
+      "local": "android-driver/brouter-engine/src/main/java/btools/codec/WaypointMatcher.java",
+      "sha256": "7f3ac2053790038e204717f67a36ee7594007a4c4372000a492924cb85291a56"
+    },
+    {
+      "upstream": "brouter-codec/src/main/java/btools/codec/StatCoderContext.java",
+      "local": "android-driver/brouter-engine/src/main/java/btools/codec/StatCoderContext.java",
+      "sha256": "75a43d9c64011d5dd866002c877d16519480ce0b5a54f00d8666af182bd56128"
+    },
+    {
+      "upstream": "brouter-codec/src/main/java/btools/codec/TagValueWrapper.java",
+      "local": "android-driver/brouter-engine/src/main/java/btools/codec/TagValueWrapper.java",
+      "sha256": "d7339f5034d1b6e896e5e8da021754076480d58f6d47ebf2cebc7cb1b854413f"
+    },
+    {
+      "upstream": "brouter-expressions/src/main/java/btools/expressions/BExpressionMetaData.java",
+      "local": "android-driver/brouter-engine/src/main/java/btools/expressions/BExpressionMetaData.java",
+      "sha256": "b5677777c4088cf95df56762a6fe71614230ca05307945abcb01ab1b92e9ca1c"
+    },
+    {
+      "upstream": "brouter-expressions/src/main/java/btools/expressions/BExpressionContextNode.java",
+      "local": "android-driver/brouter-engine/src/main/java/btools/expressions/BExpressionContextNode.java",
+      "sha256": "032a8b33beb7494a8bfec6ed4b36bd69295be7815b5832b6311fa177306e0169"
+    },
+    {
+      "upstream": "brouter-expressions/src/main/java/btools/expressions/IntegrityCheckProfile.java",
+      "local": "android-driver/brouter-engine/src/main/java/btools/expressions/IntegrityCheckProfile.java",
+      "sha256": "07f074e36e9b9d4b7b48449c7a9062f01ecd361ba74fc85bcf194d097b0c4a91"
+    },
+    {
+      "upstream": "brouter-expressions/src/main/java/btools/expressions/ProfileComparator.java",
+      "local": "android-driver/brouter-engine/src/main/java/btools/expressions/ProfileComparator.java",
+      "sha256": "e0799ee673129793b8ab55e12f1ea306e8a404c75e8c9f52c7f2426d13582380"
+    },
+    {
+      "upstream": "brouter-expressions/src/main/java/btools/expressions/BExpressionContextWay.java",
+      "local": "android-driver/brouter-engine/src/main/java/btools/expressions/BExpressionContextWay.java",
+      "sha256": "e77f4dd34a53142a2a3dcd6e0c726f91de66d0c523afd4de9287ff00ae309164"
+    },
+    {
+      "upstream": "brouter-expressions/src/main/java/btools/expressions/BExpressionContext.java",
+      "local": "android-driver/brouter-engine/src/main/java/btools/expressions/BExpressionContext.java",
+      "sha256": "377f2e28d84f2e6dcf9d29f76fefc0b533588fb1e36dbad16187c95fc6fff2e5"
+    },
+    {
+      "upstream": "brouter-expressions/src/main/java/btools/expressions/BExpressionLookupValue.java",
+      "local": "android-driver/brouter-engine/src/main/java/btools/expressions/BExpressionLookupValue.java",
+      "sha256": "2688e6e47f50c8ee29282fc875a1a0da7eb8c69c47360571b66d82bf1c87e309"
+    },
+    {
+      "upstream": "brouter-expressions/src/main/java/btools/expressions/BExpression.java",
+      "local": "android-driver/brouter-engine/src/main/java/btools/expressions/BExpression.java",
+      "sha256": "f43be242c15a176f1a9ac14fdecea76cead2f142bdf2b1aaa4558c28a4c79eee"
+    },
+    {
+      "upstream": "brouter-expressions/src/main/java/btools/expressions/CacheNode.java",
+      "local": "android-driver/brouter-engine/src/main/java/btools/expressions/CacheNode.java",
+      "sha256": "0379f2534999cbdbd6b48bc3b20b4df0e7da96b9aade8e8f89b48e4d3327159b"
+    },
+    {
+      "upstream": "brouter-expressions/src/main/java/btools/expressions/VarWrapper.java",
+      "local": "android-driver/brouter-engine/src/main/java/btools/expressions/VarWrapper.java",
+      "sha256": "d9a103e26adefe3473cbcf57643c3047224c828f46330d522ae24ece129087eb"
+    },
+    {
+      "upstream": "brouter-util/src/main/java/btools/util/LongList.java",
+      "local": "android-driver/brouter-engine/src/main/java/btools/util/LongList.java",
+      "sha256": "137282009e1bfc8b28a105af7d44283154118886d21fee58596a76510f1fb998"
+    },
+    {
+      "upstream": "brouter-util/src/main/java/btools/util/ProgressListener.java",
+      "local": "android-driver/brouter-engine/src/main/java/btools/util/ProgressListener.java",
+      "sha256": "cbab014f0138bca40cc5498e6019a5d0f681311190d66c0e40b09a64787e95a6"
+    },
+    {
+      "upstream": "brouter-util/src/main/java/btools/util/CheapRuler.java",
+      "local": "android-driver/brouter-engine/src/main/java/btools/util/CheapRuler.java",
+      "sha256": "9ae845a5d42a8f5eb3b699c8e163732135bcaf07ce1e1251b66f16597c24b2b2"
+    },
+    {
+      "upstream": "brouter-util/src/main/java/btools/util/DenseLongMap.java",
+      "local": "android-driver/brouter-engine/src/main/java/btools/util/DenseLongMap.java",
+      "sha256": "763cbd24a8cc73888fc8bece20750af8cab49df7ac21abc176ecb7438d83a638"
+    },
+    {
+      "upstream": "brouter-util/src/main/java/btools/util/SortedHeap.java",
+      "local": "android-driver/brouter-engine/src/main/java/btools/util/SortedHeap.java",
+      "sha256": "e62c48663ed11821ce21daa0f2af8de48b493884f24c0b27e446937c60302618"
+    },
+    {
+      "upstream": "brouter-util/src/main/java/btools/util/DiffCoderDataOutputStream.java",
+      "local": "android-driver/brouter-engine/src/main/java/btools/util/DiffCoderDataOutputStream.java",
+      "sha256": "547d24ee86098fc33f9fbbf444bf7939fc9f65d0f5d6c3b5d31f86d228a3b93d"
+    },
+    {
+      "upstream": "brouter-util/src/main/java/btools/util/MixCoderDataInputStream.java",
+      "local": "android-driver/brouter-engine/src/main/java/btools/util/MixCoderDataInputStream.java",
+      "sha256": "20bae75d7e3c2d54a69a80add8d4c66c339c07a46285d11b5b1a73fb23b9a030"
+    },
+    {
+      "upstream": "brouter-util/src/main/java/btools/util/StackSampler.java",
+      "local": "android-driver/brouter-engine/src/main/java/btools/util/StackSampler.java",
+      "sha256": "fad8fc2f129fa59b2c03e2fc37906796efa3829721fd1462b05898bf1fdc4577"
+    },
+    {
+      "upstream": "brouter-util/src/main/java/btools/util/StringUtils.java",
+      "local": "android-driver/brouter-engine/src/main/java/btools/util/StringUtils.java",
+      "sha256": "b25b72ff19b583b112e3145931ec7f58dfa4ef036abe992620e9141969bd03bd"
+    },
+    {
+      "upstream": "brouter-util/src/main/java/btools/util/LruMapNode.java",
+      "local": "android-driver/brouter-engine/src/main/java/btools/util/LruMapNode.java",
+      "sha256": "94173e45f43303f652acecc5b5e4d357e7dfa53700164cd75705828dd4508e13"
+    },
+    {
+      "upstream": "brouter-util/src/main/java/btools/util/LruMap.java",
+      "local": "android-driver/brouter-engine/src/main/java/btools/util/LruMap.java",
+      "sha256": "d5ccae38e9fb2812d68aa6ba6d21b90131c00644c2050e8b03b0d6228104a1d4"
+    },
+    {
+      "upstream": "brouter-util/src/main/java/btools/util/ByteDataWriter.java",
+      "local": "android-driver/brouter-engine/src/main/java/btools/util/ByteDataWriter.java",
+      "sha256": "de1b393ff485a0907a3f309982cebf367ba6976729eb2f419c5487efe188bf53"
+    },
+    {
+      "upstream": "brouter-util/src/main/java/btools/util/FrozenLongMap.java",
+      "local": "android-driver/brouter-engine/src/main/java/btools/util/FrozenLongMap.java",
+      "sha256": "8e09fc89ba914298d13e52612ff4d2dccaab1e22efd091245e0aed28552c873b"
+    },
+    {
+      "upstream": "brouter-util/src/main/java/btools/util/ByteArrayUnifier.java",
+      "local": "android-driver/brouter-engine/src/main/java/btools/util/ByteArrayUnifier.java",
+      "sha256": "c034fe72bd4b46ffb374206c3fa08171cdf87b3b0fa72e12396bd6651fdda8d5"
+    },
+    {
+      "upstream": "brouter-util/src/main/java/btools/util/BitCoderContext.java",
+      "local": "android-driver/brouter-engine/src/main/java/btools/util/BitCoderContext.java",
+      "sha256": "ee6f64db2708c00e4979c925062005bb250eee5a4ef27aae140f726e45de6d54"
+    },
+    {
+      "upstream": "brouter-util/src/main/java/btools/util/DiffCoderDataInputStream.java",
+      "local": "android-driver/brouter-engine/src/main/java/btools/util/DiffCoderDataInputStream.java",
+      "sha256": "2b99bf056505cd0d625c0d81ed7a3a4ad20774c355e74037726c7f58055735f9"
+    },
+    {
+      "upstream": "brouter-util/src/main/java/btools/util/CompactLongMap.java",
+      "local": "android-driver/brouter-engine/src/main/java/btools/util/CompactLongMap.java",
+      "sha256": "3587cd716c2fd011b7b405b207c93b8bc9f0841c0c49b8bbe5db72b4b5eb7a94"
+    },
+    {
+      "upstream": "brouter-util/src/main/java/btools/util/LazyArrayOfLists.java",
+      "local": "android-driver/brouter-engine/src/main/java/btools/util/LazyArrayOfLists.java",
+      "sha256": "0c10793fa363229fd20850d1c1181948a5c620fe4a20e04dcedb05d78f630e37"
+    },
+    {
+      "upstream": "brouter-util/src/main/java/btools/util/Crc32.java",
+      "local": "android-driver/brouter-engine/src/main/java/btools/util/Crc32.java",
+      "sha256": "62ed5a8ee6fc5a34bc836a7201c4ac3ab70e97346892e2b3847dda2e4640afa3"
+    },
+    {
+      "upstream": "brouter-util/src/main/java/btools/util/ReducedMedianFilter.java",
+      "local": "android-driver/brouter-engine/src/main/java/btools/util/ReducedMedianFilter.java",
+      "sha256": "b7245f0ffcadf2950ff6ed201deebe21b4901849a229767e8a3c4c0cce3f4cf6"
+    },
+    {
+      "upstream": "brouter-util/src/main/java/btools/util/ByteDataReader.java",
+      "local": "android-driver/brouter-engine/src/main/java/btools/util/ByteDataReader.java",
+      "sha256": "d3ad6d5099ca6e41650f1a1305afe6af0928a73d6f5889770e03cf416124f2e5"
+    },
+    {
+      "upstream": "brouter-util/src/main/java/btools/util/CompactLongSet.java",
+      "local": "android-driver/brouter-engine/src/main/java/btools/util/CompactLongSet.java",
+      "sha256": "71a9df4c62d2701642404264b59c75b68699f551b7ea1afd4c5b7b3c3746d55d"
+    },
+    {
+      "upstream": "brouter-util/src/main/java/btools/util/FrozenLongSet.java",
+      "local": "android-driver/brouter-engine/src/main/java/btools/util/FrozenLongSet.java",
+      "sha256": "c117abf9dec1fe1fa510dc0bf8682ac9d81f7c9c4fc33bbdf3b36a290a24e722"
+    },
+    {
+      "upstream": "brouter-util/src/main/java/btools/util/IByteArrayUnifier.java",
+      "local": "android-driver/brouter-engine/src/main/java/btools/util/IByteArrayUnifier.java",
+      "sha256": "453578e43bb7bbb74fb80f95f34fbc2ff67da3b16aeff7b1936e20a127a889f0"
+    },
+    {
+      "upstream": "brouter-util/src/main/java/btools/util/TinyDenseLongMap.java",
+      "local": "android-driver/brouter-engine/src/main/java/btools/util/TinyDenseLongMap.java",
+      "sha256": "420694fb4d76a65b9435a8979a15ab73e07b05aefd71b37b4d52ca9ede7ae92c"
+    },
+    {
+      "upstream": "brouter-util/src/main/java/btools/util/MixCoderDataOutputStream.java",
+      "local": "android-driver/brouter-engine/src/main/java/btools/util/MixCoderDataOutputStream.java",
+      "sha256": "2d0f95c0fc494e3432d33a9eb4f71fe4ab498d4ed6e059c67e1d8eff6ca1e8f4"
+    },
+    {
+      "upstream": "brouter-util/src/main/java/btools/util/CheapAngleMeter.java",
+      "local": "android-driver/brouter-engine/src/main/java/btools/util/CheapAngleMeter.java",
+      "sha256": "52aaba147430fddd1565eebba567ce0433077a178ea44d8365487b2f83b74b81"
+    }
+  ]
+}

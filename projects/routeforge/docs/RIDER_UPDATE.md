@@ -1,6 +1,20 @@
-# RouteForge Rider 1.2 update
+# RouteForge Rider 1.4 update
 
-The office and rider app share one delivery reservation per phone. Rider 1.2 adds office and rider accounts, required-phone onboarding and 30-second offers. It retains the previous fixes for delivery visibility and alerts while retaining the previous dashboard's planning and financial tools.
+Rider 1.4 adds real on-device road directions and per-delivery recipient calling for ordinary office orders. In **New delivery**, enter **Recipient name** and **Recipient phone**; existing open orders offer **Add recipient phone / Edit recipient**. Merchant orders already provide customer details through their API or delivery form. These are the recipient's contacts for a specific parcel, separate from the business registration phone. Only the currently assigned rider receives them, and the call control opens Android's dialer for the rider to place the call. Offers and delivery history redact contacts.
+
+In **Map**, start duty with a fresh GPS fix, select **Load road directions**, and approve the first regional road-map download. The Nairobi region is about 34 MB and is reused for later rides. Road directions and distance are calculated on the phone by the pinned MIT BRouter engine using OpenStreetMap road data. The polyline follows road vertices; distance comes from that route. Travel time is estimated without live traffic. Motorcycles and cars use the driving profile; registered bicycles use cycling. A route to the entrance requires a nearby mapped road; missing data or an inaccessible pin produces a visible error and retains external Google Maps navigation. Large/long routes can exceed phone resource limits. The app never replaces missing directions with a straight-line kilometre estimate.
+
+Saved regional road graphs are public data; no rider coordinates, customer phone, route endpoints or authentication token are sent to the graph-download service. Private calculated geometry is encrypted and bound to the rider account. Regional files refresh after 30 days when needed; cached maps remain usable if refresh fails offline. **Pause road download**, privacy pause and sign-out cancel road work, independently of offer polling and the durable completion queue. Background map tiles still require internet and disclose the viewed area to the tile provider. See OpenStreetMap attribution and the bundled BRouter MIT licence.
+
+Install **1.4 over 1.2 or 1.3** without uninstalling or clearing storage. It keeps the same package, original certificate, account, driver history and saved reports. Android requires the rider to approve installation of this native update. Delivery/status/dashboard changes update from the server automatically; this existing app has no signed over-the-air native-code updater. Subsequent cached-road refreshes do not require another APK installation. The current installer is linked on the dashboard login page and in **Account → Get the latest rider update**.
+
+Rider 1.3 extends the same Android app for merchant-owned and shared fleets. Merchant offers show their business, pickup branch, fleet, fee and delivery window. Riders can accept or decline exclusive offers, navigate to pickup and drop-off, call only their assigned customer, collect the package, and enter the six-digit customer OTP at delivery. Legacy office orders retain their existing cash/till reporting and multi-stop controls.
+
+Collection and OTP completion queue in order during outages. Reports use stable receipt IDs and device-keystore encryption; queue summaries do not expose OTPs. A rejected OTP remains visible under Account → Saved rider reports and can be corrected without changing its receipt. Customer snapshots are encrypted locally and removed on sign-out. Contact information is removed from network history after delivery or cancellation. Network jobs show applicable earnings for review; live charges and settlements remain disabled.
+
+Earlier update: install 1.3 over 1.2 without uninstalling or clearing app storage. Existing sign-in, history, local queues and notification settings remain linked. Download from the office login screen or tracking portal. Original pilot users follow their existing account migration instructions.
+
+The office and rider app share one delivery reservation per phone. Office and rider accounts, required-phone onboarding and 30-second offers continue from 1.2. It retains the previous fixes for delivery visibility and alerts while retaining the previous dashboard's planning and financial tools.
 
 | Requested feature | Implemented behaviour | Verification |
 | --- | --- | --- |
@@ -20,9 +34,9 @@ The office and rider app share one delivery reservation per phone. Rider 1.2 add
 
 ## Install and check
 
-Install the published Rider 1.2 APK over the existing RouteForge Rider app on each rider phone. It uses the same package and signing certificate. Keep local storage and queues, then sign in with the office-issued rider username and password. Existing accounts keep their driver record and assignments. See [ACCOUNT_LOGINS.md](ACCOUNT_LOGINS.md).
+Install the published Rider 1.4 APK over the existing RouteForge Rider app on each rider phone. It uses the same package and signing certificate. Keep local storage and queues, then sign in with the office-issued rider username and password. Existing accounts keep their driver record and assignments. See [ACCOUNT_LOGINS.md](ACCOUNT_LOGINS.md).
 
-In Account, use **Play delivery alert test**, then check both offer and assigned-delivery sound/popup settings. Start duty with GPS enabled and a fresh fix before offering work. A newly assigned order appears on Home and in the banner on every tab. Confirm collection, finish delivery, then enter cash or company till payment; review the report in office Sales & totals.
+In Account, use **Play delivery alert test**, then check both offer and assigned-delivery sound/popup settings. Start duty with GPS enabled and a fresh fix before offering work. A newly assigned order appears on Home and in the banner on every tab. For merchant jobs, confirm collection and enter the customer OTP after delivery. For legacy office jobs, finish delivery and report cash or company till payment; review it in office Sales & totals.
 
 The 30-second deadline is enforced by the server. Phones need a working connection and an active app service to receive offers promptly; Android volume, notification permission, channel settings, Do Not Disturb, scheduling and cooldown still govern sound and popups. Hardware sound and real-phone background delivery require a field check. Automated browser QA was unavailable in the managed build environment; no browser gesture result is claimed.
 
