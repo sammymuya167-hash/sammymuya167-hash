@@ -14,9 +14,10 @@ import org.json.JSONObject;
 
 /** Android owns sound and heads-up delivery; never bypass a rider's mute or DND. */
 final class DriverAlerts {
- static final String OFFERS="delivery-offers-v2", ASSIGNMENTS="delivery-assignments-v1";
+ static final String OFFERS="delivery-offers-v2", ASSIGNMENTS="delivery-assignments-v1", UPDATES="platform-updates-v1";
  static void channels(Context c){
   NotificationManager manager=c.getSystemService(NotificationManager.class);
+  manager.createNotificationChannel(new NotificationChannel(UPDATES,"RouteForge service updates",NotificationManager.IMPORTANCE_DEFAULT));
   for(String id:new String[]{OFFERS,ASSIGNMENTS}){
    NotificationChannel channel=new NotificationChannel(id,id.equals(OFFERS)?"New delivery offers":"Assigned deliveries",NotificationManager.IMPORTANCE_HIGH);
    channel.setDescription(id.equals(OFFERS)?"Sound, vibration and a popup during the 30-second claim window.":"A delivery has been assigned to this rider, including automatic assignments.");
@@ -44,6 +45,9 @@ final class DriverAlerts {
  static void sync(Context c,JSONObject data){
   try{
    channels(c);NotificationManager manager=c.getSystemService(NotificationManager.class);
+   JSONObject maintenance=data.optJSONObject("maintenance");boolean paused=maintenance!=null&&maintenance.optBoolean("paused",false);
+   if(paused&&!Session.prefs(c).getBoolean("maintenance_notified",false)&&enabled(manager,UPDATES))manager.notify("platform-maintenance",81,base(c,UPDATES,"maintenance","home").setContentTitle("RouteForge update in progress").setContentText("Your current delivery, tracking and saved journeys remain available.").build());
+   if(!paused)manager.cancel("platform-maintenance",81);Session.prefs(c).edit().putBoolean("maintenance_notified",paused).apply();
    JSONArray offers=data.optJSONArray("offers"),current=new JSONArray();String seen=Session.prefs(c).getString("notified","");
    if(offers!=null)for(int i=0;i<offers.length();i++){
     JSONObject o=offers.getJSONObject(i);String id=o.getString("id");long remaining=o.optLong("offerDeadline")-data.optLong("serverTime");
