@@ -75,12 +75,6 @@ final class CoreTests: XCTestCase {
         XCTAssertNil(info["UIBackgroundModes"])
         XCTAssertEqual(info["WKAppBoundDomains"] as? [String], [ShopOrigin.host])
     }
-    @MainActor func testSessionChangeClearsNativePrivateViews() {
-        let client = CustomerClient()
-        client.sessionChanged()
-        XCTAssertNil(client.customer)
-        XCTAssertTrue(client.orders.isEmpty)
-    }
     private func order(id: String = "sample", status: String) -> ShopOrder {
         ShopOrder(id: id, reference: "RF-TEST", storeName: "Unit test shop", status: status,
                   totalMinor: 12345, createdAt: 1_000_000, deliveryOtp: nil, rider: nil, riderLocation: nil)

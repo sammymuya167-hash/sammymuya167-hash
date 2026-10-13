@@ -25,6 +25,12 @@ struct CustomerRoot: View {
             }.padding().foregroundStyle(.white).background(green)
             if let controller { ShopWebView(controller: controller) } else { ProgressView().frame(maxWidth: .infinity, maxHeight: .infinity) }
         }
+        .overlay {
+            if phase == .background {
+                VStack(spacing: 12) { Image(systemName: "bag.fill").font(.largeTitle); Text("RouteForge Shop").font(.headline) }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity).foregroundStyle(.white).background(green)
+            }
+        }
         .task {
             if controller == nil { controller = ShopWebController(client: client) }
             client.setActive(true)

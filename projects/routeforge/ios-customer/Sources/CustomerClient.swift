@@ -30,14 +30,16 @@ enum CustomerError: LocalizedError {
     private var changes = OrderChanges()
     private var epoch = 0
     private var active = false
+    private let dataStore: WKWebsiteDataStore
     private let cookies: WKHTTPCookieStore
     private let session: URLSession
     private let notifications = UNUserNotificationCenter.current()
     private var alertsEnabled: Bool { UserDefaults.standard.bool(forKey: "orderAlertsEnabled") }
 
-    init(dataStore: WKWebsiteDataStore = .default()) {
+    init(dataStore: WKWebsiteDataStore = .default(), configuration: URLSessionConfiguration = .ephemeral) {
+        self.dataStore = dataStore
         cookies = dataStore.httpCookieStore
-        let config = URLSessionConfiguration.ephemeral
+        let config = configuration
         config.httpCookieStorage = nil
         config.urlCache = nil
         config.requestCachePolicy = .reloadIgnoringLocalCacheData
