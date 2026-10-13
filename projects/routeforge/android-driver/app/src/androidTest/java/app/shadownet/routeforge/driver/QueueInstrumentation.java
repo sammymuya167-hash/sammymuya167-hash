@@ -32,7 +32,7 @@ public final class QueueInstrumentation extends Instrumentation {
     private void status(int code, String name, int number, String message) {
         activeTest=name;activeNumber=number;
         Bundle b = new Bundle(); b.putString("class", getClass().getName());
-        b.putString("test", name); b.putInt("numtests", 38); b.putInt("current", number);
+        b.putString("test", name); b.putInt("numtests", 39); b.putInt("current", number);
         b.putString("stream", message); sendStatus(code, b);
     }
     private boolean notificationCount(NotificationManager manager,int expected) throws Exception {
@@ -299,23 +299,23 @@ public final class QueueInstrumentation extends Instrumentation {
             check(stationaryUi.await(5,TimeUnit.SECONDS),"Stationary map must respond");JSONObject stillResult=new JSONObject(stationaryResult.get());check(stillResult.getInt("lines")==0&&!stillResult.getBoolean("moving")&&stillResult.getBoolean("anchored")&&stillResult.getBoolean("unchanged")&&stillResult.getInt("drawn")==0&&stillResult.getInt("walking")==10,"Stationary drift is hidden and genuine offline movement retained: "+stillResult);
             status(0,"stationaryWebViewHasNoTrailAndOfflineWalkingStillHasOne",32,".");
             status(1,"installedUpdateClearsCachedBannerAndShowsCurrentVersion",33,"");
-            check(UpdateApi.installedVersion(getTargetContext())==12&&UpdateApi.installedName(getTargetContext()).equals("1.10"),"Rider identity must match this installed 1.10 APK");
+            check(UpdateApi.installedVersion(getTargetContext())==13&&UpdateApi.installedName(getTargetContext()).equals("1.11"),"Rider identity must match this installed 1.11 APK");
             int retainedQueue=queue.count();JSONObject priorUpdate=new JSONObject().put("applicationId","app.shadownet.routeforge.rider").put("certificateSha256","e0c3213d4cbb6cc15c5792d8f7ffecaa6758b963d6998b9afc9511c6c45dc72c").put("apkSha256","a".repeat(64)).put("versionedApkPath","/downloads/routeforge-rider-1.10.apk").put("versionCode",12).put("available",true);
             Session.prefs(getTargetContext()).edit().putString("rider_update",priorUpdate.toString()).commit();
             check(!UpdateApi.cached(getTargetContext()).optBoolean("available")&&UpdateApi.downloadUrl(getTargetContext()).equals(Session.API+"/login"),"A cached pre-install notification must not offer the already installed update, even offline");
-            priorUpdate.put("versionCode",13).put("versionedApkPath","/downloads/routeforge-rider-1.11.apk");Session.prefs(getTargetContext()).edit().putString("rider_update",priorUpdate.toString()).commit();
-            check(UpdateApi.cached(getTargetContext()).optBoolean("available")&&UpdateApi.downloadUrl(getTargetContext()).endsWith("/routeforge-rider-1.11.apk")&&queue.count()==retainedQueue,"A newer same-identity release remains available without touching saved GPS");
+            priorUpdate.put("versionCode",14).put("versionedApkPath","/downloads/routeforge-rider-1.12.apk");Session.prefs(getTargetContext()).edit().putString("rider_update",priorUpdate.toString()).commit();
+            check(UpdateApi.cached(getTargetContext()).optBoolean("available")&&UpdateApi.downloadUrl(getTargetContext()).endsWith("/routeforge-rider-1.12.apk")&&queue.count()==retainedQueue,"A newer same-identity release remains available without touching saved GPS");
             Session.prefs(getTargetContext()).edit().remove("rider_update").commit();
             CountDownLatch versionUi=new CountDownLatch(1);AtomicReference<String> versionResult=new AtomicReference<>();
-            runOnMainSync(()->{WebView web=(WebView)((ViewGroup)ui[0].findViewById(android.R.id.content)).getChildAt(0);web.evaluateJavascript("(function(){applyState({paired:true,appVersionName:'1.10',commands:[],data:{}});go('account');var result=document.getElementById('accountcontent').textContent.indexOf('Rider 1.10')>=0;applyState({paired:false});return result;})()",value->{versionResult.set(value);versionUi.countDown();});});
-            check(versionUi.await(5,TimeUnit.SECONDS)&&"true".equals(versionResult.get()),"The actual account screen must show the installed Rider 1.10 version");
+            runOnMainSync(()->{WebView web=(WebView)((ViewGroup)ui[0].findViewById(android.R.id.content)).getChildAt(0);web.evaluateJavascript("(function(){applyState({paired:true,appVersionName:'1.11',commands:[],data:{}});go('account');var result=document.getElementById('accountcontent').textContent.indexOf('Rider 1.11')>=0;applyState({paired:false});return result;})()",value->{versionResult.set(value);versionUi.countDown();});});
+            check(versionUi.await(5,TimeUnit.SECONDS)&&"true".equals(versionResult.get()),"The actual account screen must show the installed Rider 1.11 version");
             status(0,"installedUpdateClearsCachedBannerAndShowsCurrentVersion",33,".");
             status(1,"heartbeatReportsActualInstalledPackageVersion",34,"");
             int queueBeforeHeartbeat=queue.count();
             android.content.pm.PackageInfo installedInfo=getTargetContext().getPackageManager().getPackageInfo(getTargetContext().getPackageName(),0);
             long expectedHeartbeatVersion=android.os.Build.VERSION.SDK_INT>=28?installedInfo.getLongVersionCode():installedInfo.versionCode;
             JSONObject heartbeatVersionPayload=DriverApi.stateInput(getTargetContext());
-            check(heartbeatVersionPayload.getLong("appVersion")==expectedHeartbeatVersion&&heartbeatVersionPayload.getLong("appVersion")==12,"The actual heartbeat payload must report this installed APK instead of stale Rider 1.6 code 8");
+            check(heartbeatVersionPayload.getLong("appVersion")==expectedHeartbeatVersion&&heartbeatVersionPayload.getLong("appVersion")==13,"The actual heartbeat payload must report this installed APK instead of stale Rider 1.6 code 8");
             check(heartbeatVersionPayload.getBoolean("gpsEnabled")==DriverApi.gpsEnabled(getTargetContext())&&heartbeatVersionPayload.getBoolean("onDuty")== (TrackingService.running&&Session.prefs(getTargetContext()).getBoolean("duty",false))&&queue.count()==queueBeforeHeartbeat,"Reading package identity must preserve duty, GPS permissions and queued journeys");
             status(0,"heartbeatReportsActualInstalledPackageVersion",34,".");
             status(1,"motionEvidenceDistinguishesStillWalkingAndMissingSensor",35,"");
@@ -357,11 +357,25 @@ public final class QueueInstrumentation extends Instrumentation {
             check(paymentUi.await(5,TimeUnit.SECONDS),"Customer payment UI must respond");JSONObject paymentView=new JSONObject(paymentResult.get());
             check(paymentView.getBoolean("cod")&&!paymentView.getBoolean("prepaid")&&!paymentView.getBoolean("handoff")&&!paymentView.getBoolean("zero")&&paymentView.getBoolean("legacyUnknown")&&paymentView.getString("explanation").contains("nothing to collect")&&paymentView.getString("courierExplanation").contains("Courier handoff"),"Only an actual outstanding collection should open the exact payment form: "+paymentView);
             status(0,"customerCollectionDistinguishesPrepaidHandoffAndExactCod",38,".");
-            Bundle result = new Bundle(); result.putString("stream", "\nOK (38 tests)\n");
+            status(1,"rejectedReportsRecoverOnlyWithAuthoritativeCompletion",39,"");
+            queue.clearCommands();queue.clear();Session.save(getTargetContext(),new JSONObject().put("deviceId",device).put("driverName","Synthetic rider").put("token","test-only-token").put("loggedIn",true));
+            String recoveredOrder=UUID.randomUUID().toString(),recoveredDispatch=UUID.randomUUID().toString(),recoveredId=UUID.randomUUID().toString();
+            JSONObject report=new JSONObject().put("action","delivered").put("operationId",recoveredId).put("orderId",recoveredOrder).put("dispatchId",recoveredDispatch);
+            queue.addCommand(device,report);queue.commandError(recoveredId,"The assignment changed while confirming. Refresh and retry.");
+            JSONObject authoritative=new JSONObject().put("recentOrders",new JSONArray().put(new JSONObject().put("id",recoveredOrder).put("dispatchId",recoveredDispatch).put("status","assigned")));
+            DriverApi.recoverConfirmedReport(getTargetContext(),authoritative);check(!queue.command().getString("error").isEmpty(),"An unconfirmed delivery must stay held");
+            authoritative.getJSONArray("recentOrders").getJSONObject(0).put("status","delivered");DriverApi.recoverConfirmedReport(getTargetContext(),authoritative);
+            check(queue.commandCount()==1&&queue.command().getString("id").equals(recoveredId)&&queue.command().getString("error").isEmpty(),"Confirmed completion retries its original receipt ID and is not acknowledged locally");
+            queue.clearCommands();report.put("action","payment").put("amount",0);queue.addCommand(device,report);queue.commandError(recoveredId,"This order is prepaid. Nothing is due to the rider.");
+            authoritative.put("payments",new JSONArray().put(new JSONObject().put("orderId",recoveredOrder).put("source","customer_checkout").put("status","reported")));
+            DriverApi.recoverConfirmedReport(getTargetContext(),authoritative);check(!queue.command().getString("error").isEmpty(),"A reported payment cannot release financial reports");
+            authoritative.getJSONArray("payments").getJSONObject(0).put("status","verified");DriverApi.recoverConfirmedReport(getTargetContext(),authoritative);check(queue.command().getString("error").isEmpty()&&queue.commandCount()==1,"The verified checkout may recover an obsolete zero-collection report without inventing money");
+            queue.clearCommands();Session.clear(getTargetContext());status(0,"rejectedReportsRecoverOnlyWithAuthoritativeCompletion",39,".");
+            Bundle result = new Bundle(); result.putString("stream", "\nOK (39 tests)\n");
             finish(Activity.RESULT_OK, result);
         } catch (Throwable error) {
             android.util.Log.e("RouteForgeTests",activeTest,error);
-            Bundle failure=new Bundle();failure.putString("class",getClass().getName());failure.putString("test",activeTest);failure.putInt("numtests",38);failure.putInt("current",activeNumber);failure.putString("stack",android.util.Log.getStackTraceString(error));failure.putString("stream",error.toString());sendStatus(-2,failure);
+            Bundle failure=new Bundle();failure.putString("class",getClass().getName());failure.putString("test",activeTest);failure.putInt("numtests",39);failure.putInt("current",activeNumber);failure.putString("stack",android.util.Log.getStackTraceString(error));failure.putString("stream",error.toString());sendStatus(-2,failure);
             Bundle result = new Bundle(); result.putString("stream", "Queue test failed: " + error);
             finish(Activity.RESULT_CANCELED, result);
         } finally { if(ui[0]!=null)runOnMainSync(ui[0]::finish);queue.clear();queue.clearCommands();Session.clear(getTargetContext());Session.prefs(getTargetContext()).edit().remove("pending_unlink").commit(); }

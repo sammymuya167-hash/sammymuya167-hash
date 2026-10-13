@@ -49,6 +49,19 @@ final class DriverApi {
  static JSONObject stateInput(Context c)throws Exception{
   return new JSONObject().put("appVersion",UpdateApi.installedVersion(c)).put("onDuty",TrackingService.running&&Session.prefs(c).getBoolean("duty",false)).put("gpsEnabled",gpsEnabled(c));
  }
+ static void recoverConfirmedReport(Context c,JSONObject response)throws Exception{
+  JSONObject row=EventQueue.get(c).command();if(row==null||row.optString("error").isEmpty())return;
+  JSONObject session=Session.get(c);if(session==null||!session.optString("deviceId").equals(row.optString("deviceId")))return;
+  JSONObject p=row.getJSONObject("payload");String action=p.optString("action");boolean confirmed=false;
+  JSONArray orders=response.optJSONArray("recentOrders");
+  if(orders!=null)for(int i=0;i<orders.length();i++){JSONObject o=orders.getJSONObject(i);if(!o.optString("id").equals(p.optString("orderId"))||!"delivered".equals(o.optString("status")))continue;
+   if(("collected".equals(action)||"delivered".equals(action))&&o.optString("dispatchId").equals(p.optString("dispatchId")))confirmed=true;
+   if("payment".equals(action)&&p.optDouble("amount",-1)==0){JSONArray credits=response.optJSONArray("payments");if(credits!=null)for(int j=0;j<credits.length();j++){JSONObject credit=credits.getJSONObject(j);if(credit.optString("orderId").equals(o.optString("id"))&&"verified".equals(credit.optString("status"))&&"customer_checkout".equals(credit.optString("source")))confirmed=true;}}
+  }
+  if("stop_duty".equals(action)&&response.optBoolean("canStop",false))confirmed=true;
+  // Retry with the original durable ID. Only a server receipt removes a row.
+  if(confirmed)EventQueue.get(c).commandError(row.getString("id"),"");
+ }
  static void poll(Context c){
   if(!polling.compareAndSet(false,true))return;
   try{
@@ -56,7 +69,7 @@ final class DriverApi {
    JSONObject session=Session.get(c);if(!Session.loggedIn(c))return;
    JSONObject response=Api.post("/api/driver/state",stateInput(c),session.getString("token"),12000);
    JSONObject current=Session.get(c);if(current==null||!current.optString("token").equals(session.optString("token")))return;
-   response.put("receivedAt",System.currentTimeMillis());Session.cacheState(c,response);Session.prefs(c).edit().putString("state_error","").apply();DriverAlerts.sync(c,response);
+   response.put("receivedAt",System.currentTimeMillis());Session.cacheState(c,response);recoverConfirmedReport(c,response);Session.prefs(c).edit().putString("state_error","").apply();DriverAlerts.sync(c,response);
   }catch(Api.Rejected e){if(e.status==401){Session.clear(c);c.stopService(new Intent(c,TrackingService.class));}Session.prefs(c).edit().putString("state_error",e.getMessage()).apply();}
   catch(Exception ignored){Session.prefs(c).edit().putString("state_error","Delivery connection interrupted. Your last assignment is retained. Reconnect or tap Refresh deliveries; offers need a live connection.").apply();}
   finally{polling.set(false);}
