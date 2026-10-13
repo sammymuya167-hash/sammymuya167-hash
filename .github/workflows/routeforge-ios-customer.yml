@@ -39,6 +39,8 @@ jobs:
               runtimes = json.load(f)['devices']
           import re
           keys = sorted(runtimes, key=lambda s: tuple(map(int, re.findall(r'\d+', s))), reverse=True)
+          # Reuse the iOS 26.4 runtime that successfully ran the live catalog checks.
+          keys = sorted(keys, key=lambda s: not s.endswith('iOS-26-4'))
           devices = [d for k in keys for d in runtimes[k] if d.get('isAvailable') and d['name'].startswith('iPhone')]
           if not devices:
               raise SystemExit('No iPhone simulator is available')
@@ -46,14 +48,6 @@ jobs:
           with open(os.environ['GITHUB_ENV'], 'a') as f:
               f.write('ROUTEFORGE_SIMULATOR_ID=' + device['udid'] + '\n')
           print('Testing on ' + device['name'])
-          PY
-      - name: Boot selected simulator
-        run: |
-          python3 - <<'PY'
-          import os, subprocess
-          subprocess.run(['open', '-a', 'Simulator'], check=True, timeout=30)
-          subprocess.run(['xcrun', 'simctl', 'boot', os.environ['ROUTEFORGE_SIMULATOR_ID']], check=False, timeout=600)
-          subprocess.run(['xcrun', 'simctl', 'bootstatus', os.environ['ROUTEFORGE_SIMULATOR_ID'], '-b'], check=True, timeout=600)
           PY
       - name: Build signed simulator test application
         run: |
