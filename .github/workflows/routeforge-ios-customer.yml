@@ -9,7 +9,7 @@ permissions:
 jobs:
   customer-ios:
     runs-on: macos-26
-    timeout-minutes: 30
+    timeout-minutes: 25
     defaults:
       run:
         working-directory: projects/routeforge/ios-customer
@@ -24,6 +24,7 @@ jobs:
           xcodegen generate --spec project.yml
           git rev-parse HEAD > build/release/source-sha.txt
           find Sources Tests UITests Assets.xcassets -type f -print0 | sort -z | xargs -0 shasum -a 256 > build/release/source-manifest.sha256
+          cp README.md build/release/iOS-handoff.md
       - name: Compile device archive without distribution credentials
         run: |
           set -o pipefail
@@ -35,7 +36,10 @@ jobs:
           python3 - <<'PY'
           import json, os
           with open('build/simulators.json') as f:
-              devices = [d for ds in json.load(f)['devices'].values() for d in ds if d.get('isAvailable') and d['name'].startswith('iPhone')]
+              runtimes = json.load(f)['devices']
+          import re
+          keys = sorted(runtimes, key=lambda s: tuple(map(int, re.findall(r'\d+', s))), reverse=True)
+          devices = [d for k in keys for d in runtimes[k] if d.get('isAvailable') and d['name'].startswith('iPhone')]
           if not devices:
               raise SystemExit('No iPhone simulator is available')
           device = next((d for d in devices if 'Pro' in d['name']), devices[0])
@@ -43,13 +47,29 @@ jobs:
               f.write('ROUTEFORGE_SIMULATOR_ID=' + device['udid'] + '\n')
           print('Testing on ' + device['name'])
           PY
-      - name: Test installed app on iPhone simulator
+      - name: Boot selected simulator
+        run: |
+          open -a Simulator
+          xcrun simctl boot "$ROUTEFORGE_SIMULATOR_ID" 2>/dev/null || true
+          python3 - <<'PY'
+          import os, subprocess
+          subprocess.run(['xcrun', 'simctl', 'bootstatus', os.environ['ROUTEFORGE_SIMULATOR_ID'], '-b'], check=True, timeout=240)
+          PY
+      - name: Build signed simulator test application
         run: |
           set -o pipefail
-          xcodebuild test -project RouteForgeShop.xcodeproj -scheme RouteForgeShop -configuration Debug -destination "platform=iOS Simulator,id=$ROUTEFORGE_SIMULATOR_ID" -parallel-testing-enabled NO -derivedDataPath build/DerivedData -resultBundlePath build/CustomerTests.xcresult CODE_SIGNING_ALLOWED=NO | tee build/release/simulator-tests.log
+          xcodebuild build-for-testing -project RouteForgeShop.xcodeproj -scheme RouteForgeShop -configuration Debug -destination "platform=iOS Simulator,id=$ROUTEFORGE_SIMULATOR_ID" -derivedDataPath build/DerivedData CODE_SIGNING_ALLOWED=YES CODE_SIGN_IDENTITY=- | tee build/release/simulator-build.log
           ditto -c -k --keepParent build/DerivedData/Build/Products/Debug-iphonesimulator/RouteForgeShop.app build/release/RouteForge-Customer-1.0-simulator.zip
-          xcrun xcresulttool get test-results summary --path build/CustomerTests.xcresult --format json > build/release/test-results.json
-          cp README.md build/release/iOS-handoff.md
+      - name: Verify customer API sessions and offline recovery
+        run: |
+          set -o pipefail
+          xcodebuild test-without-building -project RouteForgeShop.xcodeproj -scheme RouteForgeShop -configuration Debug -destination "platform=iOS Simulator,id=$ROUTEFORGE_SIMULATOR_ID" -parallel-testing-enabled NO -derivedDataPath build/DerivedData -resultBundlePath build/CustomerCoreTests.xcresult -only-testing:RouteForgeShopTests -test-timeouts-enabled YES -default-test-execution-time-allowance 120 -maximum-test-execution-time-allowance 180 CODE_SIGNING_ALLOWED=YES CODE_SIGN_IDENTITY=- | tee build/release/core-tests.log
+          xcrun xcresulttool get test-results summary --path build/CustomerCoreTests.xcresult --format json > build/release/core-test-results.json
+      - name: Verify native iPhone screens and live shop
+        run: |
+          set -o pipefail
+          xcodebuild test-without-building -project RouteForgeShop.xcodeproj -scheme RouteForgeShop -configuration Debug -destination "platform=iOS Simulator,id=$ROUTEFORGE_SIMULATOR_ID" -parallel-testing-enabled NO -derivedDataPath build/DerivedData -resultBundlePath build/CustomerUITests.xcresult -only-testing:RouteForgeShopUITests -test-timeouts-enabled YES -default-test-execution-time-allowance 180 -maximum-test-execution-time-allowance 240 CODE_SIGNING_ALLOWED=YES CODE_SIGN_IDENTITY=- | tee build/release/ui-tests.log
+          xcrun xcresulttool get test-results summary --path build/CustomerUITests.xcresult --format json > build/release/ui-test-results.json
           shasum -a 256 build/release/*.zip > build/release/binary-checksums.sha256
       - uses: actions/upload-artifact@v4
         if: always()
@@ -57,5 +77,6 @@ jobs:
           name: routeforge-customer-ios-build
           path: |
             projects/routeforge/ios-customer/build/release/
-            projects/routeforge/ios-customer/build/CustomerTests.xcresult/
+            projects/routeforge/ios-customer/build/CustomerCoreTests.xcresult/
+            projects/routeforge/ios-customer/build/CustomerUITests.xcresult/
           retention-days: 14

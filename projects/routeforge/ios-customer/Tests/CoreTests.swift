@@ -62,7 +62,7 @@ final class CoreTests: XCTestCase {
         XCTAssertEqual(order(status: "placed").money, "KES 123.45")
         XCTAssertEqual(order(status: "future_status").statusTitle, "Order update")
     }
-    @MainActor func testNativePermissionsAndWebIsolation() {
+    @MainActor func testNativePermissionsAndWebIsolation() async {
         let client = CustomerClient()
         let controller = ShopWebController(client: client)
         XCTAssertTrue(controller.webView.configuration.limitsNavigationsToAppBoundDomains)
