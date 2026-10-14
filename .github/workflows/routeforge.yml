@@ -2,7 +2,7 @@ name: RouteForge checks
 
 on:
   push:
-    branches: [main, routeforge-rider-1-11]
+    branches: [main, routeforge-rider-1-11, routeforge-rider-1-12]
     paths: ["projects/routeforge/**", ".github/workflows/routeforge.yml"]
   pull_request:
     paths: ["projects/routeforge/**", ".github/workflows/routeforge.yml"]
@@ -13,7 +13,7 @@ permissions:
 
 jobs:
   verify:
-    if: github.ref != 'refs/heads/routeforge-rider-1-11'
+    if: github.ref != 'refs/heads/routeforge-rider-1-11' && github.ref != 'refs/heads/routeforge-rider-1-12'
     runs-on: ubuntu-latest
     defaults:
       run:

@@ -36,7 +36,7 @@ final class DriverApi {
     if(!row.getString("deviceId").equals(session.getString("deviceId"))){Session.error(c,"A saved action belongs to an earlier link. Review it before pairing another driver.");return false;}
     // A rejected financial/completion report stays visible until explicitly discarded.
     if(!row.optString("error").isEmpty()){Session.error(c,row.optString("error"));return false;}
-    try{Api.post("/api/driver/actions",row.getJSONObject("payload"),session.getString("token"),12000);EventQueue.get(c).commandDone(row.getString("id"));JSONObject completed=row.getJSONObject("payload");if("delivered".equals(completed.optString("action"))&&completed.optString("orderId").matches("[a-fA-F0-9-]{36}"))try{JourneyApi.requestBackup(c,"order",completed.getString("orderId"));}catch(Exception ignored){}}
+    try{JSONObject receipt=Api.post("/api/driver/actions",row.getJSONObject("payload"),session.getString("token"),12000);EventQueue.get(c).commandDone(row.getString("id"));JSONObject completed=row.getJSONObject("payload");if(!receipt.optBoolean("cancelled",false)&&"delivered".equals(completed.optString("action"))&&completed.optString("orderId").matches("[a-fA-F0-9-]{36}"))try{JourneyApi.requestBackup(c,"order",completed.getString("orderId"));}catch(Exception ignored){}}
     catch(Api.Rejected e){
      if(e.status==401){Session.clear(c);c.stopService(new Intent(c,TrackingService.class));Session.error(c,"Your session ended. Sign in to the same rider account to sync saved reports.");}
      else if(e.status==409||e.status==404||e.status==422)EventQueue.get(c).commandError(row.getString("id"),e.getMessage());
@@ -54,7 +54,7 @@ final class DriverApi {
   JSONObject session=Session.get(c);if(session==null||!session.optString("deviceId").equals(row.optString("deviceId")))return;
   JSONObject p=row.getJSONObject("payload");String action=p.optString("action");boolean confirmed=false;
   JSONArray orders=response.optJSONArray("recentOrders");
-  if(orders!=null)for(int i=0;i<orders.length();i++){JSONObject o=orders.getJSONObject(i);if(!o.optString("id").equals(p.optString("orderId"))||!"delivered".equals(o.optString("status")))continue;
+  if(orders!=null)for(int i=0;i<orders.length();i++){JSONObject o=orders.getJSONObject(i);if(!o.optString("id").equals(p.optString("orderId"))||!("delivered".equals(o.optString("status"))||"cancelled".equals(o.optString("status"))))continue;
    if(("collected".equals(action)||"delivered".equals(action))&&o.optString("dispatchId").equals(p.optString("dispatchId")))confirmed=true;
    if("payment".equals(action)&&p.optDouble("amount",-1)==0){JSONArray credits=response.optJSONArray("payments");if(credits!=null)for(int j=0;j<credits.length();j++){JSONObject credit=credits.getJSONObject(j);if(credit.optString("orderId").equals(o.optString("id"))&&"verified".equals(credit.optString("status"))&&"customer_checkout".equals(credit.optString("source")))confirmed=true;}}
   }
