@@ -373,7 +373,7 @@ public final class QueueInstrumentation extends Instrumentation {
             queue.clearCommands();Session.clear(getTargetContext());status(0,"rejectedReportsRecoverOnlyWithAuthoritativeCompletion",39,".");
             status(1,"cancelledReportsRetryOriginalReceiptsWithoutClaimingDeliveryOrRefund",40,"");
             queue.clearCommands();String cancelledDevice=UUID.randomUUID().toString(),cancelledOrder=UUID.randomUUID().toString(),cancelledDispatch=UUID.randomUUID().toString(),cancelledOperation=UUID.randomUUID().toString();
-            Session.save(getTargetContext(),new JSONObject().put("deviceId",cancelledDevice).put("token","fixture-native-cancellation").put("loggedIn",true));
+            Session.save(getTargetContext(),new JSONObject().put("deviceId",cancelledDevice).put("driverName","Synthetic cancellation rider").put("token","fixture-native-cancellation").put("loggedIn",true));
             JSONObject cancelledReport=new JSONObject().put("action","delivered").put("operationId",cancelledOperation).put("orderId",cancelledOrder).put("dispatchId",cancelledDispatch);
             queue.addCommand(cancelledDevice,cancelledReport);queue.commandError(cancelledOperation,"No assignment is active on this rider phone.");
             JSONObject cancellation=new JSONObject().put("recentOrders",new JSONArray().put(new JSONObject().put("id",cancelledOrder).put("dispatchId",UUID.randomUUID().toString()).put("status","cancelled")));
@@ -382,7 +382,7 @@ public final class QueueInstrumentation extends Instrumentation {
             check(queue.commandCount()==1&&queue.command().getString("id").equals(cancelledOperation)&&queue.command().getString("error").isEmpty(),"Cancellation clears only the retry error; the original report still needs a server receipt");
             queue.clearCommands();queue.addCommand(UUID.randomUUID().toString(),cancelledReport);queue.commandError(cancelledOperation,"held");
             DriverApi.recoverConfirmedReport(getTargetContext(),cancellation);check(!queue.command().getString("error").isEmpty(),"Another signed-in rider must not release the saved report");
-            queue.clearCommands();Session.save(getTargetContext(),new JSONObject().put("deviceId",cancelledDevice).put("token","fixture-native-cancellation").put("loggedIn",true));
+            queue.clearCommands();Session.save(getTargetContext(),new JSONObject().put("deviceId",cancelledDevice).put("driverName","Synthetic cancellation rider").put("token","fixture-native-cancellation").put("loggedIn",true));
             cancelledReport.put("action","payment").put("amount",1);queue.addCommand(cancelledDevice,cancelledReport);queue.commandError(cancelledOperation,"Nonzero collection needs review");
             cancellation.put("payments",new JSONArray().put(new JSONObject().put("orderId",cancelledOrder).put("source","customer_checkout").put("status","verified")));
             DriverApi.recoverConfirmedReport(getTargetContext(),cancellation);check(!queue.command().getString("error").isEmpty(),"Cancellation never discards a nonzero financial claim");
