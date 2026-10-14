@@ -32,7 +32,7 @@ public final class QueueInstrumentation extends Instrumentation {
     private void status(int code, String name, int number, String message) {
         activeTest=name;activeNumber=number;
         Bundle b = new Bundle(); b.putString("class", getClass().getName());
-        b.putString("test", name); b.putInt("numtests", 39); b.putInt("current", number);
+        b.putString("test", name); b.putInt("numtests", 40); b.putInt("current", number);
         b.putString("stream", message); sendStatus(code, b);
     }
     private boolean notificationCount(NotificationManager manager,int expected) throws Exception {
@@ -315,7 +315,7 @@ public final class QueueInstrumentation extends Instrumentation {
             android.content.pm.PackageInfo installedInfo=getTargetContext().getPackageManager().getPackageInfo(getTargetContext().getPackageName(),0);
             long expectedHeartbeatVersion=android.os.Build.VERSION.SDK_INT>=28?installedInfo.getLongVersionCode():installedInfo.versionCode;
             JSONObject heartbeatVersionPayload=DriverApi.stateInput(getTargetContext());
-            check(heartbeatVersionPayload.getLong("appVersion")==expectedHeartbeatVersion&&heartbeatVersionPayload.getLong("appVersion")==13,"The actual heartbeat payload must report this installed APK instead of stale Rider 1.6 code 8");
+            check(heartbeatVersionPayload.getLong("appVersion")==expectedHeartbeatVersion&&heartbeatVersionPayload.getLong("appVersion")==14,"The actual heartbeat payload must report this installed APK instead of stale Rider 1.6 code 8");
             check(heartbeatVersionPayload.getBoolean("gpsEnabled")==DriverApi.gpsEnabled(getTargetContext())&&heartbeatVersionPayload.getBoolean("onDuty")== (TrackingService.running&&Session.prefs(getTargetContext()).getBoolean("duty",false))&&queue.count()==queueBeforeHeartbeat,"Reading package identity must preserve duty, GPS permissions and queued journeys");
             status(0,"heartbeatReportsActualInstalledPackageVersion",34,".");
             status(1,"motionEvidenceDistinguishesStillWalkingAndMissingSensor",35,"");
@@ -373,16 +373,16 @@ public final class QueueInstrumentation extends Instrumentation {
             queue.clearCommands();Session.clear(getTargetContext());status(0,"rejectedReportsRecoverOnlyWithAuthoritativeCompletion",39,".");
             status(1,"cancelledReportsRetryOriginalReceiptsWithoutClaimingDeliveryOrRefund",40,"");
             queue.clearCommands();String cancelledDevice=UUID.randomUUID().toString(),cancelledOrder=UUID.randomUUID().toString(),cancelledDispatch=UUID.randomUUID().toString(),cancelledOperation=UUID.randomUUID().toString();
-            Session.save(getTargetContext(),new JSONObject().put("deviceId",cancelledDevice).put("token","fixture-native-cancellation"));
+            Session.save(getTargetContext(),new JSONObject().put("deviceId",cancelledDevice).put("token","fixture-native-cancellation").put("loggedIn",true));
             JSONObject cancelledReport=new JSONObject().put("action","delivered").put("operationId",cancelledOperation).put("orderId",cancelledOrder).put("dispatchId",cancelledDispatch);
             queue.addCommand(cancelledDevice,cancelledReport);queue.commandError(cancelledOperation,"No assignment is active on this rider phone.");
             JSONObject cancellation=new JSONObject().put("recentOrders",new JSONArray().put(new JSONObject().put("id",cancelledOrder).put("dispatchId",UUID.randomUUID().toString()).put("status","cancelled")));
             DriverApi.recoverConfirmedReport(getTargetContext(),cancellation);check(!queue.command().getString("error").isEmpty(),"A different cancelled dispatch must not release this saved report");
             cancellation.getJSONArray("recentOrders").getJSONObject(0).put("dispatchId",cancelledDispatch);DriverApi.recoverConfirmedReport(getTargetContext(),cancellation);
             check(queue.commandCount()==1&&queue.command().getString("id").equals(cancelledOperation)&&queue.command().getString("error").isEmpty(),"Cancellation clears only the retry error; the original report still needs a server receipt");
-            queue.commandError(cancelledOperation,"held");Session.save(getTargetContext(),new JSONObject().put("deviceId",UUID.randomUUID().toString()).put("token","other-fixture"));
+            queue.clearCommands();queue.addCommand(UUID.randomUUID().toString(),cancelledReport);queue.commandError(cancelledOperation,"held");
             DriverApi.recoverConfirmedReport(getTargetContext(),cancellation);check(!queue.command().getString("error").isEmpty(),"Another signed-in rider must not release the saved report");
-            Session.save(getTargetContext(),new JSONObject().put("deviceId",cancelledDevice).put("token","fixture-native-cancellation"));queue.clearCommands();
+            queue.clearCommands();Session.save(getTargetContext(),new JSONObject().put("deviceId",cancelledDevice).put("token","fixture-native-cancellation").put("loggedIn",true));
             cancelledReport.put("action","payment").put("amount",1);queue.addCommand(cancelledDevice,cancelledReport);queue.commandError(cancelledOperation,"Nonzero collection needs review");
             cancellation.put("payments",new JSONArray().put(new JSONObject().put("orderId",cancelledOrder).put("source","customer_checkout").put("status","verified")));
             DriverApi.recoverConfirmedReport(getTargetContext(),cancellation);check(!queue.command().getString("error").isEmpty(),"Cancellation never discards a nonzero financial claim");
