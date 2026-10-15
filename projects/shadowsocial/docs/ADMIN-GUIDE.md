@@ -1,0 +1,12 @@
+# Running your ShadowSocial office
+
+1. Open `/office` and sign in with the configured owner account. Create a profile once. The server recognizes the owner; you do not need an invitation.
+2. Open **Rules & settings**. Choose whether new posts publish immediately or wait for review. You can pause registration or member publishing at any time. Staff can continue their moderation work while publishing is paused.
+3. Members create accounts on the public app. After someone joins, find them under **People & permissions** to assign moderator or admin access. Only you can grant or remove staff roles.
+4. Review **Reports**. Inspect the reported post/comment/user and author before deciding. Remove content or restrict the author when appropriate, then resolve or dismiss the report. Resolution itself does not automatically remove content or ban an author.
+5. Use warnings for minor concerns, timed suspensions for temporary restrictions and bans for serious/repeated abuse. The current office offers a seven-day suspension; the API supports 1–30 days. Every decision requires a clear reason.
+6. Review **Appeals**. Record the decision, and separately restore access from **People & permissions** if accepted. Preserve a useful explanation for the member.
+7. Use **Content studio** to approve pending posts, remove live content or restore a staff-removed post. Author-deleted posts cannot be restored.
+8. Check **Audit trail** to see the latest actions and reasons. Audit records are not editable through the app.
+
+Community rules are displayed at signup and inside the app. Age is self-confirmed at 16+. Photo safety review is manual. This office is an initial operating system; staff still need to review reports and respond to appeals.

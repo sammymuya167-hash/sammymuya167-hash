@@ -1,0 +1,11 @@
+{
+  "package": "ke.co.shadownet.shadowsocial",
+  "version": "0.1.0",
+  "apk_sha256": "949c2fd8e4eb9fb3af7a8a9f8ded88103cf2fe90b2502631ede55937ecc8828f",
+  "android_source_commit": "f11d4a8176c115fb395d0177ef43c00fb8715182",
+  "github_actions_run": 38780283123,
+  "web_origin": "https://shadowsocial-shadownet.sammymuya167.chatgpt.site",
+  "client": "browser-backed Android Custom Tabs",
+  "built_and_tested": "Android SDK 35; unit tests, release lint and API 35 emulator checks",
+  "published_date": "2026-10-15"
+}

@@ -35,7 +35,24 @@
     {
       "pdf_id": 7,
       "title": "Instagram Clone",
-      "state": "unbuilt"
+      "state": "built",
+      "project": "ShadowSocial",
+      "source_path": "projects/shadowsocial",
+      "live_url": "https://shadowsocial-shadownet.sammymuya167.chatgpt.site",
+      "office_url": "https://shadowsocial-shadownet.sammymuya167.chatgpt.site/office",
+      "android_apk_url": "https://shadowsocial-shadownet.sammymuya167.chatgpt.site/downloads/shadowsocial-android-v0.1.0.apk",
+      "android_package": "ke.co.shadownet.shadowsocial",
+      "android_apk_sha256": "949c2fd8e4eb9fb3af7a8a9f8ded88103cf2fe90b2502631ede55937ecc8828f",
+      "android_source_commit": "f11d4a8176c115fb395d0177ef43c00fb8715182",
+      "web_source_commit": "9cce6181e5b43fc1705c57a75c9e73d301d522d6",
+      "access": "Public entry and open profile registration with hosted ChatGPT sign-in. Owner/admin/moderator API authorization protects the office.",
+      "implementation": "Original AI-assisted SHADOWNET implementation, using React/Vinext, Cloudflare D1/R2 and an adapted SHADOWNET Custom Tabs Android shell. No upstream Instagram clone code reused.",
+      "verification": "85 real D1/R2 integration assertions; 5 production-Worker flows; clean typecheck and production build; Android release lint, 3 unit and 4 API 35 emulator checks; signed APK v2/v3 verification and source/artifact provenance.",
+      "scope": "Photo/text feed, follows and private follow requests, profiles, likes, comments, saved posts, blocking, reports, notifications, appeals, owner moderation office, staff roles, bans/suspensions, audit records, registration/publishing controls, rules and announcements. Browser-backed Android client shares the same service. No independent email/password auth, video reels, stories, DMs or background push; physical-device sign-in/upload and browser visual QA remain field checks.",
+      "released_at": "2026-10-15",
+      "last_updated": "2026-10-15",
+      "release_timezone": "Africa/Nairobi",
+      "version": "0.1.0"
     },
     {
       "pdf_id": 8,
