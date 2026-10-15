@@ -1,6 +1,6 @@
 # Running your ShadowSocial office
 
-1. Open `/office` and sign in with the configured owner account. Create a profile once. The server recognizes the owner; you do not need an invitation.
+1. For Android owner access, open `/account-access` in the verified owner session, create the owner profile if prompted, choose your app password and save the recovery code. Sign into the APK with your owner email and that password. Open `/office` and sign in with the configured owner account. Create a profile once. The server recognizes the owner; you do not need an invitation.
 2. Open **Rules & settings**. Choose whether new posts publish immediately or wait for review. You can pause registration or member publishing at any time. Staff can continue their moderation work while publishing is paused.
 3. Members create accounts on the public app. After someone joins, find them under **People & permissions** to assign moderator or admin access. Only you can grant or remove staff roles.
 4. Review **Reports**. Inspect the reported post/comment/user and author before deciding. Remove content or restrict the author when appropriate, then resolve or dismiss the report. Resolution itself does not automatically remove content or ban an author.
