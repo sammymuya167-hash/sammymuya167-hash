@@ -1,0 +1,17 @@
+<resources>
+    <string name="app_name">ShadowChat</string>
+    <string name="brand_byline">BY SHADOWNET</string>
+    <string name="welcome_title">Your people.\nYour private space.</string>
+    <string name="welcome_body">Your Android app and the website use the same ShadowChat account and conversations.</string>
+    <string name="open_chat">Open my conversations</string>
+    <string name="same_chats">How to use the same chats</string>
+    <string name="key_title">Keep your conversation history</string>
+    <string name="key_steps">1. Sign in with the same ChatGPT account you use on the web.\n\n2. If this phone does not have your message key, open Settings on the web and save your encrypted recovery key. Transfer that encrypted file to your phone.\n\n3. Enter your existing passphrase in ShadowChat on this phone and choose Restore encrypted key.\n\nYou only restore once per browser profile. Conversations sent from either device then appear in the same account while online.</string>
+    <string name="key_summary">Already started on the web? Use the same account and restore your encrypted key once on this phone.</string>
+    <string name="browser_note">Powered by your Android browser. Your phone browser and this app share sign-in and message-key storage when they use the same browser profile.</string>
+    <string name="delivery_note">Messages sync while ShadowChat is open and online. Background push is not included in this version.</string>
+    <string name="no_browser_title">A browser is needed</string>
+    <string name="no_browser_body">Install or enable a modern Android browser, such as Chrome, then open ShadowChat again.</string>
+    <string name="close">Close</string>
+    <string name="version">ANDROID 0.2.0 · SHADOWNET</string>
+</resources>
