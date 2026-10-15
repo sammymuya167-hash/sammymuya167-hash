@@ -2,19 +2,22 @@
 
 A standalone native Android social app with its own animated splash, email/username login, sign-up, feed, photo composer, profiles, messaging and owner-controlled moderation office. Catalogue project #7.
 
-- [Download the signed Android APK v0.2.0](https://shadowsocial-shadownet.sammymuya167.chatgpt.site/api/android/v0.2.0)
+- [Download the signed Android APK v0.2.1](https://shadowsocial-shadownet.sammymuya167.chatgpt.site/api/android/v0.2.1)
 - [Community](https://shadowsocial-shadownet.sammymuya167.chatgpt.site)
 - [Office](https://shadowsocial-shadownet.sammymuya167.chatgpt.site/office)
 - [Owner app-password setup](https://shadowsocial-shadownet.sammymuya167.chatgpt.site/account-access)
 
 ## Android release
-Native Flutter 3.32.8 screens, compiled for ARM32, ARM64 and x86_64. Android 8.0+ (API 26); target API 35. Package `ke.co.shadownet.shadowsocial`, version 0.2.0 (2). The app has no WebView, Custom Tabs or browser launcher.
-The universal installer is **50,843,048 bytes (50.8 MB)**, with no padding. APK SHA-256:
-`c24a4b8d1ce838a4ff249c86ad35d13a03c9c7a0e6097e2a8c45c36bfc7f5b16`
+Native Flutter 3.32.8 screens, compiled for ARM32, ARM64 and x86_64. Android 8.0+ (API 26); target API 35. Package `ke.co.shadownet.shadowsocial`, version 0.2.1 (3). The app has no WebView, Custom Tabs or browser launcher.
+The universal installer is **50,859,432 bytes (50.9 MB)**, with no padding. APK SHA-256:
+`0a0a87d3a468a364242ff90abaa10bc3a852fd4536fa1f73ac9a34d98aafc4dd`
 Signing certificate SHA-256:
 `3d48406874958d7cf34d08373101fbb346cc52fda05008a1cb0231c0db3d0a71`
 The existing owner certificate is preserved for upgrades. Private signing material is never committed.
 `native/` is the current Android source. `android/` records the superseded v0.1.0 browser launcher.
+
+## v0.2.1 improvements
+The account header, welcome card and action button adapt to small screens. Publishing closes the keyboard before returning to the feed. Long chat names fit the header. Narrow-phone widget checks pass at 320 pixels.
 
 ## Owner setup
 Open `/account-access` using the verified hosted owner account. Create the owner profile if prompted, then choose an app password and save the private recovery code. Sign into the APK with the owner email and that password. The same profile and office permissions are used on phone and web.

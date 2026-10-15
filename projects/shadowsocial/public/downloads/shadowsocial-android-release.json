@@ -1,14 +1,14 @@
 {
-  "version": "0.2.0",
-  "versionCode": 2,
+  "version": "0.2.1",
+  "versionCode": 3,
   "package": "ke.co.shadownet.shadowsocial",
   "native": true,
   "framework": "Flutter",
   "minAndroidApi": 26,
   "targetAndroidApi": 35,
-  "bytes": 50843048,
-  "sha256": "c24a4b8d1ce838a4ff249c86ad35d13a03c9c7a0e6097e2a8c45c36bfc7f5b16",
-  "downloadUrl": "https://shadowsocial-shadownet.sammymuya167.chatgpt.site/api/android/v0.2.0",
+  "bytes": 50859432,
+  "sha256": "0a0a87d3a468a364242ff90abaa10bc3a852fd4536fa1f73ac9a34d98aafc4dd",
+  "downloadUrl": "https://shadowsocial-shadownet.sammymuya167.chatgpt.site/api/android/v0.2.1",
   "certificateSha256": "3d48406874958d7cf34d08373101fbb346cc52fda05008a1cb0231c0db3d0a71",
   "features": [
     "native animated splash",
@@ -18,5 +18,6 @@
     "profiles and follows",
     "mutual-follower messages",
     "native moderation office"
-  ]
+  ],
+  "sourceCommit": "42b19073dee33b202511af473dbee03be968bc29"
 }
