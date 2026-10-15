@@ -36,7 +36,7 @@ Web members use `/login`; the hosted identity path remains available for secure 
 
 ## Validation
 - 85 existing D1/R2 social and moderation assertions passed.
-- 25 native-account and messaging assertions passed.
+- 29 native-account and messaging assertions passed.
 - 6 production-built Worker tests passed.
 - Flutter analyzer clean; 3 widget/client tests passed.
 - Release compiled, aligned and signatures verified.
