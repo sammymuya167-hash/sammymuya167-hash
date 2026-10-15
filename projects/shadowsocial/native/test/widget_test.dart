@@ -25,7 +25,11 @@ void main() {
   testWidgets('Native splash leads to own login and signup forms', (
     tester,
   ) async {
-    final api = Api(
+    tester.view.physicalSize = Size(320, 640);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      final api = Api(
       vault: MemoryVault(),
       client: MockClient(
         (r) async => http.Response(
@@ -51,6 +55,7 @@ void main() {
     expect(find.text('Display name'), findsOneWidget);
     expect(find.text('Username'), findsOneWidget);
     expect(find.byType(CheckboxListTile), findsOneWidget);
+      expect(tester.takeException(), isNull);
   });
   test(
     'Secure session token is sent as bearer and never placed in URLs',

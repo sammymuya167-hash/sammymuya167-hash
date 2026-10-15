@@ -1111,6 +1111,7 @@ class _ComposerScreenState extends State<ComposerScreen> {
   }
 
   Future<void> publish() async {
+    FocusScope.of(context).unfocus();
     if (caption.text.trim().isEmpty && photo == null) {
       setState(() => error = 'Add a photo or write a caption.');
       return;
@@ -1874,7 +1875,7 @@ class SettingsScreen extends StatelessWidget {
               color: ink,
             ),
           ),
-          subtitle: Text('Version 0.2.0 · by SHADOWNET'),
+          subtitle: Text('Version 0.2.1 · by SHADOWNET'),
         ),
         SizedBox(height: 22),
         if (api.staff)
@@ -2323,9 +2324,13 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
         children: [
           Avatar(api: widget.api, person: widget.person, radius: 18),
           SizedBox(width: 10),
-          Text(
-            widget.person['name'],
-            style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800),
+          Expanded(
+            child: Text(
+              widget.person['name'],
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800),
+            ),
           ),
         ],
       ),

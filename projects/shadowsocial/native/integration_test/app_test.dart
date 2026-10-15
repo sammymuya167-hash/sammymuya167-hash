@@ -79,7 +79,22 @@ void main() {
       await tester.pump(Duration(milliseconds: 500));
     }
     await tester.pumpAndSettle();
-    expect(find.textContaining('My first native Android moment'), findsWidgets);
+    final published = await api.call('posts');
+    expect(
+      rows(published, 'posts').any(
+        (post) => post['caption'] == 'My first native Android moment',
+      ),
+      isTrue,
+    );
+    await tester.drag(find.byType(ListView).first, Offset(0, -500));
+    await tester.pumpAndSettle();
+    expect(
+      find.textContaining(
+        'My first native Android moment',
+        findRichText: true,
+      ),
+      findsWidgets,
+    );
     await tester.tap(find.text('Explore').last);
     await tester.pumpAndSettle();
     expect(find.text('CI Friend'), findsOneWidget);

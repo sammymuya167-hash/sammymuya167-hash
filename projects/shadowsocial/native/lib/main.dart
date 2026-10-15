@@ -428,16 +428,22 @@ class _AuthScreenState extends State<AuthScreen> {
                 children: [
                   BrandMark(size: 43),
                   SizedBox(width: 12),
-                  Text(
-                    'ShadowSocial',
-                    style: TextStyle(
-                      color: ink,
-                      fontSize: 23,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: -.8,
+                  Expanded(
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        'ShadowSocial',
+                        style: TextStyle(
+                          color: ink,
+                          fontSize: 23,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: -.8,
+                        ),
+                      ),
                     ),
                   ),
-                  Spacer(),
+                  SizedBox(width: 8),
                   Container(
                     padding: EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                     decoration: BoxDecoration(
