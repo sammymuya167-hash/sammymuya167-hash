@@ -1,0 +1,17 @@
+<resources>
+<string name="app_name">ShadowSocial</string>
+<string name="brand_byline">BY SHADOWNET</string>
+<string name="welcome_title">Your people.\nYour world.</string>
+<string name="welcome_body">Share little moments. Find your people. Make a little more connection.</string>
+<string name="open_chat">Enter my world</string>
+<string name="same_chats">One account, everywhere</string>
+<string name="key_title">Your people come with you</string>
+<string name="key_steps">1. Sign in with ChatGPT, then create your ShadowSocial username and profile. No invitation is needed.\n\n2. Use the same account on the website and this app. Your photos, follows, comments and saved posts are stored by the same service.\n\n3. Choose a photo from your phone to share a moment. Manage profile privacy and report concerns from the app.\n\nYou must be at least 16 and accept the community rules.</string>
+<string name="key_summary">Your photos, followers and saved moments stay together on web and Android.</string>
+<string name="browser_note">This Android client opens the live app in your browser profile. A modern Android browser and internet connection are required.</string>
+<string name="delivery_note">Activity updates while the app is open. Background push and video reels are not included in this first release.</string>
+<string name="no_browser_title">A browser is needed</string>
+<string name="no_browser_body">Install or enable a modern Android browser, such as Chrome, then open ShadowSocial again.</string>
+<string name="close">Close</string>
+<string name="version">ANDROID 0.1.0 · SHADOWNET</string>
+</resources>
