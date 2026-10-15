@@ -30,6 +30,7 @@ void main() {
     await binding.convertFlutterSurfaceToImage();
     await tester.pump();
     await binding.takeScreenshot('01-native-splash');
+    await tester.pump(Duration(seconds: 2));
     await tester.pumpAndSettle();
     await binding.takeScreenshot('02-native-login');
     final signup = find.text('New around here? Create an account');
@@ -84,6 +85,9 @@ void main() {
     expect(find.text('CI Friend'), findsOneWidget);
     await binding.takeScreenshot('04-native-explore');
     await tester.tap(find.text('Follow').first);
+    for (int i = 0; i < 60 && find.text('Following').evaluate().isEmpty; i++) {
+      await tester.pump(Duration(milliseconds: 250));
+    }
     await tester.pumpAndSettle();
     expect(find.text('Following'), findsWidgets);
     await tester.tap(find.text('You').last);
