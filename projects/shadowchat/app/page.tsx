@@ -1,7 +1,7 @@
-import { requireChatGPTUser } from "./chatgpt-auth";
+import { chatGPTSignInPath, getChatGPTUser } from "./chatgpt-auth";
 import ShadowChat from "./shadowchat";
 export const dynamic = "force-dynamic";
 export default async function Home() {
-  await requireChatGPTUser("/");
-  return <ShadowChat />;
+  const user = await getChatGPTUser();
+  return <ShadowChat initialSignedIn={Boolean(user)} signInPath={chatGPTSignInPath("/")} />;
 }

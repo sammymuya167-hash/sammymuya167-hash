@@ -4,25 +4,26 @@ An invite-only messenger for a small, approved circle. The web app and signed An
 
 ## What works
 
-- Hosted ChatGPT sign-in, private Site access, and a separate owner-managed membership gate.
+- A public entry page with hosted ChatGPT sign-in and invitation-only membership; no separate Site viewer approval.
 - Email-bound, single-use invitations with 48-hour expiry and revocation.
 - Usernames, approved-member directory, one-to-one conversations, cursor-based history, unread counts, and delivery/read markers.
 - NaCl public-key authenticated encryption in the browser; only ciphertext, nonces, routing metadata and public keys go to the application server.
 - Passphrase-protected device keys, encrypted recovery-key export/restore, manual lock, and ten-minute inactivity lock.
 - An encrypted browser outbox which retries while the app is open and reconnects. Queued text is encrypted before persistent storage.
 - Optional browser alerts while the app remains open, with no message content in the notification.
-- Responsive desktop/mobile layouts, a signed browser-backed Android APK, and an in-app Android release notice.
+- Responsive desktop/mobile layouts, a signed browser-backed Android APK, and an in-app update notice.
 
 ## Start using it
 
-1. Open the private deployment and sign in as its owner. Create a name, username, and a long passphrase. Initialize this first owner before sharing the Site.
-2. Download the encrypted recovery key. Keep the backup and its passphrase safe; the service cannot restore a lost private key.
-3. In **Your people → Invite someone**, create an invitation bound to the friend's ChatGPT sign-in email.
-4. Grant that same person viewer access using the hosting platform's private Share controls, then send the generated invitation link. These are two gates: platform access and ShadowChat membership. Private owner-only publication does not itself grant invited people platform access.
-5. The invited person signs in, accepts the invitation, creates a device key/passphrase, and downloads their recovery key.
-6. Open a conversation and compare safety numbers through a separate trusted channel. Mark comparison only after both numbers match.
+1. Open ShadowChat on the web or in the existing Android APK. Sign in to the same account you already use for ShadowChat.
+2. The existing owner can create an invitation in **Your people → Invite someone**, bound to the friend's ChatGPT sign-in email.
+3. Send the generated link directly. There is no hosting Share approval step. Invitations expire after 48 hours and can be used once.
+4. The invited person signs in with that email, accepts the invitation, chooses their name and key passphrase, and downloads their encrypted recovery key.
+5. Open a conversation and compare safety numbers through a separate trusted channel. Mark comparison only after both numbers match.
 
-No invitation emails are sent by the application. No other person's platform access is added automatically. The first published release remains owner-private until the owner explicitly shares it.
+No invitation emails are sent by the application. Anyone with the URL can open the entry page and APK download. Private APIs still require a signed-in, active member, and each conversation is restricted to its two members. A public visitor cannot create an owner account. The existing owner was initialized before public entry was enabled; a new empty database requires administrator provisioning rather than first-visitor enrollment.
+
+Invitation tokens stay in the URL fragment and this tab's session storage through sign-in/account switching. The sign-in return URL contains no invitation token. After enrollment, the pending token is removed. If tab storage is blocked, the original invitation link can be pasted after sign-in.
 
 ## Development
 
@@ -32,7 +33,7 @@ Migrations are in `drizzle/`. Do not modify an applied migration. Add a new migr
 
 ## Verification
 
-The initial release passes 18 focused cryptographic and D1-backed API tests. They cover intended-recipient delivery, tamper/context substitution, wrong-key rejection, recovery passphrases, pinned implementation bytes, one-owner initialization, invitation expiry/revocation/replay, membership authorization, idempotent delivery, receipt handling, key replacement rejection, and multi-page history. Five additional production-Worker flow checks verify hosted identity handling, account/invitation routes, an encrypted message through the built Worker and D1, cross-device restored-key history, and install assets. TypeScript and production Worker builds also pass.
+The current release passes focused cryptographic, invitation-entry, and D1-backed API tests. They cover intended-recipient delivery, tamper/context substitution, wrong-key rejection, recovery passphrases, pinned implementation bytes, blocked public owner takeover, uninvited visitor rejection, invitation expiry/revocation/replay, membership authorization, idempotent delivery, receipt handling, key replacement rejection, and multi-page history. Additional production-Worker flow checks verify public entry and protected API handling, blocked owner takeover, account/invitation routes, an encrypted message through the built Worker and D1, cross-device restored-key history, and install assets. TypeScript and production Worker builds also pass.
 
 The managed environment has no supported interactive browser control. Real-browser IndexedDB persistence, Android installation, idle lock timing, notifications and two-person device operation require a device acceptance test. The tests use independent synthetic identities and a local D1 runtime; they do not claim a successful live conversation between real accounts.
 

@@ -1,12 +1,12 @@
-# ShadowChat 0.2 security model
+# ShadowChat 0.2.1 security model
 
 This is an early, unaudited private messenger for a small approved circle. It must not be represented as Signal, WhatsApp, or equivalent in security assurance.
 
 ## Identities and gates
 
-Hosted sign-in establishes a stable, Site-scoped account ID. Private hosting access is preserved. Application APIs additionally require an active membership and authorize the conversation pair for every operation. The first owner is initialized only while the Site is owner-private, using an atomic singleton reservation. Initialize the owner before granting any hosting access. Public or shared uninitialized deployment is unsupported.
+The entry page and install assets are publicly reachable. Hosted sign-in establishes a stable, Site-scoped account ID; it does not grant chat membership. Private application APIs require an active membership and authorize the conversation pair for every operation. The existing owner was initialized while hosting was owner-private. The public join endpoint cannot create an owner: an uninitialized database fails closed, including concurrent join attempts. A fresh database requires administrator provisioning before use. Hosting access approval is no longer part of joining.
 
-Only the owner can create or revoke invitations and remove members. Invitations contain 256 random bits, expire in 48 hours, bind to the authenticated email, and are consumed atomically with account creation. Only a SHA-256 token digest is stored server-side. Invitation URLs put the token in the fragment to keep it out of HTTP paths and referrers; the client clears the fragment after reading it. Invitation emails are visible only to the owner. Removing a member stops new access but cannot erase received copies, screenshots, exported keys or backups.
+Only the owner can create or revoke invitations and remove members. Invitations contain 256 random bits, expire in 48 hours, bind to the authenticated email, and are consumed atomically with account creation. Only a SHA-256 token digest is stored server-side. Invitation URLs put the token in the fragment to keep it out of HTTP paths and referrers; the client clears the fragment after reading it on authenticated entry. A pending token is held in tab-scoped session storage through sign-in or account switching, removed on membership detection/successful enrollment, and locally expires within 48 hours. The auth return URL contains no invitation token. Server-side expiry and email binding remain authoritative; session storage grants no membership. Invitation emails are visible only to the owner. Removing a member stops new access but cannot erase received copies, screenshots, exported keys or backups.
 
 ## Content encryption
 

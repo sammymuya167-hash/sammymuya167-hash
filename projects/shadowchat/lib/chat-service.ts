@@ -61,11 +61,9 @@ export async function handleChatRequest(req: Request, db: D1Database, user: Requ
       const exists = await db.prepare("SELECT owner_id FROM settings WHERE id = 1").first<{ owner_id: string }>();
       const now = Date.now();
       if (!exists) {
-        // Initial owner enrolment is possible only behind the owner-private hosting gate.
-        await db.batch([
-          db.prepare("INSERT INTO settings (id, owner_id) VALUES (1, ?) ON CONFLICT(id) DO NOTHING").bind(user.userId),
-          db.prepare("INSERT INTO members (id, handle, name, public_key, role, status, joined_at) SELECT ?, ?, ?, ?, 'owner', 'active', ? WHERE EXISTS (SELECT 1 FROM settings WHERE id = 1 AND owner_id = ?)").bind(user.userId, handle, name, b.publicKey, now, user.userId)
-        ]);
+        // The existing owner was initialized before public entry was enabled.
+        // An empty or replaced database must never let a visitor claim ownership.
+        throw new UserError("This space is not ready. Please contact its owner.", 503);
       } else {
         if (typeof b.token !== "string" || !/^[a-f0-9]{64}$/.test(b.token)) throw new UserError("You need a valid invitation from the owner.", 403);
         const hashed = await hashToken(b.token), email = user.email.toLowerCase().trim();

@@ -8,7 +8,7 @@ Build one substantial project at a time, aiming for a daily release with working
 | 02 · 2026-10-08 | 33 · Jira Clone | SprintForge | Built · public demo · 28 checks |
 | 03 · 2026-10-08 | 98 · API Testing Tool | RequestLab | Built · public demo · 32 checks |
 | 04 · 2026-10-08 | 77 · Design Collaboration Tool | CanvasRoom | Built · public demo · 5 domain tests |
-| 05 · 2026-10-15 | 12 · WhatsApp Clone | ShadowChat | Built · private initial web release · encrypted one-to-one text |
+| 05 · 2026-10-15 | 12 · WhatsApp Clone | ShadowChat | Built · web + signed Android APK · public entry, invitation-only chats |
 | Candidate | 45 · Invoice Management System | Invoice studio with lifecycle states and PDF output | Unbuilt |
 | Candidate | 55 · Travel Planner | Itineraries, budgets and saved places | Unbuilt |
 | Candidate | 67 · Inventory Management System | Stock movement history and reorder rules | Unbuilt |
@@ -63,3 +63,11 @@ The existing owner-private Site was updated successfully by deployment `appgdep_
 APK SHA-256: `80a802f632f59c49723b6f124afa0d9cb6858562470ed159a5e7fccf6ccd3d78`. Package: `ke.co.shadownet.shadowchat`. Android minimum: API 26. Certificate SHA-256: `1694b52bc5f49ea85d3bc751d75aa4b7b68e10ec0c39ecece311a3a1e9086851`.
 
 Five built-Worker flow checks now include a restored phone identity sending a message read by a separate web identity, followed by a web reply decrypted on that phone identity. The exact served APK download hash is also checked. TypeScript and production Worker builds pass. These checks use synthetic sessions and do not claim a real physical-phone ChatGPT sign-in or production conversation; those remain field checks. [Android setup and security boundaries](../../shadowchat/docs/ANDROID.md).
+
+## ShadowChat invitation access fix 0.2.1 · 2026-10-15
+
+Removed the separate hosting viewer approval that returned 403 before an invited person could reach ShadowChat. The existing owner and initialized database were retained. Hardened source `151a403909c5c56856156afc80e9effe31f21acc` was published successfully by deployment `appgdep_6ad10ce068ec8191bd3a10d93dbebc4a` before changing the Site audience to public (access policy revision 2). The entry page and APK download are reachable by anyone with the URL; membership still requires hosted identity and an owner-created, email-bound, single-use invitation. Private APIs and each conversation retain their authorization checks. No invitation emails were sent.
+
+The public join endpoint cannot create an owner, including after an empty database or concurrent visitor requests. Invitation tokens survive sign-in/account switching in tab-scoped session storage and never enter the sign-in return URL. Removed the obsolete Share-control step from the app and setup guide. An in-app release notice explains direct invitations. The installed signed Android 0.2.0 APK opens this same live app and needs no reinstall.
+
+Validation: 22 focused cryptographic, invitation-entry and D1 API tests, all 6 production-Worker flow checks, TypeScript and the production build pass. These cover public entry/protected APIs, owner takeover rejection, mismatched-email invitation rejection, encrypted delivery, restored-key phone/web history and the unchanged APK hash. Interactive browser/device acceptance remains a field check.

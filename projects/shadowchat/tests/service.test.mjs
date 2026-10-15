@@ -19,9 +19,12 @@ async function fixture(t) {
   }
   async function join(user, token = '') { return call(user, 'join', { name: user.displayName, handle: user.userId, publicKey: keys[user.userId].publicKey, token }); }
   async function invite(user) { const r = await call(alice, 'invitations', { email: user.email }); assert.equal(r.status, 201); return r.data; }
-  async function members() { assert.equal((await join(alice)).status, 201); for (const u of [bob, carol]) { const i = await invite(u); assert.equal((await join(u, i.token)).status, 201); } }
+  async function seedOwner() {
+    await db.batch([db.prepare('INSERT INTO settings (id, owner_id) VALUES (1, ?)').bind(alice.userId), db.prepare("INSERT INTO members (id, handle, name, public_key, role, status, joined_at) VALUES (?, ?, ?, ?, 'owner', 'active', ?)").bind(alice.userId, alice.userId, alice.displayName, keys.alice.publicKey, Date.now())]);
+  }
+  async function members() { await seedOwner(); for (const u of [bob, carol]) { const i = await invite(u); assert.equal((await join(u, i.token)).status, 201); } }
   async function conversation() { const r = await call(alice, 'conversations', { peerId: bob.userId }); assert.equal(r.status, 201); return r.data.id; }
-  return { db, call, join, invite, members, conversation };
+  return { db, call, join, invite, members, conversation, seedOwner };
 }
 test('identity is required; hostile origins and oversized input are rejected', async t => {
   const f = await fixture(t); assert.equal((await f.call(null, 'bootstrap')).status, 401);
@@ -29,13 +32,21 @@ test('identity is required; hostile origins and oversized input are rejected', a
   assert.equal((await f.call(alice, 'join', { text: 'x'.repeat(25000) })).status, 413);
   assert.equal((await f.call(alice, 'bootstrap')).headers.get('Cache-Control'), 'private, no-store');
 });
-test('private initial setup produces exactly one owner even under concurrent enrolment', async t => {
+test('public visitors cannot claim ownership of an empty space, even concurrently', async t => {
   const f = await fixture(t); const result = await Promise.all([f.join(alice), f.join(bob)]);
-  assert.equal(result.filter(r => r.status === 201).length, 1);
-  const owners = await f.db.prepare("SELECT id FROM members WHERE role='owner'").all(); assert.equal(owners.results.length, 1);
+  assert.deepEqual(result.map(r => r.status), [503, 503]);
+  assert.equal((await f.db.prepare('SELECT * FROM settings').all()).results.length, 0);
+  assert.equal((await f.db.prepare('SELECT * FROM members').all()).results.length, 0);
+});
+test('signed-in visitors still need an invitation before any private operation', async t => {
+  const f = await fixture(t); await f.seedOwner();
+  assert.equal((await f.join(bob)).status,403);
+  for (const path of ['members','invitations','conversations','messages?conversationId='+crypto.randomUUID()]) assert.equal((await f.call(bob,path)).status,403);
+  for (const [path,data] of [['invitations',{email:other.email}],['members/revoke',{id:alice.userId}],['conversations',{peerId:alice.userId}],['messages',{}],['receipts',{}]]) assert.equal((await f.call(bob,path,data)).status,403);
+  assert.equal((await f.call(bob,'bootstrap')).data.member,null);
 });
 test('invitations are email bound, one use, and stored as hashes', async t => {
-  const f = await fixture(t); assert.equal((await f.join(alice)).status, 201);
+  const f = await fixture(t); await f.seedOwner();
   const i = await f.invite(bob); const record = await f.db.prepare('SELECT * FROM invitations WHERE id=?').bind(i.id).first();
   assert.equal(record.token_hash.length, 64); assert.notEqual(record.token_hash, i.token); assert.ok(!Object.values(record).includes(i.token));
   assert.equal((await f.join(other, i.token)).status, 403);
@@ -44,7 +55,7 @@ test('invitations are email bound, one use, and stored as hashes', async t => {
   assert.equal((await f.join(carol, i.token)).status, 403);
 });
 test('expired and revoked invitations cannot enrol; handle conflicts do not consume invites', async t => {
-  const f = await fixture(t); await f.join(alice);
+  const f = await fixture(t); await f.seedOwner();
   const expired = await f.invite(bob); await f.db.prepare('UPDATE invitations SET expires_at=1 WHERE id=?').bind(expired.id).run(); assert.equal((await f.join(bob, expired.token)).status, 403);
   const revoked = await f.invite(bob); await f.call(alice, 'invitations/revoke', { id: revoked.id }); assert.equal((await f.join(bob, revoked.token)).status, 403);
   const valid = await f.invite(bob); assert.equal((await f.call(bob, 'join', { name: 'Bob', handle: 'alice', publicKey: keys.bob.publicKey, token: valid.token })).status, 409); assert.equal((await f.join(bob, valid.token)).status, 201);

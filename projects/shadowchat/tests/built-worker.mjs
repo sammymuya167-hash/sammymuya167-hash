@@ -14,15 +14,22 @@ test('production Worker, routes and D1 work together', async t => {
   const headers = id => id ? { 'oai-authenticated-user-id': id, 'oai-authenticated-user-email': `${id}@example.test`, 'oai-authenticated-user-full-name': id, 'oai-authenticated-user-full-name-encoding': 'percent-encoded-utf-8' } : {};
   const request = (id, path, data) => mf.dispatchFetch(`https://shadowchat.test${path}`, { method: data === undefined ? 'GET' : 'POST', headers: { ...headers(id), Origin: 'https://shadowchat.test', 'Content-Type': 'application/json' }, body: data === undefined ? undefined : JSON.stringify(data), redirect: 'manual' });
   let chatId;
-  await t.test('private page and API require hosted identity', async () => {
+  await t.test('entry page is public while API requires hosted identity', async () => {
     assert.equal((await request(null,'/api/bootstrap')).status,401);
-    const anonymous=await request(null,'/'); assert.ok([302,307].includes(anonymous.status));
+    const anonymous=await request(null,'/'); assert.equal(anonymous.status,200); const entry=await anonymous.text(); assert.match(entry,/Sign in to ShadowChat/); assert.match(entry,/signin-with-chatgpt\?return_to=%2F/); assert.match(entry,/An invitation is all the approval you need/); assert.ok(!entry.includes('Opening your private space'));
     const page=await request('alice','/'); assert.equal(page.status,200); const html=await page.text(); assert.match(html,/ShadowChat/); assert.match(html,/Opening your private space/);
     assert.equal(page.headers.get('Cache-Control'),'private, no-store'); assert.match(page.headers.get('Content-Security-Policy'),/object-src 'none'/);
   });
+  await t.test('public visitors cannot claim the owner or inspect private data',async()=>{
+    const claim=await request('outsider','/api/join',{name:'Visitor',handle:'visitor',publicKey:identities.bob.publicKey}); assert.equal(claim.status,503);
+    assert.equal((await request('outsider','/api/members')).status,403);
+    assert.equal((await db.prepare('SELECT * FROM settings').all()).results.length,0);
+  });
   await t.test('production account and email-bound invitation routes work',async()=>{
-    const owner=await request('alice','/api/join',{name:'Alice',handle:'alice',publicKey:identities.alice.publicKey}); assert.equal(owner.status,201);
+    await db.batch([db.prepare("INSERT INTO settings (id,owner_id) VALUES (1,'alice')"),db.prepare("INSERT INTO members (id,handle,name,public_key,role,status,joined_at) VALUES ('alice','alice','Alice',?,'owner','active',?)").bind(identities.alice.publicKey,Date.now())]);
+    assert.equal((await request('outsider','/api/conversations')).status,403);
     const i=await request('alice','/api/invitations',{email:'bob@example.test'}); const invite=await i.json(); assert.equal(i.status,201);
+    assert.equal((await request('outsider','/api/join',{name:'Visitor',handle:'visitor',publicKey:identities.bob.publicKey,token:invite.token})).status,403);
     const b=await request('bob','/api/join',{name:'Bob',handle:'bob',publicKey:identities.bob.publicKey,token:invite.token}); assert.equal(b.status,201);
     const c=await request('alice','/api/conversations',{peerId:'bob'}); assert.equal(c.status,201); chatId=(await c.json()).id;
   });

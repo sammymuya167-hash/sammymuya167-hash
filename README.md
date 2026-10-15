@@ -16,13 +16,13 @@ My work focuses on useful workflows, clear interfaces, tested server behavior, a
 | **SprintForge** | Sprint planning with Kanban, dependency graphs, burndown, comments, private D1 autosave and revision conflict protection | [Source & setup](projects/sprintforge) · [Live demo](https://sprintforge-shadownet.sammymuya167.chatgpt.site) |
 | **RequestLab** | Real HTTP requests, collections, environments, declarative assertions, a live mock API and private saved run summaries | [Source & setup](projects/requestlab) · [Live demo](https://requestlab-shadownet.sammymuya167.chatgpt.site) |
 | **CanvasRoom** | Original SVG design canvas with draggable shapes, connectors, review comments, private saves and restorable snapshots | [Source & setup](projects/canvasroom) · [Live demo](https://canvasroom-shadownet.sammymuya167.chatgpt.site) |
-| **ShadowChat** | Encrypted one-to-one conversations shared across web and a signed browser-backed Android APK, invitations, key recovery and app lock | [Source & setup](projects/shadowchat) · [Private app](https://shadowchat-shadownet.sammymuya167.chatgpt.site) |
+| **ShadowChat** | Encrypted one-to-one conversations shared across web and a signed browser-backed Android APK, invitations, key recovery and app lock | [Source & setup](projects/shadowchat) · [Open app](https://shadowchat-shadownet.sammymuya167.chatgpt.site) |
 | **IT operations & security portfolio** | Support tracking, authentication log triage, and an offline network configuration auditor; synthetic case studies and 19 automated tests | [Source & case studies](portfolio/README.md) |
 | **Jumia WhatsApp Importer** | Product export parsing, image processing, category matching, pricing, validation, and marketplace integration | [Private repository](https://github.com/sammymuya167-hash/jumia-whatsapp-importer) |
 
 ## Latest builds
 
-Five projects from the supplied *Full Stack Projects* catalogue are built and documented. Four have public demos; ShadowChat is privately deployed.
+Five projects from the supplied *Full Stack Projects* catalogue are built and documented. All five have live web apps; ShadowChat requires an invitation to join.
 
 - **RouteForge (#92):** manage company orders with a signed Rider app, five-second offers, completion/payment reports, verified sales totals and live GPS.
 - **SprintForge (#33):** plan sprints, enforce dependencies, track progress and retain project activity.
@@ -32,7 +32,7 @@ Five projects from the supplied *Full Stack Projects* catalogue are built and do
 
 CanvasRoom adds 5 focused canvas-domain tests plus clean lint, typecheck, migration and production Worker builds. The existing SprintForge and RequestLab suites retain 27 domain/request tests and 33 built-Worker/D1 integration checks.
 
-Portfolio source is public. RouteForge, SprintForge, RequestLab and CanvasRoom have public demos; ShadowChat remains owner-private until explicitly shared, with a separate application invitation gate. ShadowChat adds 18 cryptographic/D1 API tests, 5 production-Worker flow checks, plus Android unit and emulator checks. Its signed APK and the web app use the same conversation service; another device restores the existing encrypted identity once. Its first release is unaudited, lacks forward secrecy, and still requires real-browser and Android device testing. Saved workspaces remain private to each signed-in account. Distances and arrival times are estimates; it does not claim live traffic or turn-by-turn navigation.
+Portfolio source is public. RouteForge, SprintForge, RequestLab and CanvasRoom have public demos. ShadowChat has a public entry page and invitation-only chat membership; invited people sign in with their invited email, with no separate hosting approval. ShadowChat passes 22 cryptographic, invitation-entry and D1 API tests, 6 production-Worker flow checks, plus Android unit and emulator checks. Its signed APK and the web app use the same conversation service; another device restores the existing encrypted identity once. Its first release is unaudited, lacks forward secrecy, and still requires real-browser and Android device testing. Saved workspaces remain private to each signed-in account. Distances and arrival times are estimates; it does not claim live traffic or turn-by-turn navigation.
 
 [Read the architecture](projects/routeforge/docs/ARCHITECTURE.md) · [Build roadmap](projects/routeforge/docs/ROADMAP.md) · [100 project ideas](projects/routeforge/docs/catalog.json)
 

@@ -1,6 +1,6 @@
 # ShadowChat Android 0.2.0
 
-A small browser-backed Android APK for the existing private ShadowChat service:
+A small browser-backed Android APK for the existing invitation-only ShadowChat service:
 
 `https://shadowchat-shadownet.sammymuya167.chatgpt.site/`
 
@@ -40,3 +40,7 @@ GitHub Actions run **38773113521** passed debug/release compilation, release lin
 The release APK is signed with the retained owner certificate using APK Signature Schemes v2 and v3. Its SHA-256 is `80a802f632f59c49723b6f124afa0d9cb6858562470ed159a5e7fccf6ccd3d78`; certificate SHA-256 is `1694b52bc5f49ea85d3bc751d75aa4b7b68e10ec0c39ecece311a3a1e9086851`. Public release metadata is in `public/downloads/shadowchat-android-release.json`. No private signing material is present in the app, Site source, GitHub or CI artifacts.
 
 Five built-Worker integration flows include sending from a restored phone identity and reading that same message on a separately held desktop identity, followed by a web reply decrypted by the phone identity. This verifies the shared service and encryption/key-restoration path with synthetic sessions. It is not a claim of a completed physical-phone sign-in or a real production conversation.
+
+## Web access update 0.2.1
+
+The installed 0.2.0 APK opens the live web application and automatically receives the invitation access fix; reinstalling is unnecessary. The entry page and APK download are publicly reachable, while signing in with the invited email and accepting the owner's invitation are required for membership. No separate hosting viewer approval is required. Existing accounts, recovery keys and conversations are unchanged.
