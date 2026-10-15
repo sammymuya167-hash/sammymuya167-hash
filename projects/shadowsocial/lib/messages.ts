@@ -1,0 +1,19 @@
+import {Identity} from "./social-api";
+export async function handleMessages(req:Request,db:D1Database,identity:Identity):Promise<Response>{
+ const j=(v:unknown,s=200)=>Response.json(v,{status:s,headers:{"Cache-Control":"no-store"}});
+ try{
+ if(!identity)return j({error:"Sign in first."},401);
+ const q=(s:string,...v:unknown[])=>db.prepare(s).bind(...v),uid=identity.userId;
+ const actor=await q("SELECT status,suspended_until FROM profiles WHERE id=?",uid).first<{status:string;suspended_until:number}>();
+ if(!actor||actor.status!=="active"&&!(actor.status==="suspended"&&actor.suspended_until&&actor.suspended_until<Date.now()))return j({error:"Your account is restricted."},403);
+ const url=new URL(req.url),peer=url.pathname.split("/")[3];
+ if(req.method!=="GET"&&(req.headers.get("origin")&&req.headers.get("origin")!==url.origin||req.headers.get("sec-fetch-site")==="cross-site"))return j({error:"Cross-site request rejected."},403);
+ if(!peer&&req.method==="GET"){const rows=await q("SELECT p.id,p.username,p.name,p.avatar,(SELECT m.body FROM messages m WHERE (m.sender=? AND m.recipient=p.id) OR (m.recipient=? AND m.sender=p.id) ORDER BY m.created_at DESC LIMIT 1) last_message,(SELECT COUNT(*) FROM messages m WHERE m.recipient=? AND m.sender=p.id AND m.read=0) unread FROM profiles p WHERE p.id!=? AND p.status='active' AND NOT EXISTS(SELECT 1 FROM blocks b WHERE (b.owner=? AND b.target=p.id) OR (b.target=? AND b.owner=p.id)) AND EXISTS(SELECT 1 FROM follows f WHERE f.follower=? AND f.following=p.id AND f.state='accepted') AND EXISTS(SELECT 1 FROM follows f WHERE f.follower=p.id AND f.following=? AND f.state='accepted') ORDER BY unread DESC,p.name LIMIT 60",uid,uid,uid,uid,uid,uid,uid,uid).all();return j({people:rows.results})}
+ if(!peer||peer===uid)return j({error:"Choose another account."},400);
+ const allowed=await q("SELECT p.id FROM profiles p WHERE p.id=? AND p.status='active' AND NOT EXISTS(SELECT 1 FROM blocks b WHERE (b.owner=? AND b.target=p.id) OR (b.target=? AND b.owner=p.id)) AND EXISTS(SELECT 1 FROM follows f WHERE f.follower=? AND f.following=p.id AND f.state='accepted') AND EXISTS(SELECT 1 FROM follows f WHERE f.follower=p.id AND f.following=? AND f.state='accepted')",peer,uid,uid,uid,uid).first();
+ if(!allowed)return j({error:"Messages are available when you follow each other."},403);
+ if(req.method==="GET"){const result=await q("SELECT id,sender,recipient,body,created_at FROM messages WHERE (sender=? AND recipient=?) OR (sender=? AND recipient=?) ORDER BY created_at DESC LIMIT 100",uid,peer,peer,uid).all();await q("UPDATE messages SET read=1 WHERE sender=? AND recipient=?",peer,uid).run();return j({messages:result.results.reverse()})}
+ if(req.method==="POST"){if(Number(req.headers.get("content-length"))>9000)return j({error:"Message too long."},413);let raw="";if(req.body){const reader=req.body.getReader();while(true){const v=await reader.read();if(v.done)break;raw+=new TextDecoder().decode(v.value);if(raw.length>9000){await reader.cancel();return j({error:"Message too long."},413)}}}if(raw.length>9000)return j({error:"Message too long."},413);const b=JSON.parse(raw),body=String(b.body??"").trim();if(!body||body.length>2000)return j({error:"Messages must be 1–2000 characters."},400);const key=uid+":messages:"+new Date().toISOString().slice(0,10),r=await q("INSERT INTO limits(id,count) VALUES(?,1) ON CONFLICT(id) DO UPDATE SET count=count+1 WHERE count<300",key).run();if(!r.meta.changes)return j({error:"Daily message limit reached."},429);const id=crypto.randomUUID();await q("INSERT INTO messages(id,sender,recipient,body,created_at) VALUES(?,?,?,?,?)",id,uid,peer,body,Date.now()).run();return j({id},201)}
+ return j({error:"Method not allowed."},405);
+ }catch(e){console.error(JSON.stringify({event:"messages.error",message:e instanceof Error?e.message:"Unknown"}));return j({error:"Could not load messages."},500)}
+}

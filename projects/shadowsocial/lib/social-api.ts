@@ -1,4 +1,4 @@
-export type Identity = { userId: string; email: string; displayName: string } | null;
+export type Identity = { userId: string; email: string; displayName: string; authMethod?:"hosted"|"password" } | null;
 type Profile = { id:string; email:string; username:string; name:string; bio:string; avatar:string|null; role:string; status:string; private:number; suspended_until:number|null; reason:string; terms:string; created_at:number };
 type Bindings = { DB:D1Database; BUCKET:R2Bucket; ownerEmail:string };
 type Config = { registrationOpen:boolean; postingOpen:boolean; reviewNewPosts:boolean; announcement:string; maxPostsPerDay:number; blockedWords:string; rules:string };
@@ -20,7 +20,7 @@ export async function handleSocial(req:Request,env:Bindings,identity:Identity):P
  const active=(alias:string)=>`(${alias}.status='active' OR (${alias}.status='suspended' AND ${alias}.suspended_until IS NOT NULL AND ${alias}.suspended_until<=${Date.now()}))`;
  const safeProfile="p.id,p.username,p.name,p.bio,p.avatar,p.role,p.private,p.created_at";
  let actor:Profile|null=null;
- const isOwner=!!identity&&!!env.ownerEmail&&identity!.email.toLowerCase()===env.ownerEmail.toLowerCase();
+ let isOwner=identity?.authMethod!=="password"&&!!identity&&!!env.ownerEmail&&identity!.email.toLowerCase()===env.ownerEmail.toLowerCase();
  const owner=()=>{if(!isOwner||actor?.role!=="owner")fail(403,"Only the platform owner can do that.")};
  const staff=()=>{if(!actor||!["owner","admin","moderator"].includes(actor.role))fail(403,"Staff access required.")};
  const account=()=>{if(!identity)fail(401,"Sign in to continue.");if(!actor)fail(409,"Create your ShadowSocial profile first.");if(actor!.status==="deleted")fail(403,"This account has been deleted.");return actor!};
@@ -38,6 +38,7 @@ export async function handleSocial(req:Request,env:Bindings,identity:Identity):P
   if(!["GET","HEAD"].includes(method)){const origin=req.headers.get("origin");if(origin&&origin!==url.origin)fail(403,"Cross-site request rejected.");if(req.headers.get("sec-fetch-site")==="cross-site")fail(403,"Cross-site request rejected.")}
   if(!env.ownerEmail)fail(503,"Owner configuration is missing.");
   if(identity){actor=await one<Profile>("SELECT * FROM profiles WHERE id=?",identity!.userId);if(actor?.status==="suspended"&&actor.suspended_until&&actor.suspended_until<=Date.now()){await q("UPDATE profiles SET status='active',reason='',suspended_until=NULL WHERE id=? AND status='suspended' AND suspended_until<=?",actor.id,Date.now()).run();actor.status="active";actor.reason=""}}
+  if(identity?.authMethod==="password")isOwner=actor?.role==="owner"&&actor.email.toLowerCase()===env.ownerEmail.toLowerCase();
   if(path==="me"&&method==="GET")return json({profile:actor,isOwner,identity:identity?{name:identity.displayName}:null,policyVersion:POLICY_VERSION,config:await config()});
   if(path==="profile"&&method==="POST"){
    if(!identity)fail(401,"Sign in first.");if(actor)fail(409,"You already have a profile.");const c=await config();if(!c.registrationOpen&&!isOwner)fail(403,"New registrations are temporarily paused.");const b=await body(req);const username=text(b.username,24,"Username",3).toLowerCase();if(!/^[a-z0-9_]+$/.test(username))fail(400,"Use letters, numbers and underscores.");if(!isOwner&&["admin","administrator","owner","office","support","shadownet","shadowsocial","moderator"].includes(username))fail(400,"This username is reserved.");if(b.acceptRules!==true||b.ageConfirmed!==true)fail(400,"Accept the rules and confirm you are at least 16.");
@@ -55,7 +56,7 @@ export async function handleSocial(req:Request,env:Bindings,identity:Identity):P
   if(path==="profile"&&method==="DELETE"){
    const a=account();if(a.role==="owner")fail(400,"The owner account cannot be deleted here.");const b=await body(req);if(b.confirm!==a.username)fail(400,"Type your username to confirm.");
    const files=await rows("SELECT key FROM media WHERE owner=?",a.id);for(const file of files)await env.BUCKET.delete(String(file.key));
-   await db.batch([q("DELETE FROM follows WHERE follower=? OR following=?",a.id,a.id),q("DELETE FROM likes WHERE user=?",a.id),q("DELETE FROM bookmarks WHERE user=?",a.id),q("DELETE FROM notifications WHERE user=? OR actor=?",a.id,a.id),q("UPDATE comments SET body='[deleted]',status='removed' WHERE owner=?",a.id),q("UPDATE posts SET caption='',status='deleted' WHERE owner=?",a.id),q("UPDATE profiles SET email='',username=?,name='Deleted account',bio='',avatar=NULL,status='deleted',reason='' WHERE id=?",`deleted_${id().slice(0,8)}`,a.id),log("account.deleted",a.id,"User requested account deletion")]);return json({ok:true});
+   await db.batch([q("DELETE FROM sessions WHERE user_id=?",a.id),q("DELETE FROM credentials WHERE user_id=?",a.id),q("DELETE FROM messages WHERE sender=? OR recipient=?",a.id,a.id),q("DELETE FROM follows WHERE follower=? OR following=?",a.id,a.id),q("DELETE FROM likes WHERE user=?",a.id),q("DELETE FROM bookmarks WHERE user=?",a.id),q("DELETE FROM notifications WHERE user=? OR actor=?",a.id,a.id),q("UPDATE comments SET body='[deleted]',status='removed' WHERE owner=?",a.id),q("UPDATE posts SET caption='',status='deleted' WHERE owner=?",a.id),q("UPDATE profiles SET email='',username=?,name='Deleted account',bio='',avatar=NULL,status='deleted',reason='' WHERE id=?",`deleted_${id().slice(0,8)}`,a.id),log("account.deleted",a.id,"User requested account deletion")]);return json({ok:true});
   }
   if(path==="export"&&method==="GET"){const a=account();const data={profile:a,posts:await rows("SELECT * FROM posts WHERE owner=?",a.id),comments:await rows("SELECT * FROM comments WHERE owner=?",a.id),follows:await rows("SELECT * FROM follows WHERE follower=? OR following=?",a.id,a.id),reports:await rows("SELECT * FROM reports WHERE reporter=?",a.id),generatedAt:new Date().toISOString()};return new Response(JSON.stringify(data,null,2),{headers:{"Content-Type":"application/json","Content-Disposition":"attachment; filename=shadowsocial-data.json","Cache-Control":"no-store"}})}
   if(path==="upload"&&method==="POST"){

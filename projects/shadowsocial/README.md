@@ -1,69 +1,58 @@
 # ShadowSocial by SHADOWNET
 
-An original, AI-assisted photo-sharing community with an owner-controlled moderation office and a signed, browser-backed Android client. Catalogue project #7 (Instagram-style photo sharing); no upstream clone code is used. The Android launcher is adapted from SHADOWNET's existing ShadowChat client with its own package and signing identity.
+A standalone native Android social app with its own animated splash, email/username login, sign-up, feed, photo composer, profiles, messaging and owner-controlled moderation office. Catalogue project #7.
 
-- Community: https://shadowsocial-shadownet.sammymuya167.chatgpt.site
-- Office: https://shadowsocial-shadownet.sammymuya167.chatgpt.site/office
-- Android package: `ke.co.shadownet.shadowsocial`
+- [Download the signed Android APK v0.2.0](https://shadowsocial-shadownet.sammymuya167.chatgpt.site/api/android/v0.2.0)
+- [Community](https://shadowsocial-shadownet.sammymuya167.chatgpt.site)
+- [Office](https://shadowsocial-shadownet.sammymuya167.chatgpt.site/office)
+- [Owner app-password setup](https://shadowsocial-shadownet.sammymuya167.chatgpt.site/account-access)
 
-## Owner and registration
+## Android release
+Native Flutter 3.32.8 screens, compiled for ARM32, ARM64 and x86_64. Android 8.0+ (API 26); target API 35. Package `ke.co.shadownet.shadowsocial`, version 0.2.0 (2). The app has no WebView, Custom Tabs or browser launcher.
+The universal installer is **50,843,048 bytes (50.8 MB)**, with no padding. APK SHA-256:
+`c24a4b8d1ce838a4ff249c86ad35d13a03c9c7a0e6097e2a8c45c36bfc7f5b16`
+Signing certificate SHA-256:
+`3d48406874958d7cf34d08373101fbb346cc52fda05008a1cb0231c0db3d0a71`
+The existing owner certificate is preserved for upgrades. Private signing material is never committed.
+`native/` is the current Android source. `android/` records the superseded v0.1.0 browser launcher.
 
-The production owner email is configured privately as `SHADOWSOCIAL_OWNER_EMAIL`. No secret is included in source or the browser bundle. Sign in with that account, create your owner profile and open `/office`. The server assigns ownership only when the trusted hosted sign-in email matches that configuration. The first public visitor cannot claim the system.
+## Owner setup
+Open `/account-access` using the verified hosted owner account. Create the owner profile if prompted, then choose an app password and save the private recovery code. Sign into the APK with the owner email and that password. The same profile and office permissions are used on phone and web.
+Native signup always creates a member. Claiming an owner email never grants ownership; that address is reserved for explicit linking from the trusted owner session. Only the configured owner manages staff roles and platform settings.
 
-Registration is open by default. People sign in with ChatGPT and then choose a ShadowSocial name and username, accept the community rules and confirm they are at least 16. No invitation or manual approval is required. Hosted identity is not an independent email/password login. Emails remain in the account/staff surfaces; public profiles omit them.
+## Community
+- Independent email/username accounts; scrypt password hashes, hashed expiring sessions, Android Keystore-backed token storage and single-use recovery codes.
+- Animated native splash, original Material UI, discover/following feeds, photo picker/camera, posts, likes, comments, saved posts and profile editing.
+- Private accounts and follow approvals, block/unblock, notifications and reports.
+- Direct text conversations between mutual accepted followers. Messages refresh every 8 seconds while the chat is open; messages are server-stored, **not end-to-end encrypted**.
+- Native owner/admin/moderator office: users, warnings, suspension, bans, staff roles, post review, reports, appeals, audit history, rules, registration/posting switches, blocked phrases and daily posting limits.
+- Bans, private-media access and roles are checked by the server on each request.
+- Rules acceptance and 16+ confirmation, account deletion and data export API.
 
-## Community features
+## Backend and deployment
+Vinext/React on Cloudflare Workers with 18 D1 tables and R2 image/release storage. The public website and native app call the same APIs. Runtime owner identity and release-publishing credentials are private Sites secrets. APK uploads are streamed, checked against SHA-256 and published as immutable versions.
+Apply tracked Drizzle migrations in order. `lib/password-auth.ts`, `lib/messages.ts`, `lib/social-api.ts` and `lib/android-release.ts` contain the server behavior. Public profiles never expose account emails.
+Web members use `/login`; the hosted identity path remains available for secure owner bootstrap.
 
-- Photo and text posts; captions; discover and following feeds with keyset pagination.
-- JPEG, PNG and WebP uploads, checked server-side against file signatures and a 6 MiB limit. SVG and arbitrary files are rejected. R2 objects have no public bucket URL.
-- Profiles, bios and avatars; private accounts and accepted-follow visibility.
-- Follow requests, follows/unfollows, likes, comments, saved posts and profile sharing.
-- Account blocking that removes mutual follow relationships and excludes the blocked party from signed-in discovery, comments, posts and media.
-- Reports on posts, comments and accounts; in-app activity notifications and account appeals.
-- Account data export and deletion. Uploaded files are deleted; content is deactivated and personal profile fields are anonymized. Minimal moderation and audit records remain. Restrictions do not prevent export/deletion.
+## Validation
+- 85 existing D1/R2 social and moderation assertions passed.
+- 25 native-account and messaging assertions passed.
+- 6 production-built Worker tests passed.
+- Flutter analyzer clean; 3 widget/client tests passed.
+- Release compiled, aligned and signatures verified.
+- Production signup, native bearer login identity, posting, account deletion and revoked-session rejection passed using a temporary account, which was removed.
+- The published installer was downloaded and its size and SHA-256 matched the privately signed file.
+- Android emulator integration workflow exercises signup, posting, following and profiles with a real local D1/R2 API. Check its current run result before calling emulator validation complete.
 
-## Owner office
-
-Overview uses real database counts. Staff can search members; inspect reported content and its author; review live, pending or removed posts; review reports and appeals; and inspect recent audit events. Every moderation decision requires a reason. Moderation actions and their audit entry are committed in one D1 batch.
-
-| Role | Permissions |
-|---|---|
-| Owner | All moderation, staff role assignment, registration/publishing controls, rule and announcement changes |
-| Admin | Member warnings, suspensions, bans/reinstatement, content/report/appeal review |
-| Moderator | Member warnings and suspensions; content/report/appeal review |
-| Member | Own profile/content and ordinary community interactions |
-
-Owner and self-targeted staff restrictions are protected. Only the owner can manage existing staff. The owner can pause registration, pause member publishing/uploads/comments, require manual review of new member posts, configure the daily post limit and blocked text phrases, publish an announcement, and edit community rules. Manual image review is available; no automatic image classifier is claimed.
-
-## Shared service and privacy
-
-The React/Vinext web app and Android client use the same HTTPS origin, D1 records and R2 media. All authorization happens in the API; the Android APK has no separate feed database or sync bridge. Account bans are checked on every authenticated API request, and restricted authors are excluded from public feeds and media delivery. Staff have explicit access to private content for moderation. Public pages may be viewed while signed out; account blocks cannot prevent anonymous access to public content.
-
-Source: `lib/social-api.ts`; schema: `db/schema.ts`; generated migrations: `drizzle/`; office: `app/office/`; consumer: `app/ui.tsx`. The API rejects cross-origin writes, bounds request bodies, parameterizes values, and uses server-enforced quotas. Uploaded media responses are not publicly cached, so removals and privacy changes are checked on subsequent requests. Security headers restrict scripts/resources and disable native browser camera/microphone/geolocation APIs; the file chooser remains available.
-
-## Development and checks
-
-The Sites starter's locked installation and build helpers are retained. Node 22.13+ is required.
-
+## Build
+Java 17, Flutter 3.32.8, Gradle 8.11.1, Android SDK 35, NDK 27.0.12077973.
 ```sh
-npm run install:ci
-npm run db:generate
-npm run typecheck
-npm test
-npm run build
-npm run test:worker
+cd native
+flutter create --platforms=android --org ke.co.shadownet --project-name shadowsocial .
+python3 tool/prepare_android.py
+flutter pub get
+flutter analyze
+flutter test
+flutter build apk --release
 ```
-
-Tests use real local Miniflare D1/R2 bindings rather than a mock SQLite implementation. Production-Worker checks exercise rendered pages, routing, hosted identity headers, member/owner registration, phone/web shared writes and immediate ban enforcement. Test identity headers are supplied only by the local harness; production headers are injected by hosting dispatch. There is no production development-auth bypass.
-
-## Android
-
-The client is browser-backed using Custom Tabs and requires a modern Android browser and internet connection. Browser identity is retained in the selected browser profile. The signed APK opens the canonical production origin; incoming arbitrary URLs or tokens are not accepted. The app requests no native storage, contact, location, camera or microphone permissions. The web file input permits photo selection in the browser.
-
-The CI recipe in `ci/shadowsocial-android.yml` is installed at repository `.github/workflows/shadowsocial-android.yml`. It uses Java 17, Gradle 8.11.1, Android SDK 35 and AGP 8.9.2, runs debug/release compilation, release lint, unit tests and API 35 emulator instrumentation tests, then produces an unsigned aligned release and source manifests. Release signing is performed outside the public repository. The private signing backup must never be committed or included in site archives.
-
-## Release limits and field checks
-
-This initial release does not include video reels, stories, direct messages, live calls, push notifications while closed, an offline feed, automated age verification or a separately implemented native social UI. In-app activity is fetched when opened. A production Android device still needs to confirm hosted sign-in, browser photo selection, actual two-account following and restricted-account behavior. Browser visual QA was unavailable in this managed environment; responsive styles, semantic form labels and reduced-motion support are included, but real browser/device inspection remains necessary. Do not describe emulator launch tests as verification of production sign-in or photo uploads.
-
-The platform is an original SHADOWNET product and is not affiliated with Instagram or Meta. Before broader promotion, confirm operational moderation coverage, support contacts, recovery practices and production device testing.
+The generated Android scaffold is deliberately reproducible from the pinned Flutter toolchain and preparation script. Sign release builds privately using the owner key; no debug signing configuration is used for release.

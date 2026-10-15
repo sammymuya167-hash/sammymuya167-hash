@@ -1,0 +1,1 @@
+"use client";import {useEffect} from "react";export default function Logout(){useEffect(()=>{void fetch("/api/auth/logout",{method:"POST"}).finally(()=>{window.location.href="/signout-with-chatgpt?return_to=%2F"})},[]);return <main style={{padding:40}}>Signing you out…</main>}

@@ -1,0 +1,1 @@
+import {requireChatGPTUser} from "../chatgpt-auth";import AccountAccess from "./setup";export default async function Page(){await requireChatGPTUser("/account-access");return <AccountAccess/>}

@@ -1,0 +1,37 @@
+import assert from 'node:assert/strict';import{readFileSync,readdirSync}from'node:fs';import{createRequire}from'node:module';
+const require=createRequire(import.meta.url),wr=createRequire(require.resolve('wrangler/package.json')),{Miniflare}=wr('miniflare'),{build}=wr('esbuild');
+const bundle=await build({stdin:{contents:"export{handlePasswordAuth,nativeIdentity,authErrorResponse}from './lib/password-auth.ts';export{handleSocial}from './lib/social-api.ts';export{handleMessages}from './lib/messages.ts';",resolveDir:process.cwd()},bundle:true,format:'esm',platform:'node',write:false,external:['node:crypto']});
+const source=bundle.outputFiles[0].text.replace(/export\s*\{[^}]+\};?\s*$/,'')+`\nexport default{async fetch(req,env){try{const url=new URL(req.url);const hosted=req.headers.get('x-owner')==='verified'?{userId:'owner',email:'owner@example.test',displayName:'Owner'}:null;if(url.pathname.startsWith('/api/auth/'))return handlePasswordAuth(req,env.DB,hosted,'owner@example.test');const identity=(await nativeIdentity(req,env.DB))??hosted;if(url.pathname.startsWith('/api/messages'))return handleMessages(req,env.DB,identity);return handleSocial(req,{...env,ownerEmail:'owner@example.test'},identity);}catch(e){return authErrorResponse(e)??Response.json({error:String(e)},{status:500})}}};`;
+const mf=new Miniflare({modules:true,script:source,compatibilityDate:'2026-05-15',compatibilityFlags:['nodejs_compat'],d1Databases:['DB'],r2Buckets:['BUCKET']});const db=await mf.getD1Database('DB');
+for(const f of readdirSync('drizzle').filter(x=>x.endsWith('.sql')).sort())for(const s of readFileSync('drizzle/'+f,'utf8').split('--> statement-breakpoint'))if(s.trim())await db.prepare(s).run();
+let checks=0;const eq=(a,b)=>{assert.deepEqual(a,b);checks++};
+async function call(path,data,token,extra={}){const r=await mf.dispatchFetch('https://social.test/api/'+path,{method:data===undefined?'GET':'POST',headers:{'content-type':'application/json','cf-connecting-ip':'192.0.2.1',...(token?{authorization:'Bearer '+token}:{}),...extra},body:data===undefined?undefined:JSON.stringify(data)});return {status:r.status,b:await r.json(),cookie:r.headers.get('set-cookie')}}
+const signup=(name)=>call('auth/signup',{email:name+'@example.test',password:'long-password-'+name,name,username:name,acceptRules:true,ageConfirmed:true,role:'owner'});
+try{
+ eq((await call('auth/signup',{email:'owner@example.test',password:'long-password-owner',name:'Fake owner',username:'fake_owner',acceptRules:true,ageConfirmed:true})).status,409);
+ const a=await signup('alice');eq(a.status,200);eq(a.b.recoveryCode.length,64);eq((await call('me',undefined,a.b.token)).b.profile.role,'member');
+ eq((await call('office/overview',undefined,a.b.token)).status,403);
+ eq((await call('auth/login',{email:'alice',password:'incorrect-password'})).status,401);
+ const login=await call('auth/login',{email:'alice',password:'long-password-alice'});eq(login.status,200);
+ eq((await call('me',undefined,undefined,{cookie:login.cookie.split(';')[0]})).b.profile.username,'alice');
+ eq((await call('me',undefined,undefined,{authorization:'Bearer wrong','x-owner':'verified'})).status,401);
+ eq((await call('auth/owner-access',{password:'long-password-owner'},a.b.token)).status,403);
+ await call('profile',{username:'shadownet',name:'Owner',acceptRules:true,ageConfirmed:true},undefined,{'x-owner':'verified'});
+ eq((await call('auth/owner-access',{password:'long-password-owner'},undefined,{'x-owner':'verified'})).status,200);
+ const owner=await call('auth/login',{email:'owner@example.test',password:'long-password-owner'});eq((await call('me',undefined,owner.b.token)).b.isOwner,true);
+ const b=await signup('bobby'),ap=(await call('me',undefined,a.b.token)).b.profile,bp=(await call('me',undefined,b.b.token)).b.profile;
+ eq((await call('messages/'+bp.id,{body:'Not mutual'},a.b.token)).status,403);
+ eq((await call('people/'+bp.id+'/follow',{enabled:true},a.b.token)).status,200);await call('people/'+ap.id+'/follow',{enabled:true},b.b.token);
+ eq((await call('messages/'+bp.id,{body:'Hello from the native app!'},a.b.token)).status,201);
+ eq((await call('messages/'+ap.id,undefined,b.b.token)).b.messages[0].body,'Hello from the native app!');
+ await call('people/'+ap.id+'/block',{enabled:true},b.b.token);eq((await call('messages/'+bp.id,undefined,a.b.token)).status,403);
+ await call('office/users/'+ap.id,{action:'ban',reason:'Test live native ban enforcement'},owner.b.token);eq((await call('posts',{caption:'Banned token'},a.b.token)).status,403);
+ eq((await call('messages',undefined,a.b.token)).status,403);
+ await call('office/users/'+ap.id,{action:'restore',reason:'Test account restoration'},owner.b.token);
+ const recovery=await call('auth/recover',{email:'alice@example.test',password:'new-long-password-alice',recoveryCode:a.b.recoveryCode});eq(recovery.status,200);eq((await call('me',undefined,a.b.token)).status,401);
+ eq((await call('auth/recover',{email:'alice@example.test',password:'another-long-password',recoveryCode:a.b.recoveryCode})).status,401);
+ await call('auth/logout',{},recovery.b.token);eq((await call('me',undefined,recovery.b.token)).status,401);
+ eq((await call('auth/login',{email:'alice',password:'new-long-password-alice'},undefined,{origin:'https://evil.test'})).status,403);
+ const stored=await db.prepare('SELECT password_hash FROM credentials WHERE email=?').bind('alice@example.test').first();eq(stored.password_hash.startsWith('scrypt-v1$'),true);
+ console.log(JSON.stringify({passed:checks,scope:'Native auth, cookies, privilege protection, owner linking, live bans, mutual chat, blocking, recovery, logout and CSRF'}));
+}finally{await mf.dispose()}
