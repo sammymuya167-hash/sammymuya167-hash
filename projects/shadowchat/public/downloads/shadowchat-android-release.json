@@ -1,0 +1,17 @@
+{
+  "name": "ShadowChat",
+  "version": "0.2.0",
+  "version_code": 2,
+  "package": "ke.co.shadownet.shadowchat",
+  "min_android_api": 26,
+  "web_origin": "https://shadowchat-shadownet.sammymuya167.chatgpt.site",
+  "browser_backed": true,
+  "apk_sha256": "80a802f632f59c49723b6f124afa0d9cb6858562470ed159a5e7fccf6ccd3d78",
+  "certificate_sha256": "1694b52bc5f49ea85d3bc751d75aa4b7b68e10ec0c39ecece311a3a1e9086851",
+  "source_commit": "7ce2307ff6b878a9e7ccba8cca92500d000f6ad6",
+  "github_run_id": 38773113521,
+  "verified_signature_schemes": [
+    "v2",
+    "v3"
+  ]
+}

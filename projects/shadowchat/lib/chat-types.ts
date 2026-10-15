@@ -5,4 +5,4 @@ export type Conversation = { id: string; peer: Member; createdAt: number; update
 export type Invitation = { id: string; email: string; createdAt: number; expiresAt: number; claimed: boolean; revoked: boolean };
 export type Bootstrap = { user: { id: string; name: string; email: string }; member: Member | null; initialized: boolean; release: string };
 export type PlainMessage = { v: 1; id: string; conversationId: string; senderId: string; recipientId: string; text: string };
-export const RELEASE = "0.1.0";
+export const RELEASE = "0.2.0";

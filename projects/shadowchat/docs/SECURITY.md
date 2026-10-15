@@ -1,4 +1,4 @@
-# ShadowChat 0.1 security model
+# ShadowChat 0.2 security model
 
 This is an early, unaudited private messenger for a small approved circle. It must not be represented as Signal, WhatsApp, or equivalent in security assurance.
 
@@ -29,3 +29,7 @@ A restored browser uses the same identity key. This version cannot independently
 HTTPS, strict same-origin JSON writes, bounded request bodies, parameterized SQL, ownership checks, basic per-user write limits and no-store responses provide application controls. Rate limiting is a basic abuse guard, not DDoS protection. Browser alerts contain no plaintext and work only while the web app remains open. Background delivery is not promised. The UI displays delivery/read state only after the recipient fetches and authenticates a selected conversation.
 
 A compromised browser, malicious extension, stolen unlocked device, XSS, malicious app update or altered served JavaScript can expose plaintext or keys. The service controls delivered JavaScript, so content encryption alone is not a guarantee against an actively malicious application operator. The CSP permits framework inline scripts; it is not an XSS-proof boundary. No third-party analytics or external fonts are included. A dedicated security review, stronger device management and a mature forward-secret messaging protocol are prerequisites for higher-assurance use.
+
+## Android browser-backed client
+
+The Android APK opens the same production HTTPS origin in a regular browser-backed Custom Tab. It has no native message database, WebView, JavaScript bridge, credential relay or native network/storage permission. The browser owns sign-in, encrypted origin storage and message operations. A different browser profile or another device requires signing in to the same account and restoring its existing encrypted key. This does not silently transfer keys or add background delivery. Browser controls may remain visible.

@@ -54,3 +54,6 @@ next-env.d.ts
 /.codex/
 /outputs/
 /work/
+
+# Incremental compiler state is local build output.
+*.tsbuildinfo

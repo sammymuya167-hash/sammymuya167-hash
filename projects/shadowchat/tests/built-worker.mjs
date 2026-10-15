@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 import { readFileSync, readdirSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { createIdentity, sealMessage, openMessage } from '../lib/crypto-core.ts';
+import { createIdentity, sealMessage, openMessage, protectIdentity, unlockIdentity } from '../lib/crypto-core.ts';
 const require = createRequire(import.meta.resolve('wrangler/package.json'));
 const { Miniflare } = require('miniflare');
 test('production Worker, routes and D1 work together', async t => {
@@ -34,9 +34,28 @@ test('production Worker, routes and D1 work together', async t => {
     assert.equal(openMessage(payload.messages[0],identities.bob,{id:'alice',publicKey:identities.alice.publicKey},'bob'),p.text);
     const other=await request('outsider',`/api/messages?conversationId=${chatId}`); assert.equal(other.status,403);
   });
+  await t.test('phone and web sessions use the same account, restored key and conversation history',async()=>{
+    const desktopBackup=await protectIdentity(identities.alice,'alice','this is a private multi device test');
+    const phoneIdentity=await unlockIdentity(desktopBackup,'alice','this is a private multi device test');
+    const phoneMessage={v:1,id:crypto.randomUUID(),conversationId:chatId,senderId:'alice',recipientId:'bob',text:'Sent from the Android-backed phone session; visible on the web.'};
+    const encrypted=sealMessage(phoneMessage,phoneIdentity,identities.bob.publicKey);
+    assert.equal((await request('alice','/api/messages',encrypted)).status,201);
+    const webHistory=await request('alice',`/api/messages?conversationId=${chatId}`); const history=await webHistory.json();
+    const fromPhone=history.messages.find(m=>m.id===phoneMessage.id); assert.ok(fromPhone);
+    assert.equal(openMessage(fromPhone,identities.alice,{id:'bob',publicKey:identities.bob.publicKey},'alice'),phoneMessage.text);
+    const webReply={v:1,id:crypto.randomUUID(),conversationId:chatId,senderId:'bob',recipientId:'alice',text:'A reply from the web arrives on the same phone conversation.'};
+    assert.equal((await request('bob','/api/messages',sealMessage(webReply,identities.bob,identities.alice.publicKey))).status,201);
+    const phoneHistory=await (await request('alice',`/api/messages?conversationId=${chatId}`)).json();
+    assert.equal(openMessage(phoneHistory.messages.find(m=>m.id===webReply.id),phoneIdentity,{id:'bob',publicKey:identities.bob.publicKey},'alice'),webReply.text);
+    phoneIdentity.secretKey.fill(0);
+  });
   await t.test('install assets are served and the service worker never caches conversations',async()=>{
     const m=await mf.dispatchFetch('https://shadowchat.test/manifest.webmanifest'); assert.equal(m.status,200); const manifest=await m.json(); assert.equal(manifest.short_name,'ShadowChat');
     const icon=await mf.dispatchFetch('https://shadowchat.test/icon-192.png'); assert.equal(icon.status,200); assert.match(icon.headers.get('Content-Type'),/image\/png/);
+    const apk=await mf.dispatchFetch('https://shadowchat.test/downloads/shadowchat-android-v0.2.0.apk'); assert.equal(apk.status,200);
+    const release=JSON.parse(readFileSync('public/downloads/shadowchat-android-release.json','utf8'));
+    const digest=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',await apk.arrayBuffer())),x=>x.toString(16).padStart(2,'0')).join('');
+    assert.equal(digest,release.apk_sha256); assert.equal(release.web_origin,'https://shadowchat-shadownet.sammymuya167.chatgpt.site');
     const sw=await mf.dispatchFetch('https://shadowchat.test/sw.js'); assert.equal(sw.status,200); const code=await sw.text(); assert.ok(!code.includes('caches.open')); assert.ok(!code.includes('cache.put'));
   });
 });

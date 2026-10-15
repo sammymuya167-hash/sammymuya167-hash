@@ -68,8 +68,15 @@
       "released_at": "2026-10-15",
       "release_timezone": "Africa/Nairobi",
       "implementation": "Original AI-assisted messenger. Uses unchanged TweetNaCl.js 1.0.3 with upstream licence and provenance. Early, unaudited NaCl long-term-key encryption; no forward secrecy.",
-      "verification": "18 cryptographic/D1 API tests and 4 built-Worker flow checks; TypeScript and production build pass. Interactive browser and Android device checks remain.",
-      "scope": "One-to-one text, invitations, key backup/restore, app lock, encrypted retry queue and installable web UI. Groups, media, calls, native APK and background push are not included."
+      "verification": "18 cryptographic/D1 API tests, 5 built-Worker flows including phone/web restored-key synchronization, Android debug/release builds, release lint, 3 native unit tests and 4 API 35 emulator checks. Native APK signatures v2/v3 and artifact/source hashes verified. Physical-phone hosted sign-in and live production chat remain field checks.",
+      "scope": "One-to-one encrypted text on web and a signed browser-backed Android APK, email-bound invitations, key recovery, app lock and encrypted retry queue. Same account and restored key share the same conversation history. Groups, media, calls, background push and a separately implemented native chat UI are not included.",
+      "last_updated": "2026-10-15",
+      "version": "0.2.0",
+      "android_apk_url": "https://shadowchat-shadownet.sammymuya167.chatgpt.site/downloads/shadowchat-android-v0.2.0.apk",
+      "android_package": "ke.co.shadownet.shadowchat",
+      "android_apk_sha256": "80a802f632f59c49723b6f124afa0d9cb6858562470ed159a5e7fccf6ccd3d78",
+      "android_source_commit": "7ce2307ff6b878a9e7ccba8cca92500d000f6ad6",
+      "web_source_commit": "f348dffd09dde59f67719f8ed355b6276009bc32"
     },
     {
       "pdf_id": 13,
