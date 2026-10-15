@@ -44,7 +44,7 @@
       "android_package": "ke.co.shadownet.shadowsocial",
       "android_apk_sha256": "949c2fd8e4eb9fb3af7a8a9f8ded88103cf2fe90b2502631ede55937ecc8828f",
       "android_source_commit": "f11d4a8176c115fb395d0177ef43c00fb8715182",
-      "web_source_commit": "9cce6181e5b43fc1705c57a75c9e73d301d522d6",
+      "web_source_commit": "50268ef968c67962424e01fc11fb9b093917f307",
       "access": "Public entry and open profile registration with hosted ChatGPT sign-in. Owner/admin/moderator API authorization protects the office.",
       "implementation": "Original AI-assisted SHADOWNET implementation, using React/Vinext, Cloudflare D1/R2 and an adapted SHADOWNET Custom Tabs Android shell. No upstream Instagram clone code reused.",
       "verification": "85 real D1/R2 integration assertions; 5 production-Worker flows; clean typecheck and production build; Android release lint, 3 unit and 4 API 35 emulator checks; signed APK v2/v3 verification and source/artifact provenance.",
