@@ -504,38 +504,43 @@ class _AuthScreenState extends State<AuthScreen> {
                     ),
                     Padding(
                       padding: EdgeInsets.all(25),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'A LITTLE CLOSER.',
-                            style: TextStyle(
-                              color: mint,
-                              fontSize: 10,
-                              letterSpacing: 2,
-                              fontWeight: FontWeight.bold,
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.centerLeft,
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'A LITTLE CLOSER.',
+                              style: TextStyle(
+                                color: mint,
+                                fontSize: 10,
+                                letterSpacing: 2,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
-                          ),
-                          SizedBox(height: 13),
-                          Text(
-                            'Your people.\nYour world.',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 29,
-                              height: 1.08,
-                              fontWeight: FontWeight.w800,
-                              letterSpacing: -1,
+                            SizedBox(height: 13),
+                            Text(
+                              'Your people.\nYour world.',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 29,
+                                height: 1.08,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: -1,
+                              ),
                             ),
-                          ),
-                          SizedBox(height: 12),
-                          Text(
-                            'Share moments. Make connections.',
-                            style: TextStyle(
-                              color: Colors.white60,
-                              fontSize: 11,
+                            SizedBox(height: 12),
+                            Text(
+                              'Share moments. Make connections.',
+                              style: TextStyle(
+                                color: Colors.white60,
+                                fontSize: 11,
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
                   ],
@@ -735,12 +740,14 @@ class _AuthScreenState extends State<AuthScreen> {
                                 : Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
-                                    Text(
-                                      mode == 'signup'
-                                          ? 'Create account'
-                                          : mode == 'recover'
-                                          ? 'Reset password'
-                                          : 'Sign in',
+                                    Flexible(
+                                      child: Text(
+                                        mode == 'signup'
+                                            ? 'Create account'
+                                            : mode == 'recover'
+                                            ? 'Reset password'
+                                            : 'Sign in',
+                                      ),
                                     ),
                                     SizedBox(width: 10),
                                     Icon(Icons.arrow_forward_rounded, size: 18),
