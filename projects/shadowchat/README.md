@@ -1,0 +1,45 @@
+# ShadowChat by SHADOWNET
+
+An invite-only messenger for a small, approved circle. This first release supports one-to-one text conversations in an installable web app, including Android browsers. It is an original implementation of catalogue idea **#12, WhatsApp Clone** and operates on its own network.
+
+## What works
+
+- Hosted ChatGPT sign-in, private Site access, and a separate owner-managed membership gate.
+- Email-bound, single-use invitations with 48-hour expiry and revocation.
+- Usernames, approved-member directory, one-to-one conversations, cursor-based history, unread counts, and delivery/read markers.
+- NaCl public-key authenticated encryption in the browser; only ciphertext, nonces, routing metadata and public keys go to the application server.
+- Passphrase-protected device keys, encrypted recovery-key export/restore, manual lock, and ten-minute inactivity lock.
+- An encrypted browser outbox which retries while the app is open and reconnects. Queued text is encrypted before persistent storage.
+- Optional browser alerts while the app remains open, with no message content in the notification.
+- Responsive desktop/mobile layouts, Android home-screen installation, and a first-release notice.
+
+## Start using it
+
+1. Open the private deployment and sign in as its owner. Create a name, username, and a long passphrase. Initialize this first owner before sharing the Site.
+2. Download the encrypted recovery key. Keep the backup and its passphrase safe; the service cannot restore a lost private key.
+3. In **Your people → Invite someone**, create an invitation bound to the friend's ChatGPT sign-in email.
+4. Grant that same person viewer access using the hosting platform's private Share controls, then send the generated invitation link. These are two gates: platform access and ShadowChat membership. Private owner-only publication does not itself grant invited people platform access.
+5. The invited person signs in, accepts the invitation, creates a device key/passphrase, and downloads their recovery key.
+6. Open a conversation and compare safety numbers through a separate trusted channel. Mark comparison only after both numbers match.
+
+No invitation emails are sent by the application. No other person's platform access is added automatically. The first published release remains owner-private until the owner explicitly shares it.
+
+## Development
+
+Node 22.13+ and pnpm 11.25 are used. Install with `pnpm install --frozen-lockfile`, run `pnpm test`, `pnpm typecheck`, and `pnpm build`. The supplied Sites helpers handle the production Worker package, source synchronization, deployment and D1 migration. The tracked `.openai/hosting.json` is the canonical Site identity. D1 is bound as `DB`; R2 is unused.
+
+Migrations are in `drizzle/`. Do not modify an applied migration. Add a new migration using `pnpm db:generate` for later schema changes.
+
+## Verification
+
+The initial release passes 18 focused cryptographic and D1-backed API tests. They cover intended-recipient delivery, tamper/context substitution, wrong-key rejection, recovery passphrases, pinned implementation bytes, one-owner initialization, invitation expiry/revocation/replay, membership authorization, idempotent delivery, receipt handling, key replacement rejection, and multi-page history. Four additional production-Worker flow checks verify hosted identity handling, account/invitation routes, an encrypted message through the built Worker and D1, and install assets. TypeScript and production Worker builds also pass.
+
+The managed environment has no supported interactive browser control. Real-browser IndexedDB persistence, Android installation, idle lock timing, notifications and two-person device operation require a device acceptance test. The tests use independent synthetic identities and a local D1 runtime; they do not claim a successful live conversation between real accounts.
+
+## Scope and security
+
+Read [the security model](docs/SECURITY.md) before relying on this early release. It is not independently audited and does not implement forward secrecy. It is not a replacement for an established, audited messenger for highly sensitive communication. Group messaging, attachments, voice notes, calls, background push, multiple independently revocable device keys, and a native Android APK are not included.
+
+## Attribution
+
+The application is original, AI-assisted code authored for SHADOWNET. Encryption uses an unchanged, vendored TweetNaCl.js 1.0.3 implementation, with upstream types, license and provenance in `lib/vendor`. The library has a published independent audit; **that audit does not cover ShadowChat's application design or implementation**. Brand artwork and icons are original code-based assets; interface icons use Lucide.

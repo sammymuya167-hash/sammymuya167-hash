@@ -8,6 +8,7 @@ Build one substantial project at a time, aiming for a daily release with working
 | 02 · 2026-10-08 | 33 · Jira Clone | SprintForge | Built · public demo · 28 checks |
 | 03 · 2026-10-08 | 98 · API Testing Tool | RequestLab | Built · public demo · 32 checks |
 | 04 · 2026-10-08 | 77 · Design Collaboration Tool | CanvasRoom | Built · public demo · 5 domain tests |
+| 05 · 2026-10-15 | 12 · WhatsApp Clone | ShadowChat | Built · private initial web release · encrypted one-to-one text |
 | Candidate | 45 · Invoice Management System | Invoice studio with lifecycle states and PDF output | Unbuilt |
 | Candidate | 55 · Travel Planner | Itineraries, budgets and saved places | Unbuilt |
 | Candidate | 67 · Inventory Management System | Stock movement history and reorder rules | Unbuilt |
@@ -42,3 +43,13 @@ Verification: **43 Node unit tests**, TypeScript checks, a successful production
 The signed [Rider APK](https://routeforge-shadownet.sammymuya167.chatgpt.site/downloads/routeforge-rider.apk) has SHA-256 `552ea88f006d2d12d590e675b8fbdd96090d2e274750cce05575abcc5f738efd`. The old pilot's unavailable signing key requires a one-time install alongside it: sync its queue, stop its trip, then pair Rider with **Rider app upgrade code** from the existing driver card. The same driver ID, assignment and uploaded history are retained. Future Rider updates use the retained private owner signing key.
 
 Five seconds is the server acceptance deadline; phone alerts and fallback timing depend on connectivity, Android scheduling and server wakeup/polling. Customer till entries remain reports until office verification; no bank transfer is performed. Real-phone background behaviour and interactive browser gestures remain field checks. The earlier disconnected-workspace blocker is resolved. [Release record](RIDER-RELEASE-CHECKPOINT.md) contains evidence and installation details.
+
+## ShadowChat private first release · 2026-10-15
+
+Published catalogue idea **#12** as **ShadowChat by SHADOWNET** at `https://shadowchat-shadownet.sammymuya167.chatgpt.site`. Deployment `appgdep_6ad1020b848c819194959107ab7ac250` succeeded, from source commit `c39a4d292c03c06aaf85b0851b7206f5a88e31bf`. The Site remains owner-private, with no external visitors added. The owner must initialize their profile, then grant intended contacts platform access and create email-bound application invitations. No messages or invitation emails were sent during development.
+
+The original implementation adds authenticated one-to-one NaCl text encryption, public-key pins and safety-number comparison, encrypted key backup/restore, manual/inactivity lock, approved-member controls, ciphertext-only server content, cursor-based history, read/delivery markers, an encrypted retry queue and an installable Android web interface. Unchanged TweetNaCl.js 1.0.3 source, upstream licence and blob provenance are retained.
+
+Verification: **18 cryptographic and D1-backed API tests**, **4 built-production-Worker flow checks**, clean TypeScript and a successful Worker build. Production-flow tests cover auth/headers, invitations, an encrypted message through the compiled Worker and storage, and install assets. Interactive browser control was unavailable, so real-browser IndexedDB, two-person device use, notifications and Android installation are unverified. The native deployment result confirms publication, not a field-tested live conversation.
+
+This is an unaudited early release with long-term-key NaCl encryption, no forward secrecy, no independently revocable device identities, and no protection against malicious delivered app code or compromised devices. It does not include groups, attachments, voice notes, calls, background push or a native APK. It operates separately from WhatsApp. Source and the detailed security model are in `projects/shadowchat/`.
