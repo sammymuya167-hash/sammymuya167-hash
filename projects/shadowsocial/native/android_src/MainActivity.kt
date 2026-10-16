@@ -17,6 +17,8 @@ import java.util.concurrent.Executors
 import javax.net.ssl.HttpsURLConnection
 import java.util.zip.ZipFile
 
+class UpdateFileProvider : FileProvider()
+
 class MainActivity : FlutterActivity() {
     private val worker = Executors.newSingleThreadExecutor()
     private var prepared: File? = null

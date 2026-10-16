@@ -24,7 +24,7 @@ main_activity.parent.mkdir(parents=True,exist_ok=True)
 shutil.copy2(root/'android_src/MainActivity.kt',main_activity)
 p=a/'app/src/main/AndroidManifest.xml'
 s=p.read_text().replace('<application','<uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES"/>\n    <application',1)
-provider='<provider android:name="androidx.core.content.FileProvider" android:authorities="ke.co.shadownet.shadowsocial.updates" android:exported="false" android:grantUriPermissions="true"><meta-data android:name="android.support.FILE_PROVIDER_PATHS" android:resource="@xml/update_paths"/></provider>'
+provider='<provider android:name="ke.co.shadownet.shadowsocial.UpdateFileProvider" android:authorities="ke.co.shadownet.shadowsocial.updates" android:exported="false" android:grantUriPermissions="true"><meta-data android:name="android.support.FILE_PROVIDER_PATHS" android:resource="@xml/update_paths"/></provider>'
 s=s.replace('</application>',provider+'\n    </application>')
 p.write_text(s)
 p=a/'app/src/main/res/xml/update_paths.xml'
