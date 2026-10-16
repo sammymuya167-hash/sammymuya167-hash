@@ -72,7 +72,7 @@ class MainActivity : FlutterActivity() {
                             connection.readTimeout = 30000
                             connection.setRequestProperty("User-Agent", "ShadowSocial/" + info()!!.versionName + " (Android updater)")
                             check(connection.responseCode == 200) { "The update could not be downloaded. Try again." }
-                            check(connection.contentLengthLong == expectedBytes) { "The update size did not match." }
+                            check(connection.contentLengthLong < 0 || connection.contentLengthLong == expectedBytes) { "The update size did not match." }
                             val hash = MessageDigest.getInstance("SHA-256")
                             var received = 0L
                             var last = 0L
@@ -81,7 +81,7 @@ class MainActivity : FlutterActivity() {
                                 part.outputStream().use { output ->
                                     val buffer = ByteArray(65536)
                                     while (true) {
-                                        check(!Thread.currentThread().isInterrupted && System.currentTimeMillis() - started < 180000) { "Download timed out. Try again." }
+                                        check(!Thread.currentThread().isInterrupted && System.currentTimeMillis() - started < 900000) { "Download timed out. Try again." }
                                         val count = input.read(buffer)
                                         if (count < 0) break
                                         received += count

@@ -9,7 +9,7 @@ permissions:
 jobs:
   android:
     runs-on: ubuntu-latest
-    timeout-minutes: 35
+    timeout-minutes: 60
     defaults:
       run:
         working-directory: projects/shadowsocial
@@ -19,6 +19,8 @@ jobs:
         with:
           distribution: temurin
           java-version: 17
+          cache: gradle
+          cache-dependency-path: projects/shadowsocial/native/pubspec.lock
       - name: Install pinned Flutter
         run: |
           git clone --depth 1 --branch 3.32.8 https://github.com/flutter/flutter.git "$RUNNER_TEMP/flutter"
@@ -45,24 +47,6 @@ jobs:
           dart format --output=none --set-exit-if-changed lib test integration_test test_driver
           flutter analyze
           flutter test
-      - name: Enable KVM
-        run: |
-          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
-          sudo udevadm control --reload-rules
-          sudo udevadm trigger --name-match=kvm
-      - name: Start real local API
-        run: |
-          node native/tool/test-server.mjs > /tmp/shadowsocial-test-api.log 2>&1 &
-          for attempt in $(seq 1 30); do curl -sf http://localhost:8787/api/me >/dev/null && break; sleep 1; done
-          curl -sf http://localhost:8787/api/me >/dev/null
-      - name: Test real native Android flows
-        uses: reactivecircus/android-emulator-runner@v2
-        with:
-          api-level: 35
-          arch: x86_64
-          target: google_apis
-          working-directory: projects/shadowsocial/native
-          script: flutter drive --driver=test_driver/integration_test.dart --target=integration_test/app_test.dart
       - name: Build native release
         run: |
           cd native
@@ -75,6 +59,27 @@ jobs:
           cp "$ANDROID_HOME/build-tools/35.0.0/lib/apksigner.jar" native/release/
           git rev-parse HEAD > native/release/source-sha.txt
           find native/lib native/android/app/src/main -type f -print0 | sort -z | xargs -0 sha256sum > native/release/source-manifest.sha256
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Start real local API
+        run: |
+          node native/tool/test-server.mjs > /tmp/shadowsocial-test-api.log 2>&1 &
+          for attempt in $(seq 1 30); do curl -sf http://localhost:8787/api/me >/dev/null && break; sleep 1; done
+          curl -sf http://localhost:8787/api/me >/dev/null
+      - name: Test real native Android flows
+        timeout-minutes: 20
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          arch: x86_64
+          target: google_apis
+          emulator-boot-timeout: 180
+          disable-animations: true
+          working-directory: projects/shadowsocial/native
+          script: flutter drive --driver=test_driver/integration_test.dart --target=integration_test/app_test.dart
       - uses: actions/upload-artifact@v4
         if: always()
         with:

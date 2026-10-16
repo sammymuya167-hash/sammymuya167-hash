@@ -50,6 +50,22 @@ void main() {
           ),
         );
       });
+      await tester.runAsync(() async {
+        await expectLater(
+          updateChannel.invokeMethod('download', {
+            'url':
+                'https://shadowsocial-shadownet.sammymuya167.chatgpt.site/api/android/v0.3.0',
+            'sha256': '0' * 64,
+            'bytes': 30555169,
+            'versionCode': 6,
+          }),
+          throwsA(
+            isA<PlatformException>()
+                .having((e) => e.code, 'code', 'download')
+                .having((e) => e.message, 'message', contains('checksum')),
+          ),
+        );
+      });
       final api = Api(origin: 'http://10.0.2.2:8787', vault: MemoryVault());
       await tester.pumpWidget(ShadowSocialApp(api: api));
       await tester.pump(Duration(milliseconds: 350));
