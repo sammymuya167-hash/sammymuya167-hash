@@ -7,6 +7,7 @@ import 'package:image_picker/image_picker.dart';
 import 'api.dart';
 import 'main.dart';
 import 'office.dart';
+import 'updates.dart';
 
 String age(dynamic n) {
   final d = DateTime.now().difference(
@@ -1910,7 +1911,16 @@ class SettingsScreen extends StatelessWidget {
               color: ink,
             ),
           ),
-          subtitle: Text('Version 0.3.0 · by SHADOWNET'),
+          subtitle: Text('Version 0.4.0 · by SHADOWNET'),
+          trailing: Icon(Icons.system_update_alt),
+          onTap:
+              () => Navigator.push(
+                context,
+                MaterialPageRoute<void>(
+                  builder:
+                      (_) => UpdatesScreen(controller: UpdateScope.of(context)),
+                ),
+              ),
         ),
         SizedBox(height: 22),
         if (api.staff)

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'api.dart';
 import 'social.dart';
+import 'updates.dart';
 
 const ink = Color(0xff153d35),
     mint = Color(0xffd6f47c),
@@ -34,6 +35,7 @@ class ShadowSocialApp extends StatefulWidget {
 
 class _ShadowSocialAppState extends State<ShadowSocialApp> {
   late final Api api;
+  final appNavigator = GlobalKey<NavigatorState>();
   bool splash = true;
   @override
   void initState() {
@@ -54,6 +56,7 @@ class _ShadowSocialAppState extends State<ShadowSocialApp> {
 
   @override
   Widget build(BuildContext context) => MaterialApp(
+    navigatorKey: appNavigator,
     debugShowCheckedModeBanner: false,
     title: 'ShadowSocial',
     theme: ThemeData(
@@ -99,6 +102,9 @@ class _ShadowSocialAppState extends State<ShadowSocialApp> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
       ),
     ),
+    builder:
+        (context, child) =>
+            UpdateHost(api: api, navigatorKey: appNavigator, child: child!),
     home: AnimatedBuilder(
       animation: api,
       builder:

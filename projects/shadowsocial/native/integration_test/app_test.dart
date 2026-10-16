@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:shadowsocial/api.dart';
 import 'package:shadowsocial/main.dart';
+import 'package:shadowsocial/updates.dart';
 
 class MemoryVault implements TokenVault {
   String? token;
@@ -24,6 +26,30 @@ void main() {
   testWidgets(
     'Native signup, sharing, people and profile use the real API',
     (tester) async {
+      await tester.runAsync(() async {
+        final info = await updateChannel.invokeMapMethod<String, dynamic>(
+          'info',
+        );
+        expect(info?['versionCode'], 5);
+        expect(info?['version'], '0.4.0');
+        await expectLater(
+          updateChannel.invokeMethod('download', {
+            'url': 'https://evil.example/app.apk',
+            'sha256': 'a' * 64,
+            'bytes': 31000000,
+            'versionCode': 6,
+          }),
+          throwsA(
+            isA<PlatformException>().having((e) => e.code, 'code', 'invalid'),
+          ),
+        );
+        await expectLater(
+          updateChannel.invokeMethod('install'),
+          throwsA(
+            isA<PlatformException>().having((e) => e.code, 'code', 'missing'),
+          ),
+        );
+      });
       final api = Api(origin: 'http://10.0.2.2:8787', vault: MemoryVault());
       await tester.pumpWidget(ShadowSocialApp(api: api));
       await tester.pump(Duration(milliseconds: 350));

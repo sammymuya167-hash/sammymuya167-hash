@@ -1,3 +1,4 @@
+import {handleAndroidUpdates} from "../../../lib/android-updates";
 import {handleRtc,sweepRtc} from "../../../lib/rtc";
 import{handleAndroidRelease}from"../../../lib/android-release";
 import {env} from "cloudflare:workers";
@@ -10,8 +11,10 @@ async function handle(req:Request){
  if(!env.DB||!env.BUCKET)return Response.json({error:"Storage unavailable."},{status:503});
  try{const hosted=await getChatGPTUser(),path=new URL(req.url).pathname,ownerEmail=env.SHADOWSOCIAL_OWNER_EMAIL??"";
  if(path.startsWith("/api/android/"))return handleAndroidRelease(req,env.BUCKET,env.SHADOWSOCIAL_RELEASE_KEY??"");
+ if(path==="/api/app-updates")return handleAndroidUpdates(req,{DB:env.DB,BUCKET:env.BUCKET,ownerEmail});
  if(path.startsWith("/api/auth/"))return handlePasswordAuth(req,env.DB,hosted,ownerEmail);
  const identity=(await nativeIdentity(req,env.DB))??hosted;
+ if(path==="/api/office/app-updates")return handleAndroidUpdates(req,{DB:env.DB,BUCKET:env.BUCKET,ownerEmail},identity);
  const rtc={DB:env.DB,appId:env.SHADOWSOCIAL_SFU_APP_ID??"",appSecret:env.SHADOWSOCIAL_SFU_SECRET??"",turnId:env.SHADOWSOCIAL_TURN_KEY_ID??"",turnSecret:env.SHADOWSOCIAL_TURN_SECRET??""};
  if(path==="/api/rtc"||path.startsWith("/api/rtc/"))return handleRtc(req,rtc,identity);
  if(path==="/api/messages"||path.startsWith("/api/messages/"))return handleMessages(req,env.DB,identity);

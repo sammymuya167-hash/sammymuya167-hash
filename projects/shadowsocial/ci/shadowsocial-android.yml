@@ -35,6 +35,7 @@ jobs:
           corepack pnpm test
           node tests/password-auth.mjs
           node tests/rtc.mjs
+          node tests/android-updates.mjs
       - name: Check native app
         run: |
           cd native
