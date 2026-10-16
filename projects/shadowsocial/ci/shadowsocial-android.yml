@@ -90,15 +90,7 @@ jobs:
           disable-animations: true
           working-directory: projects/shadowsocial/native
           script: |
-            mkdir -p screenshots
-            adb logcat -c
-            adb logcat -v threadtime > screenshots/android-logcat.txt 2>&1 &
-            log_pid=$!
-            set +e
-            timeout --signal=TERM --kill-after=15s 600s flutter drive --driver=test_driver/integration_test.dart --target=integration_test/app_test.dart --no-dds --host-vmservice-port=8181
-            result=$?
-            kill "$log_pid" || true
-            exit "$result"
+            sh tool/run_android_test.sh
       - uses: actions/upload-artifact@v4
         if: always()
         with:
