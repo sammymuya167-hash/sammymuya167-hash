@@ -14,8 +14,11 @@ async function read(req:Request):Promise<Record<string,unknown>>{
  try{const v=JSON.parse(out);if(!v||typeof v!=="object"||Array.isArray(v))fail(400,"Expected an object.");return v}catch{ return fail(400,"Invalid JSON.")}
 }
 async function upstream(env:RtcBindings,path:string,body?:unknown,method="POST"):Promise<Provider>{
- const r=await fetch("https://rtc.live.cloudflare.com/v1/apps/"+env.appId+path,{method,headers:{Authorization:"Bearer "+env.appSecret,"Content-Type":"application/json"},body:body===undefined?undefined:JSON.stringify(body),signal:AbortSignal.timeout(18000)});
- const b=await r.json() as Provider;if(!r.ok||b.errorCode)fail(502,"Media service could not connect. Leave and try again.");return b;
+ const r=await fetch("https://rtc.live.cloudflare.com/v1/apps/"+env.appId+path,{method,headers:{Authorization:"Bearer "+env.appSecret,"Content-Type":"application/json"},body:body===undefined?undefined:JSON.stringify(body),signal:AbortSignal.timeout(path.endsWith("/tracks/close")?4000:18000)});
+ if(path.endsWith("/tracks/close")&&[204,404,410].includes(r.status))return {};
+ const b=await r.json() as Provider;
+ if(path.endsWith("/tracks/close")&&["session_not_found","session_expired"].includes(b.errorCode??""))return {};
+ if(!r.ok||b.errorCode){console.error(JSON.stringify({event:"rtc.provider.error",status:r.status,code:b.errorCode??"http_error",operation:path.split("/").slice(-2).join("/")}));fail(502,"Media service could not connect. Leave and try again.")}return b;
 }
 const tracks=(s:string):Track[]=>{try{return JSON.parse(s)}catch{return []}};
 export async function endRtcRoom(env:RtcBindings,room:Room,reason:string){
@@ -23,18 +26,17 @@ export async function endRtcRoom(env:RtcBindings,room:Room,reason:string){
  // Keep closure locators until the provider confirms. Ending blocks all new media access immediately.
  await db.batch([db.prepare("UPDATE rtc_rooms SET state='ended',ended_reason=?,updated_at=? WHERE id=?").bind(reason,Date.now(),room.id),db.prepare("DELETE FROM rtc_presence WHERE room=?").bind(room.id)]);
  const members=(await db.prepare("SELECT * FROM rtc_members WHERE room=?").bind(room.id).all<Member>()).results;
- for(const m of members){
-  for(const [session,list,column] of [[m.pub_session,tracks(m.pub_tracks),"pub_tracks"],[m.sub_session,tracks(m.sub_tracks),"sub_tracks"]] as const){
-   if(!session||!list.length)continue;
-   try{const r=await upstream(env,"/sessions/"+session+"/tracks/close",{tracks:list.map(t=>({mid:t.mid})),force:true},"PUT");
-    if(!r.tracks?.some(t=>t.errorCode&&t.errorCode!=="track_not_found"&&t.errorCode!=="close_track_error"))await db.prepare("UPDATE rtc_members SET "+column+"='[]',ready=0 WHERE room=? AND user=?").bind(room.id,m.user).run();
-   }catch{console.error(JSON.stringify({event:"rtc.cleanup.retry",room:room.id}))}
-  }
- }
+ await Promise.all(members.flatMap(m=>([[m.pub_session,tracks(m.pub_tracks),"pub_tracks"],[m.sub_session,tracks(m.sub_tracks),"sub_tracks"]] as const).map(async([session,list,column])=>{
+  if(!session||!list.length)return;
+  try{const r=await upstream(env,"/sessions/"+session+"/tracks/close",{tracks:list.map(t=>({mid:t.mid})),force:true},"PUT");
+   if(!r.tracks?.some(t=>t.errorCode&&t.errorCode!=="track_not_found"&&t.errorCode!=="close_track_error"))await db.prepare("UPDATE rtc_members SET "+column+"='[]',ready=0 WHERE room=? AND user=?").bind(room.id,m.user).run();
+  }catch{console.error(JSON.stringify({event:"rtc.cleanup.retry",room:room.id}))}
+ })));
+
 }
 export async function sweepRtc(env:RtcBindings){
  const db=env.DB,now=Date.now();
- const rooms=(await db.prepare("SELECT * FROM rtc_rooms WHERE state!='ended' OR (state='ended' AND EXISTS(SELECT 1 FROM rtc_members m WHERE m.room=rtc_rooms.id AND (m.pub_tracks!='[]' OR m.sub_tracks!='[]'))) ORDER BY created_at DESC LIMIT 100").all<Room>()).results;
+ const rooms=(await db.prepare(`SELECT * FROM rtc_rooms WHERE state!='ended' OR (state='ended' AND updated_at<${Date.now()-60000} AND EXISTS(SELECT 1 FROM rtc_members m WHERE m.room=rtc_rooms.id AND (m.pub_tracks!='[]' OR m.sub_tracks!='[]'))) ORDER BY state=\'ended\',created_at DESC LIMIT 100`).all<Room>()).results;
  for(const r of rooms){
   if(r.state==="ended"){await endRtcRoom(env,r,r.ended_reason);continue}
   const host=await db.prepare("SELECT status,suspended_until FROM profiles WHERE id=?").bind(r.host).first<{status:string;suspended_until:number|null}>();
