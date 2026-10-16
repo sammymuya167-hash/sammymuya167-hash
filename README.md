@@ -17,7 +17,7 @@ My work focuses on useful workflows, clear interfaces, tested server behavior, a
 | **RequestLab** | Real HTTP requests, collections, environments, declarative assertions, a live mock API and private saved run summaries | [Source & setup](projects/requestlab) · [Live demo](https://requestlab-shadownet.sammymuya167.chatgpt.site) |
 | **CanvasRoom** | Original SVG design canvas with draggable shapes, connectors, review comments, private saves and restorable snapshots | [Source & setup](projects/canvasroom) · [Live demo](https://canvasroom-shadownet.sammymuya167.chatgpt.site) |
 | **ShadowChat** | Encrypted one-to-one conversations shared across web and a signed browser-backed Android APK, invitations, key recovery and app lock | [Source & setup](projects/shadowchat) · [Open app](https://shadowchat-shadownet.sammymuya167.chatgpt.site) |
-| **ShadowSocial** | Native Android photo-sharing app, own accounts, animated splash, mutual chat and an owner moderation office | [Source & setup](projects/shadowsocial) · [Community](https://shadowsocial-shadownet.sammymuya167.chatgpt.site) · [Office](https://shadowsocial-shadownet.sammymuya167.chatgpt.site/office) |
+| **ShadowSocial** | Native Android social app, voice/video calls, live broadcasts and an owner office with remote update controls | [Source & setup](projects/shadowsocial) · [Community](https://shadowsocial-shadownet.sammymuya167.chatgpt.site) · [Office](https://shadowsocial-shadownet.sammymuya167.chatgpt.site/office) |
 | **IT operations & security portfolio** | Support tracking, authentication log triage, and an offline network configuration auditor; synthetic case studies and 19 automated tests | [Source & case studies](portfolio/README.md) |
 | **Jumia WhatsApp Importer** | Product export parsing, image processing, category matching, pricing, validation, and marketplace integration | [Private repository](https://github.com/sammymuya167-hash/jumia-whatsapp-importer) |
 
@@ -30,7 +30,7 @@ Six projects from the supplied *Full Stack Projects* catalogue are built and doc
 - **RequestLab (#98):** inspect real HTTP responses and run repeatable API contract tests.
 - **CanvasRoom (#77):** map product flows, connect ideas, review comments and restore private snapshots.
 - **ShadowChat (#12):** invite approved people into a private messenger with shared web/Android conversations, device-key recovery and an encrypted retry queue.
-- **ShadowSocial (#7):** share photos and text, follow people, manage private follow requests, like/comment/save, report concerns, chat with mutual followers, and operate an owner-controlled moderation office.
+- **ShadowSocial (#7):** share photos and text, follow people, manage private follow requests, like/comment/save, report concerns, chat with mutual followers, make voice/video calls, broadcast live, and operate an owner office with Android update controls.
 
 CanvasRoom adds 5 focused canvas-domain tests plus clean lint, typecheck, migration and production Worker builds. The existing SprintForge and RequestLab suites retain 27 domain/request tests and 33 built-Worker/D1 integration checks.
 
@@ -38,7 +38,7 @@ Portfolio source is public. RouteForge, SprintForge, RequestLab and CanvasRoom h
 
 [Read the architecture](projects/routeforge/docs/ARCHITECTURE.md) · [Build roadmap](projects/routeforge/docs/ROADMAP.md) · [100 project ideas](projects/routeforge/docs/catalog.json)
 
-ShadowSocial v0.3.0 adds a standalone native Android app (30.6 MB) with its own animated splash, login/signup, photo feed, profiles, follows, mutual-follower messaging and native owner office. It passes 85 social/moderation assertions, 29 account/chat assertions, 6 production-Worker checks and 3 Flutter widget/client checks. Production native signup, posting, deletion and session revocation were checked against the live service. The APK uses the existing signing certificate for upgrades. [Download APK](https://shadowsocial-shadownet.sammymuya167.chatgpt.site/api/android/v0.3.0) · [Set owner app password](https://shadowsocial-shadownet.sammymuya167.chatgpt.site/account-access). Video reels and background push remain outside this release.
+ShadowSocial v0.4.0 is a standalone native Android app (30.6 MB, ARM64) with its own animated splash, login/signup, photo feed, profiles, follows, mutual-follower messaging, voice/video calls, live broadcasts and owner office. The owner can manage accounts, bans, rules, media access and published Android update offers remotely. Users install 0.4.0 once to receive future in-app APK notices; Android installation still requires their approval. It passes 177 API assertions and 7 Flutter widget/client checks. The signed APK preserves the existing owner certificate. [Download APK](https://shadowsocial-shadownet.sammymuya167.chatgpt.site/api/android/v0.4.0) · [Set owner app password](https://shadowsocial-shadownet.sammymuya167.chatgpt.site/account-access). Video reels and background incoming-call push remain outside this release.
 
 ## Tools I work with
 

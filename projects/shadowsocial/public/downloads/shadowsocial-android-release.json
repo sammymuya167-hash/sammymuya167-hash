@@ -1,14 +1,14 @@
 {
-  "version": "0.3.0",
-  "versionCode": 4,
+  "version": "0.4.0",
+  "versionCode": 5,
   "package": "ke.co.shadownet.shadowsocial",
   "native": true,
   "framework": "Flutter",
   "minAndroidApi": 26,
   "targetAndroidApi": 35,
-  "bytes": 30555169,
-  "sha256": "093f9d1d475206af1d25aa3f76e3df7baf19325339f3d7431c6ddde9b4db193a",
-  "downloadUrl": "https://shadowsocial-shadownet.sammymuya167.chatgpt.site/api/android/v0.3.0",
+  "bytes": 30649433,
+  "sha256": "544a80efcb45af4d84709589aed081cecd7c63fc59e8014eb1bf511c50f75230",
+  "downloadUrl": "https://shadowsocial-shadownet.sammymuya167.chatgpt.site/api/android/v0.4.0",
   "certificateSha256": "3d48406874958d7cf34d08373101fbb346cc52fda05008a1cb0231c0db3d0a71",
   "features": [
     "native animated splash",
@@ -22,9 +22,13 @@
     "native video calls",
     "live broadcasts",
     "live audience controls",
-    "owner media switches and session stop controls"
+    "owner media switches and session stop controls",
+    "owner-managed Android release controls",
+    "native update checks and release notes",
+    "verified private APK downloads",
+    "Android-approved APK installation"
   ],
-  "sourceCommit": "3a6cb8221dc89e1c670905c4ecf67a047c2ef36a",
+  "sourceCommit": "d2db2b49b20f26473f2bd78fc9f4d3205f0975c9",
   "supportedAbis": [
     "arm64-v8a"
   ],
