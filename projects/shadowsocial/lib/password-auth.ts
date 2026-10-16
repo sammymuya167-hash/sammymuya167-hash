@@ -15,6 +15,13 @@ export function authErrorResponse(e:unknown){return e instanceof AuthError?respo
 export async function nativeIdentity(req:Request,db:D1Database):Promise<Identity|undefined>{const t=token(req);if(!t)return undefined;const p=await db.prepare("SELECT p.id,p.email,p.name,p.status FROM sessions s JOIN profiles p ON p.id=s.user_id WHERE s.token_hash=? AND s.expires_at>?").bind(await digest(t),Date.now()).first<{id:string;email:string;name:string;status:string}>();if(!p||p.status==="deleted")fail(401,"Your session expired. Please sign in again.");return {userId:p!.id,email:p!.email,displayName:p!.name,authMethod:"password"}}
 export async function handlePasswordAuth(req:Request,db:D1Database,hosted:Identity,ownerEmail:string){
  try{
+ if(req.method==="GET"&&new URL(req.url).pathname.endsWith("/owner-access")){
+ if(!hosted||hosted.authMethod==="password"||hosted.email.toLowerCase()!==ownerEmail.toLowerCase())fail(403,"Use the verified owner session to manage app access.");
+ const p=await db.prepare("SELECT role FROM profiles WHERE id=?").bind(hosted!.userId).first<{role:string}>();
+ if(p?.role!=="owner")fail(403,"Owner access required.");
+ const c=await db.prepare("SELECT email FROM credentials WHERE user_id=?").bind(hosted!.userId).first<{email:string}>();
+ return response({email:c?.email??ownerEmail.toLowerCase()});
+ }
  if(req.method!=="POST")return response({error:"Method not allowed."},405);
  const url=new URL(req.url),origin=req.headers.get("origin");if(origin&&origin!==url.origin||req.headers.get("sec-fetch-site")==="cross-site")fail(403,"Cross-site request rejected.");
  if(!ownerEmail)fail(503,"Owner configuration unavailable.");
@@ -30,7 +37,7 @@ export async function handlePasswordAuth(req:Request,db:D1Database,hosted:Identi
  if(!/^[a-z0-9_]{3,24}$/.test(username)||["admin","administrator","owner","office","support","shadownet","shadowsocial","moderator"].includes(username))fail(400,"Choose a username of 3–24 letters, numbers or underscores.");
  if(!name||name.length>60)fail(400,"Enter a display name of 1–60 characters.");if(b!.acceptRules!==true||b!.ageConfirmed!==true)fail(400,"Accept the rules and confirm you are at least 16.");
  const c=await q("SELECT value FROM settings WHERE id='platform'").first<{value:string}>();if(c&&JSON.parse(c.value).registrationOpen===false)fail(403,"Registration is temporarily paused.");
- if(e===ownerEmail.toLowerCase()||await q("SELECT id FROM profiles WHERE lower(email)=? OR username=?",e,username).first())fail(409,"That email or username is unavailable.");
+ if(e===ownerEmail.toLowerCase()||await q("SELECT id FROM profiles WHERE lower(email)=? OR username=?",e,username).first()||await q("SELECT user_id FROM credentials WHERE email=?",e).first())fail(409,"That email or username is unavailable.");
  const uid="native_"+crypto.randomUUID(),salt=random(),recovery=random(),h=await hash(p,salt);
  await db.batch([q("INSERT INTO profiles(id,email,username,name,role,terms,created_at) VALUES(?,?,?,?,'member',?,?)",uid,e,username,name,POLICY_VERSION,Date.now()),q("INSERT INTO credentials(user_id,email,password_hash,salt,recovery_hash,created_at) VALUES(?,?,?,?,?,?)",uid,e,h,salt,await digest(recovery),Date.now()),q("INSERT INTO audit(id,actor,action,target,reason,created_at) VALUES(?,?,?,?,?,?)",crypto.randomUUID(),uid,"account.created",uid,"Native account; community rules accepted",Date.now())]);return await issue(uid,{recoveryCode:recovery},h);
  }
@@ -48,7 +55,11 @@ export async function handlePasswordAuth(req:Request,db:D1Database,hosted:Identi
  if(action==="owner-access"){
  if(!hosted||hosted.authMethod==="password"||hosted.email.toLowerCase()!==ownerEmail.toLowerCase())fail(403,"Use the verified owner session to set up app access.");
  const p=await q("SELECT role FROM profiles WHERE id=?",hosted!.userId).first<{role:string}>();if(p?.role!=="owner")fail(409,"Create your owner profile in the office first.");
- await rate("owner-link",hosted!.userId,5);const e=ownerEmail.toLowerCase(),salt=random(),recovery=random(),h=await hash(password(b!.password),salt);
+ await rate("owner-link",hosted!.userId,5);
+ const existing=await q("SELECT email FROM credentials WHERE user_id=?",hosted!.userId).first<{email:string}>();
+ const e=b!.email===undefined?(existing?.email??ownerEmail.toLowerCase()):email(b!.email);
+ if(await q("SELECT user_id FROM credentials WHERE email=? AND user_id!=?",e,hosted!.userId).first()||await q("SELECT id FROM profiles WHERE lower(email)=? AND id!=?",e,hosted!.userId).first())fail(409,"That app login email is already in use.");
+ const salt=random(),recovery=random(),h=await hash(password(b!.password),salt);
  await db.batch([q("INSERT INTO credentials(user_id,email,password_hash,salt,recovery_hash,created_at) VALUES(?,?,?,?,?,?) ON CONFLICT(user_id) DO UPDATE SET email=excluded.email,password_hash=excluded.password_hash,salt=excluded.salt,recovery_hash=excluded.recovery_hash",hosted!.userId,e,h,salt,await digest(recovery),Date.now()),q("DELETE FROM sessions WHERE user_id=?",hosted!.userId),q("INSERT INTO audit(id,actor,action,target,reason,created_at) VALUES(?,?,?,?,?,?)",crypto.randomUUID(),hosted!.userId,"owner.app-access",hosted!.userId,"Owner set native password from verified session",Date.now())]);return response({ok:true,recoveryCode:recovery});
  }
  if(action==="change-password"){
@@ -56,4 +67,26 @@ export async function handlePasswordAuth(req:Request,db:D1Database,hosted:Identi
  }
  return response({error:"Endpoint not found."},404);
  }catch(e){const r=authErrorResponse(e);if(r)return r;console.error(JSON.stringify({event:"auth.error",message:e instanceof Error?e.message:"Unknown"}));return response({error:"Unable to complete this request. Try again."},500)}
+}
+
+/** One-time site-owner maintenance. Only private deployment configuration authorizes this;
+ * request headers and bodies cannot choose a target or password. Remove after recovery. */
+export async function applyOwnerRecovery(db:D1Database,ownerEmail:string,configuration:string|undefined){
+ if(!configuration)return;
+ let c:{ownerId:string;loginEmail:string;password:string;operation:string;expiresAt:number};
+ try{c=JSON.parse(configuration)}catch{return}
+ if(!c||typeof c.ownerId!=="string"||typeof c.operation!=="string"||c.operation.length>100||!c.operation.startsWith("owner-recovery-")||!Number.isFinite(c.expiresAt)||Date.now()>c.expiresAt||c.expiresAt>Date.now()+3600000)return;
+ const auditId=c.operation,q=(s:string,...v:unknown[])=>db.prepare(s).bind(...v);
+ if(await q("SELECT id FROM audit WHERE id=?",auditId).first())return;
+ const p=await q("SELECT id,email,role,status FROM profiles WHERE id=?",c.ownerId).first<{id:string;email:string;role:string;status:string}>();
+ if(!p||p.role!=="owner"||p.status!=="active"||p.email.toLowerCase()!==ownerEmail.toLowerCase())throw new Error("Owner recovery target is unavailable");
+ const e=email(c.loginEmail);
+ if(await q("SELECT user_id FROM credentials WHERE email=? AND user_id!=?",e,p.id).first()||await q("SELECT id FROM profiles WHERE lower(email)=? AND id!=?",e,p.id).first())throw new Error("Owner recovery login is unavailable");
+ const salt=random(),h=await hash(password(c.password),salt),recovery=await digest(random()),now=Date.now();
+ await db.batch([
+ q("INSERT INTO credentials(user_id,email,password_hash,salt,recovery_hash,created_at) SELECT ?,?,?,?,?,? WHERE NOT EXISTS(SELECT 1 FROM audit WHERE id=?) ON CONFLICT(user_id) DO UPDATE SET email=excluded.email,password_hash=excluded.password_hash,salt=excluded.salt,recovery_hash=excluded.recovery_hash WHERE NOT EXISTS(SELECT 1 FROM audit WHERE id=?)",p.id,e,h,salt,recovery,now,auditId,auditId),
+ q("DELETE FROM sessions WHERE user_id=? AND NOT EXISTS(SELECT 1 FROM audit WHERE id=?)",p.id,auditId),
+ q("DELETE FROM auth_limits WHERE id=? AND NOT EXISTS(SELECT 1 FROM audit WHERE id=?)",await digest("login-account:"+e+":"+Math.floor(now/900000)),auditId),
+ q("INSERT INTO audit(id,actor,action,target,reason,created_at) SELECT ?,?,'owner.app-access.recovered',?,'Site owner requested app-login recovery; hosted ownership retained',? WHERE NOT EXISTS(SELECT 1 FROM audit WHERE id=?)",auditId,p.id,p.id,now,auditId)
+ ]);
 }

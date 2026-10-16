@@ -4,7 +4,7 @@ import{handleAndroidRelease}from"../../../lib/android-release";
 import {env} from "cloudflare:workers";
 import {getChatGPTUser} from "../../chatgpt-auth";
 import {handleSocial} from "../../../lib/social-api";
-import {handlePasswordAuth,nativeIdentity,authErrorResponse} from "../../../lib/password-auth";
+import {handlePasswordAuth,nativeIdentity,authErrorResponse,applyOwnerRecovery} from "../../../lib/password-auth";
 import {handleMessages} from "../../../lib/messages";
 export const dynamic="force-dynamic";
 async function handle(req:Request){
@@ -12,7 +12,7 @@ async function handle(req:Request){
  try{const hosted=await getChatGPTUser(),path=new URL(req.url).pathname,ownerEmail=env.SHADOWSOCIAL_OWNER_EMAIL??"";
  if(path.startsWith("/api/android/"))return handleAndroidRelease(req,env.BUCKET,env.SHADOWSOCIAL_RELEASE_KEY??"");
  if(path==="/api/app-updates")return handleAndroidUpdates(req,{DB:env.DB,BUCKET:env.BUCKET,ownerEmail});
- if(path.startsWith("/api/auth/"))return handlePasswordAuth(req,env.DB,hosted,ownerEmail);
+ if(path.startsWith("/api/auth/")){if(path==="/api/auth/login")await applyOwnerRecovery(env.DB,ownerEmail,env.SHADOWSOCIAL_OWNER_RECOVERY);return handlePasswordAuth(req,env.DB,hosted,ownerEmail);}
  const identity=(await nativeIdentity(req,env.DB))??hosted;
  if(path==="/api/office/app-updates")return handleAndroidUpdates(req,{DB:env.DB,BUCKET:env.BUCKET,ownerEmail},identity);
  const rtc={DB:env.DB,appId:env.SHADOWSOCIAL_SFU_APP_ID??"",appSecret:env.SHADOWSOCIAL_SFU_SECRET??"",turnId:env.SHADOWSOCIAL_TURN_KEY_ID??"",turnSecret:env.SHADOWSOCIAL_TURN_SECRET??""};

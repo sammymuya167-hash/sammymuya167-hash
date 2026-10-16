@@ -8,5 +8,6 @@ declare namespace Cloudflare {
     SHADOWSOCIAL_TURN_SECRET?: string;
     SHADOWSOCIAL_OWNER_EMAIL?: string;
     SHADOWSOCIAL_RELEASE_KEY?: string;
+    SHADOWSOCIAL_OWNER_RECOVERY?: string;
   }
 }
