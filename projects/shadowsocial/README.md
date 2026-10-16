@@ -2,15 +2,15 @@
 
 A standalone native Android social app with its own animated splash, email/username login, sign-up, feed, photo composer, profiles, messaging and owner-controlled moderation office. Catalogue project #7.
 
-- [Download the signed Android APK v0.2.1](https://shadowsocial-shadownet.sammymuya167.chatgpt.site/api/android/v0.2.1)
+- [Download the signed Android APK v0.3.0 (64-bit ARM64)](https://shadowsocial-shadownet.sammymuya167.chatgpt.site/api/android/v0.3.0)
 - [Community](https://shadowsocial-shadownet.sammymuya167.chatgpt.site)
 - [Office](https://shadowsocial-shadownet.sammymuya167.chatgpt.site/office)
 - [Owner app-password setup](https://shadowsocial-shadownet.sammymuya167.chatgpt.site/account-access)
 
 ## Android release
-Native Flutter 3.32.8 screens, compiled for ARM32, ARM64 and x86_64. Android 8.0+ (API 26); target API 35. Package `ke.co.shadownet.shadowsocial`, version 0.2.1 (3). The app has no WebView, Custom Tabs or browser launcher.
-The universal installer is **50,859,432 bytes (50.9 MB)**, with no padding. APK SHA-256:
-`0a0a87d3a468a364242ff90abaa10bc3a852fd4536fa1f73ac9a34d98aafc4dd`
+Native Flutter 3.32.8 screens, packaged for 64-bit ARM64 phones. Android 8.0+ (API 26); target API 35. Package `ke.co.shadownet.shadowsocial`, version 0.3.0 (4). The app has no WebView, Custom Tabs or browser launcher.
+The ARM64 installer is **30,555,169 bytes (30.6 MB)**, with no padding. APK SHA-256:
+`093f9d1d475206af1d25aa3f76e3df7baf19325339f3d7431c6ddde9b4db193a`
 Signing certificate SHA-256:
 `3d48406874958d7cf34d08373101fbb346cc52fda05008a1cb0231c0db3d0a71`
 The existing owner certificate is preserved for upgrades. Private signing material is never committed.
@@ -33,13 +33,15 @@ Native signup always creates a member. Claiming an owner email never grants owne
 - Rules acceptance and 16+ confirmation, account deletion and data export API.
 
 ## Backend and deployment
-Vinext/React on Cloudflare Workers with 18 D1 tables and R2 image/release storage. The public website and native app call the same APIs. Runtime owner identity and release-publishing credentials are private Sites secrets. APK uploads are streamed, checked against SHA-256 and published as immutable versions.
+Vinext/React on Cloudflare Workers with 21 D1 tables and R2 image/release storage. The public website and native app call the same APIs. Runtime owner identity and media-provider credentials are private Sites secrets. Release publishing uses a temporary credential, removed after upload. APK uploads are streamed, checked against SHA-256 and published as immutable versions.
 Apply tracked Drizzle migrations in order. `lib/password-auth.ts`, `lib/messages.ts`, `lib/social-api.ts` and `lib/android-release.ts` contain the server behavior. Public profiles never expose account emails.
 Web members use `/login`; the hosted identity path remains available for secure owner bootstrap.
 
 ## Validation
 - 85 existing D1/R2 social and moderation assertions passed.
 - 29 native-account and messaging assertions passed.
+- 41 call/live state and authorization checks passed.
+- Production WebRTC checks decoded two-way voice, two-way video and a live viewer using synthetic media.
 - 6 production-built Worker tests passed.
 - Flutter analyzer clean; 3 widget/client tests passed.
 - Release compiled, aligned and signatures verified.
@@ -48,7 +50,7 @@ Web members use `/login`; the hosted identity path remains available for secure 
 - Android emulator integration workflow exercises signup, posting, following and profiles with a real local D1/R2 API. Check its current run result before calling emulator validation complete.
 
 ## Build
-Java 17, Flutter 3.32.8, Gradle 8.11.1, Android SDK 35, NDK 27.0.12077973.
+Java 17, Flutter 3.32.8, Gradle 8.11.1, Android compile SDK 36 / target API 35, NDK 27.0.12077973.
 ```sh
 cd native
 flutter create --platforms=android --org ke.co.shadownet --project-name shadowsocial .
@@ -56,11 +58,13 @@ python3 tool/prepare_android.py
 flutter pub get
 flutter analyze
 flutter test
-flutter build apk --release
+flutter build apk --release --target-platform android-arm64 --split-per-abi
 ```
 The generated Android scaffold is deliberately reproducible from the pinned Flutter toolchain and preparation script. Sign release builds privately using the owner key; no debug signing configuration is used for release.
 
 
-### Native calls and live (0.3.0 source)
+## Native calls and live (0.3.0)
 
-Native WebRTC voice/video calls, a live directory with public/follower broadcasts, and web/native office controls are implemented. Keep the app foregrounded for incoming invitations and during media sessions. Backend permanent SFU/TURN credentials are runtime secrets. Calls are transport encrypted, not end-to-end encrypted against the media provider. Session recording is disabled. The update requires signing with the existing owner certificate before it can replace 0.2.1.
+Native WebRTC voice/video calls, a live directory with public/follower broadcasts, and web/native office controls are implemented. Keep the app foregrounded for incoming invitations and during media sessions. Backend permanent SFU/TURN credentials are runtime secrets. Calls are transport encrypted, not end-to-end encrypted against the media provider. Session recording is disabled. The signed update uses the existing owner certificate and can replace 0.2.1 without uninstalling.
+
+The published APK is ARM64 only. The GitHub CI artifact retains the universal unsigned release input. The v0.3.0 release was signed from CI run 38867603578; its native source is unchanged in backend commit c62508d9400b2697f278ba53002d660b60dfc5ec.

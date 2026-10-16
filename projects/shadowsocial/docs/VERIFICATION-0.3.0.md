@@ -1,6 +1,6 @@
 # ShadowSocial 0.3.0 verification
 
-Status: implementation and media verification complete; APK signing awaits explicit authorization to access the existing private signing backup in the isolated Vercel build environment. The published Android download remains 0.2.1.
+Status: released. The owner explicitly authorized the saved Android signing key in the isolated Vercel build environment. The signed v0.3.0 APK is available at https://shadowsocial-shadownet.sammymuya167.chatgpt.site/api/android/v0.3.0.
 
 ## Features
 
@@ -38,8 +38,11 @@ Target Android: API 35
 Compile SDK: 36
 Prepared candidate ABI: arm64-v8a
 Unsigned aligned bytes: 30544773
-Unsigned SHA-256: a5f346cb8eae8bbc767b5652190a3a4e0e382d1728fe25808653e5a88a0ae5ec
+CI-derived unsigned SHA-256: 4ce4925ac55330f5568526784830869fa52f53941b8027307edca6dc66c109eb
+Signed bytes: 30555169
+Signed SHA-256: 093f9d1d475206af1d25aa3f76e3df7baf19325339f3d7431c6ddde9b4db193a
+Certificate SHA-256: 3d48406874958d7cf34d08373101fbb346cc52fda05008a1cb0231c0db3d0a71
 
-The unsigned candidate was compiled and checked with aapt and zipalign (16 KB page alignment). The CI artifact retains a reproducible unsigned release and source-SHA record for signing. Its universal input can be restricted to arm64-v8a and realigned before signing. The final signed APK will have a different SHA-256. Use the existing owner certificate so installed 0.2.1 users can upgrade in place.
+The unsigned candidate was compiled and checked with aapt and zipalign (16 KB page alignment). The CI artifact retains a reproducible unsigned release and source-SHA record for signing. Its universal input can be restricted to arm64-v8a and realigned before signing. V2 and V3 signatures, the existing owner certificate and 16 KB ZIP alignment were verified. The published APK was downloaded and its full SHA-256 and length matched the signed file. Installed 0.2.1 users can upgrade in place.
 
-Two automatic reviews rejected disclosure of permanent media credentials and the private Android signing backup to a temporary external build VM. Media testing was completed safely through the deployed backend instead. The private signing material was never transferred. Signing and release remain pending authorization for the Vercel destination.
+Initial automatic reviews required explicit permission before the signing backup could enter the external build VM. The owner then authorized this destination. Signing completed with the saved key; temporary key copies were immediately removed. Permanent media secrets remained in the backend. The temporary release-publishing credential was removed after upload.
