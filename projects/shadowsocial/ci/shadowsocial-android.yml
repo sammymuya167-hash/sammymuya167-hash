@@ -34,6 +34,7 @@ jobs:
           corepack pnpm typecheck
           corepack pnpm test
           node tests/password-auth.mjs
+          node tests/rtc.mjs
       - name: Check native app
         run: |
           cd native

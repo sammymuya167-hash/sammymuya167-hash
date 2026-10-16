@@ -1,3 +1,4 @@
+import 'calling.dart';
 import 'package:flutter/material.dart';
 import 'api.dart';
 import 'main.dart';
@@ -237,6 +238,15 @@ class _OfficeScreenState extends State<OfficeScreen> {
     appBar: AppBar(
       title: Text('Your office', style: TextStyle(fontWeight: FontWeight.w800)),
       actions: [
+        IconButton(
+          tooltip: "Calls & live control",
+          icon: Icon(Icons.sensors_rounded),
+          onPressed:
+              () => Navigator.push(
+                context,
+                MaterialPageRoute<void>(builder: (_) => MediaOffice(api: api)),
+              ),
+        ),
         IconButton(
           tooltip: 'Refresh',
           onPressed: loading ? null : load,

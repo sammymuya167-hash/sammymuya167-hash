@@ -1,3 +1,4 @@
+import 'calling.dart';
 import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
@@ -298,6 +299,21 @@ class _SocialHomeState extends State<SocialHome> with WidgetsBindingObserver {
   List<Json> posts = [], people = [], activity = [], requests = [];
   final search = TextEditingController();
   Timer? refreshTimer;
+  Timer? incomingTimer;
+  bool incomingPoll = false;
+  Future<void> pollCalls() async {
+    if (incomingPoll ||
+        !mounted ||
+        WidgetsBinding.instance.lifecycleState != AppLifecycleState.resumed)
+      return;
+    incomingPoll = true;
+    try {
+      await checkIncoming(context, api);
+    } finally {
+      incomingPoll = false;
+    }
+  }
+
   int generation = 0;
   Api get api => widget.api;
   @override
@@ -305,6 +321,7 @@ class _SocialHomeState extends State<SocialHome> with WidgetsBindingObserver {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     load();
+    incomingTimer = Timer.periodic(Duration(seconds: 4), (_) => pollCalls());
     refreshTimer = Timer.periodic(
       Duration(seconds: 60),
       (_) => api.refresh().catchError((_) {}),
@@ -315,6 +332,7 @@ class _SocialHomeState extends State<SocialHome> with WidgetsBindingObserver {
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     refreshTimer?.cancel();
+    incomingTimer?.cancel();
     search.dispose();
     super.dispose();
   }
@@ -323,6 +341,7 @@ class _SocialHomeState extends State<SocialHome> with WidgetsBindingObserver {
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
       api.refresh().catchError((_) {});
+      pollCalls();
       load();
     }
   }
@@ -427,18 +446,34 @@ class _SocialHomeState extends State<SocialHome> with WidgetsBindingObserver {
         children: [
           BrandMark(size: 33),
           SizedBox(width: 9),
-          Text(
-            'ShadowSocial',
-            style: TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.w800,
-              color: ink,
-              letterSpacing: -1,
+          Flexible(
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                'ShadowSocial',
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w800,
+                  color: ink,
+                  letterSpacing: -1,
+                ),
+              ),
             ),
           ),
         ],
       ),
       actions: [
+        IconButton(
+          tooltip: 'Live & calls',
+          icon: Icon(Icons.sensors_rounded),
+          onPressed:
+              () => Navigator.push(
+                context,
+                MaterialPageRoute<void>(
+                  builder: (_) => LiveDirectory(api: api),
+                ),
+              ),
+        ),
         IconButton(
           tooltip: 'Messages',
           onPressed:
@@ -1875,7 +1910,7 @@ class SettingsScreen extends StatelessWidget {
               color: ink,
             ),
           ),
-          subtitle: Text('Version 0.2.1 · by SHADOWNET'),
+          subtitle: Text('Version 0.3.0 · by SHADOWNET'),
         ),
         SizedBox(height: 22),
         if (api.staff)
@@ -2335,6 +2370,18 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
         ],
       ),
       actions: [
+        IconButton(
+          tooltip: 'Voice call',
+          icon: Icon(Icons.call_outlined),
+          onPressed:
+              () => openCall(context, widget.api, widget.person, 'voice'),
+        ),
+        IconButton(
+          tooltip: 'Video call',
+          icon: Icon(Icons.videocam_outlined),
+          onPressed:
+              () => openCall(context, widget.api, widget.person, 'video'),
+        ),
         IconButton(
           tooltip: 'Report account',
           onPressed:

@@ -10,3 +10,8 @@
 8. Check **Audit trail** to see the latest actions and reasons. Audit records are not editable through the app.
 
 Community rules are displayed at signup and inside the app. Age is self-confirmed at 16+. Photo safety review is manual. This office is an initial operating system; staff still need to review reports and respond to appeals.
+
+
+## Calls and live broadcasts (0.3.0)
+
+Open Calls & live in either office. Staff can stop a session with an audited reason; only the owner can pause voice/video calls or live broadcasts across the platform. Pausing ends active sessions. Calls require mutual accepted follows. Private broadcasts require accepted followers, blocks and restrictions revoke access. Lives support 30 viewers and a maximum hour. No recording is saved. Native incoming invitations work while the app is open; background incoming push is not configured. Sessions end when the app is backgrounded. Media service secrets stay in backend runtime configuration.

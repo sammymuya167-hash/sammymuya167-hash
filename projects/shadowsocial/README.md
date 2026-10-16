@@ -59,3 +59,8 @@ flutter test
 flutter build apk --release
 ```
 The generated Android scaffold is deliberately reproducible from the pinned Flutter toolchain and preparation script. Sign release builds privately using the owner key; no debug signing configuration is used for release.
+
+
+### Native calls and live (0.3.0 source)
+
+Native WebRTC voice/video calls, a live directory with public/follower broadcasts, and web/native office controls are implemented. Keep the app foregrounded for incoming invitations and during media sessions. Backend permanent SFU/TURN credentials are runtime secrets. Calls are transport encrypted, not end-to-end encrypted against the media provider. Session recording is disabled. The update requires signing with the existing owner certificate before it can replace 0.2.1.

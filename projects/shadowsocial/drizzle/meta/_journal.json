@@ -15,6 +15,13 @@
       "when": 1792100405249,
       "tag": "0001_ambitious_silhouette",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1792134473046,
+      "tag": "0002_familiar_riptide",
+      "breakpoints": true
     }
   ]
 }

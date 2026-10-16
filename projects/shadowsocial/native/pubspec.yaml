@@ -1,12 +1,13 @@
 name: shadowsocial
 description: ShadowSocial native Android community by SHADOWNET.
 publish_to: none
-version: 0.2.1+3
+version: 0.3.0+4
 environment:
   sdk: '>=3.7.0 <4.0.0'
 dependencies:
   flutter:
     sdk: flutter
+  flutter_webrtc: 1.6.2+hotfix.4
   http: 1.3.0
   flutter_secure_storage: 9.2.4
   image_picker: 1.1.2
