@@ -18,12 +18,13 @@ My work focuses on useful workflows, clear interfaces, tested server behavior, a
 | **CanvasRoom** | Original SVG design canvas with draggable shapes, connectors, review comments, private saves and restorable snapshots | [Source & setup](projects/canvasroom) · [Live demo](https://canvasroom-shadownet.sammymuya167.chatgpt.site) |
 | **ShadowChat** | Encrypted one-to-one conversations shared across web and a signed browser-backed Android APK, invitations, key recovery and app lock | [Source & setup](projects/shadowchat) · [Open app](https://shadowchat-shadownet.sammymuya167.chatgpt.site) |
 | **ShadowSocial** | Native Android social app, voice/video calls, live broadcasts and an owner office with remote update controls | [Source & setup](projects/shadowsocial) · [Community](https://shadowsocial-shadownet.sammymuya167.chatgpt.site) · [Office](https://shadowsocial-shadownet.sammymuya167.chatgpt.site/office) |
+| **ShadowBot** | Custom AI assistants, text/Markdown knowledge, streaming answers, private saved chats and configurable LLM providers | [Source & setup](projects/shadowbot) · [Live demo](https://shadowbot-shadownet.sammymuya167.chatgpt.site) |
 | **IT operations & security portfolio** | Support tracking, authentication log triage, and an offline network configuration auditor; synthetic case studies and 19 automated tests | [Source & case studies](portfolio/README.md) |
 | **Jumia WhatsApp Importer** | Product export parsing, image processing, category matching, pricing, validation, and marketplace integration | [Private repository](https://github.com/sammymuya167-hash/jumia-whatsapp-importer) |
 
 ## Latest builds
 
-Six projects from the supplied *Full Stack Projects* catalogue are built and documented. All six have live web apps; ShadowChat requires an invitation to join, while ShadowSocial has open email/password registration.
+Seven projects from the supplied *Full Stack Projects* catalogue are built and documented. All seven have live web apps; ShadowChat requires an invitation to join, while ShadowSocial has open email/password registration.
 
 - **RouteForge (#92):** manage company orders with a signed Rider app, five-second offers, completion/payment reports, verified sales totals and live GPS.
 - **SprintForge (#33):** plan sprints, enforce dependencies, track progress and retain project activity.
@@ -31,6 +32,8 @@ Six projects from the supplied *Full Stack Projects* catalogue are built and doc
 - **CanvasRoom (#77):** map product flows, connect ideas, review comments and restore private snapshots.
 - **ShadowChat (#12):** invite approved people into a private messenger with shared web/Android conversations, device-key recovery and an encrypted retry queue.
 - **ShadowSocial (#7):** share photos and text, follow people, manage private follow requests, like/comment/save, report concerns, chat with mutual followers, make voice/video calls, broadcast live, and operate an owner office with Android update controls.
+
+- **ShadowBot (#86):** create private/public AI assistants with custom prompts, text/Markdown knowledge, keyword retrieval, source excerpts, streaming replies and personal saved histories. Email/password accounts, Workers/D1 storage and a configurable OpenAI-compatible provider; the live demo runs Llama on Cloudflare Workers AI. Setup, architecture, limitations and 26 focused automated checks are documented. Browser/device QA and higher-scale production hardening remain open.
 
 CanvasRoom adds 5 focused canvas-domain tests plus clean lint, typecheck, migration and production Worker builds. The existing SprintForge and RequestLab suites retain 27 domain/request tests and 33 built-Worker/D1 integration checks.
 

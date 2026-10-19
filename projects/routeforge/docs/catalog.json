@@ -496,7 +496,17 @@
     {
       "pdf_id": 86,
       "title": "Chatbot Platform",
-      "state": "unbuilt"
+      "state": "built",
+      "project": "ShadowBot",
+      "source_path": "projects/shadowbot",
+      "live_url": "https://shadowbot-shadownet.sammymuya167.chatgpt.site",
+      "released_at": "2026-10-19",
+      "release_timezone": "Africa/Nairobi",
+      "version": "1.0.0",
+      "implementation": "Original React/TypeScript/Vinext app on Cloudflare Workers and D1. Own email/password sessions, per-bot keyword retrieval and configurable OpenAI-compatible HTTP/SSE transport; real demo AI via secret-protected Workers AI gateway.",
+      "verification": "8 unit tests, 17 built-Worker/D1 scenarios and 1 gateway test pass, along with type checking, build and idempotent local migrations. Actual model and protected gateway inference succeeded. Browser/device QA, load testing and security audit remain unverified.",
+      "scope": "Multiple owner-managed private/public bots; name/description/prompt/greeting editing; bounded text/Markdown uploads and keyword RAG with source excerpts; streaming with saved private history, context memory, stop and deletion. No email verification/reset, teams, billing, web search, tools or semantic embeddings.",
+      "access": "Public workspace and bot chat pages. Email/password sign-in required to send and save chats. Every conversation is private to its user; bot owners cannot read visitors' histories."
     },
     {
       "pdf_id": 87,
