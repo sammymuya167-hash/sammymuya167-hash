@@ -18,7 +18,7 @@ The test runner reports the parent integration test as an additional test entry.
 
 ## Production verification
 
-The publishing result is recorded separately from browser QA. `GET /api/health` checks D1 and presence of provider configuration. It does not call the model. A follow-up live smoke check should create an isolated account and bot, upload a small knowledge file, stream a fact-based response, read it back, verify another account cannot read it, and delete the temporary bot/history.
+The publishing result is recorded separately from browser QA. `GET /api/health` checks D1 and presence of provider configuration. It does not call the model. The deployed app passed a live API smoke check: public shell and D1 health, email/password registration and secure session, temporary assistant creation, Markdown upload/indexing, real streaming generation of the unique uploaded fact (ORBIT-86), saved-history readback, anonymous and second-account history denial, and omission of the private system prompt from the public bot API. The check also exercises unpublishing and cleanup. Live requests used the deployed Worker, its real D1 database, and the configured model gateway; they did not mock the provider.
 
 See the release handoff for the actual live smoke-check outcome. No passing browser, mobile device, email delivery, failover, load, backup restoration, or independent security audit result is claimed.
 
