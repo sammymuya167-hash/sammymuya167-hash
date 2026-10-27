@@ -3,6 +3,9 @@ on:
   push:
     branches: [routeforge-customer-1-0]
     paths: ["projects/routeforge/android-customer/**", ".github/workflows/routeforge-customer.yml"]
+  pull_request:
+    branches: [routeforge-customer-1-0]
+    paths: ["projects/routeforge/android-customer/**", ".github/workflows/routeforge-customer.yml"]
   workflow_dispatch:
 permissions:
   contents: read
