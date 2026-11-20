@@ -1,14 +1,33 @@
-# Scientific Lab regression checklist
+# Scientific Computing Lab — Verification and Regression Checklist
 
-1. Visit deployed URL, verify heading, summary cards, first chart and initial run count appear.
-2. Click experiment tabs 02, 03, 04, 05, 06, 07, 08, 20. Each should load its title, controls, metrics, interpretation, and charts.
-3. Change a slider or select. Status should read SETTINGS CHANGED and button should prompt Run updated experiment.
-4. Click Run updated experiment. Status should read RUN #n COMPLETE, new run number should be visible and graph/results should refresh.
-5. On Task 02 lower threshold 27 to 26°C; high readings should increase from 3/24 to 7/24.
-6. On Task 05 set angle 180°; transformed vertices should change.
-7. On Task 06 change RAM from 72 to 88 GB; result should be A=2 and B=6.
-8. On Task 20 set std dev from 100 to 150 Mbps; risk % should change.
-9. Test mobile screen width below 760px: horizontal nav scroll, content resizing and visible run status.
-10. Confirm no JS console exceptions, 'Could not calculate' errors, broken controls or missing graphs.
+**Project presentation:** Margaret Kamau  
+**Live URL:** https://scientific-computing-shadownet.vercel.app/
 
-All simulation data is synthetic.
+## Test objectives
+
+Verify that the live site opens without authentication, every interactive module displays results, parameter changes are recognized, and numerical outputs update consistently.
+
+## Core functional checks
+
+| ID | Scenario | Expected result |
+|---|---|---|
+| T01 | Open the live URL | Lab title, navigation and Task 02 appear without login |
+| T02 | Select each of Tasks 02, 03, 04, 05, 06, 07, 08, 20 | Correct title, controls and calculated results |
+| T03 | Change a slider value | Status reads SETTINGS CHANGED |
+| T04 | Change a dropdown value | New value is accepted; refresh is indicated |
+| T05 | Click Run updated experiment | Status reads RUN #n COMPLETE; results refresh |
+| T06 | Change Task 02 threshold from 27 to 26 °C at offset 0 | High readings change from 3/24 to 7/24 |
+| T07 | Change Task 06 RAM from 72 to 88 GB at CPU 20 | Server counts change from A=3, B=4 to A=2, B=6 |
+| T08 | Change Task 05 rotation from 90 to 180 degrees | Transformed triangle and vertices change |
+| T09 | Change Task 20 demand variability | Estimated overload risk and graphs update |
+| T10 | Use a narrow/mobile screen | Navigation remains usable and calculations can be run |
+| T11 | Inspect browser console | No uncaught JavaScript exceptions |
+| T12 | Reload the application | Initial experiment reloads and produces results |
+
+## Regression notes
+
+In prior browser checks, all eight tasks opened with calculated outputs. Input and run-button behavior was checked, including the Task 02 and Task 06 reference examples. Those checks are not a substitute for repeating tests after every deployment.
+
+## Interpretation and scope
+
+All measurements and simulated loads are illustrative. Do not describe the results as live sensor readings or real network metrics. The site is a teaching tool, not a validated operations-monitoring product.
